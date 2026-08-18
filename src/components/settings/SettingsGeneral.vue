@@ -1,0 +1,499 @@
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { Check, ChevronDown, Languages } from 'lucide-vue-next';
+import { useSettings } from '../../features/settings/useSettings';
+import { toolboxApi } from '../../services/tauri/toolboxApi';
+import { usePlayer } from '../../features/playback';
+import { useToast } from '../../composables/toast';
+import { appApi } from '../../services/tauri/appApi';
+import { playbackApi } from '../../services/tauri/playbackApi';
+import ConfirmModal from '../overlays/ConfirmModal.vue';
+import SettingHint from './SettingHint.vue';
+import { APP_LANGUAGE_OPTIONS, useAppLanguage } from '../../i18n';
+
+const { settings } = useSettings();
+const { language, storedLanguage, setLanguage, t } = useAppLanguage();
+const languageDropdownRef = ref<HTMLElement | null>(null);
+const isLanguageDropdownOpen = ref(false);
+const selectedLanguageOption = computed(() => (
+  APP_LANGUAGE_OPTIONS.find(option => option.value === storedLanguage.value) ?? APP_LANGUAGE_OPTIONS[0]
+));
+
+const selectLanguage = (nextLanguage: typeof language.value) => {
+  setLanguage(nextLanguage);
+  isLanguageDropdownOpen.value = false;
+};
+
+const closeLanguageDropdownOnOutsideClick = (event: PointerEvent) => {
+  if (!languageDropdownRef.value?.contains(event.target as Node)) {
+    isLanguageDropdownOpen.value = false;
+  }
+};
+const {
+  pauseSong,
+  libraryScanProgress,
+} = usePlayer();
+const { showToast } = useToast();
+
+const launchOnStartup = ref(false);
+
+async function handleGpuAccelerationChange() {
+  const previous = settings.value.gpuAcceleration;
+  const next = !previous;
+
+  settings.value.gpuAcceleration = next;
+
+  try {
+    await toolboxApi.setGpuAcceleration(next);
+    showToast(t('general.gpuUpdated'), 'success');
+  } catch (error) {
+    settings.value.gpuAcceleration = previous;
+    showToast(t('general.gpuFailed'), 'error');
+    console.error('Failed to update GPU acceleration setting:', error);
+  }
+}
+const showClearAllDataConfirm = ref(false);
+const isClearingAllData = ref(false);
+
+const isLibraryScanActive = computed(
+  () => !!libraryScanProgress.value && !libraryScanProgress.value.done
+);
+
+// --- 在线播放流式缓存管理 ---
+const streamCacheCurrent = ref(0);
+const streamCacheMax = ref(0);
+const isClearingStreamCache = ref(false);
+
+const formatStreamCacheBytes = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+};
+
+const refreshStreamCacheInfo = async () => {
+  try {
+    const info = await playbackApi.getStreamCacheInfo();
+    streamCacheCurrent.value = info.current;
+    streamCacheMax.value = info.max;
+  } catch {
+    // 非 Tauri 环境静默忽略
+  }
+};
+
+const patchStreamCacheSize = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const mb = Math.max(1, Math.min(10240, Math.round(parseFloat(target.value) || 1)));
+  target.value = String(mb);
+  settings.value.audio.streamCacheSizeMB = mb;
+  void playbackApi.setStreamCacheMaxSize(mb * 1024 * 1024).then(refreshStreamCacheInfo);
+};
+
+const handleClearStreamCache = async () => {
+  if (isClearingStreamCache.value) return;
+  isClearingStreamCache.value = true;
+  try {
+    await playbackApi.clearStreamCache();
+    await refreshStreamCacheInfo();
+    showToast(t('general.cacheCleared'), 'success');
+  } catch (error) {
+    console.error('Failed to clear stream cache:', error);
+    showToast(t('general.cacheClearFailed'), 'error');
+  } finally {
+    isClearingStreamCache.value = false;
+  }
+};
+
+const openClearAllDataConfirm = () => {
+  if (isClearingAllData.value || isLibraryScanActive.value) {
+    return;
+  }
+
+  showClearAllDataConfirm.value = true;
+};
+
+const handleClearAllData = async () => {
+  if (isClearingAllData.value) {
+    return;
+  }
+
+  isClearingAllData.value = true;
+
+  try {
+    await pauseSong().catch(() => {});
+    await appApi.clearAllAppData();
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
+  } catch (error) {
+    console.error('Failed to clear all app data:', error);
+    showToast(t('general.resetFailed'), 'error');
+    showClearAllDataConfirm.value = false;
+    isClearingAllData.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('pointerdown', closeLanguageDropdownOnOutsideClick);
+  // 同步在线播放缓存上限到后端并读取当前用量
+  void playbackApi.setStreamCacheMaxSize(settings.value.audio.streamCacheSizeMB * 1024 * 1024)
+    .then(refreshStreamCacheInfo);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', closeLanguageDropdownOnOutsideClick);
+});
+</script>
+
+<template>
+  <div class="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <section class="space-y-3">
+      <h2 class="flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-gray-200">
+        <span class="h-4 w-1 rounded-full bg-accent"></span>
+        {{ t('language.section') }}
+      </h2>
+      <div class="language-card flex flex-col gap-4 rounded-xl border border-gray-200/40 bg-white/20 p-4 dark:border-gray-800/40 dark:bg-black/10 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent ring-1 ring-inset ring-accent/10">
+            <Languages class="h-5 w-5" :stroke-width="1.8" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+              {{ t('language.title') }}
+            </div>
+            <p class="mt-0.5 text-xs leading-5 text-gray-500 dark:text-gray-400">
+              {{ t('language.description') }}
+            </p>
+          </div>
+        </div>
+
+        <div ref="languageDropdownRef" class="relative w-full shrink-0 sm:w-52">
+          <button
+            type="button"
+            class="flex h-10 w-full items-center gap-2 rounded-xl border border-black/10 bg-white/55 px-2.5 text-left text-xs font-semibold text-gray-800 shadow-sm transition-all duration-200 hover:border-accent/30 hover:bg-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 dark:border-white/10 dark:bg-white/[0.07] dark:text-gray-100 dark:hover:border-accent/35 dark:hover:bg-white/10"
+            :class="isLanguageDropdownOpen ? 'border-accent/35 ring-2 ring-accent/10 dark:border-accent/40' : ''"
+            aria-haspopup="listbox"
+            :aria-expanded="isLanguageDropdownOpen"
+            @click="isLanguageDropdownOpen = !isLanguageDropdownOpen"
+          >
+            <span class="grid h-6 min-w-6 shrink-0 place-items-center rounded-md bg-black/[0.045] px-1 text-[10px] tracking-tight dark:bg-white/10">
+              {{ selectedLanguageOption.shortLabel }}
+            </span>
+            <span class="min-w-0 flex-1 truncate">{{ selectedLanguageOption.label }}</span>
+            <ChevronDown
+              class="h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 dark:text-gray-500"
+              :class="isLanguageDropdownOpen ? 'rotate-180 text-accent dark:text-accent' : ''"
+              :stroke-width="2"
+            />
+          </button>
+
+          <Transition name="language-dropdown">
+            <div
+              v-if="isLanguageDropdownOpen"
+              role="listbox"
+              :aria-label="t('language.title')"
+              class="absolute right-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-black/10 bg-white/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/95 dark:shadow-black/30"
+            >
+              <button
+                v-for="option in APP_LANGUAGE_OPTIONS"
+                :key="option.value"
+                type="button"
+                role="option"
+                :aria-selected="storedLanguage === option.value"
+                class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-semibold transition-colors"
+                :class="storedLanguage === option.value
+                  ? 'bg-accent/10 text-accent'
+                  : 'text-gray-600 hover:bg-black/5 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.07] dark:hover:text-white'"
+                @click="selectLanguage(option.value)"
+              >
+                <span class="grid h-6 min-w-6 shrink-0 place-items-center rounded-md bg-black/[0.045] px-1 text-[10px] tracking-tight dark:bg-white/10">
+                  {{ option.shortLabel }}
+                </span>
+                <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
+                <Check v-if="storedLanguage === option.value" class="h-3.5 w-3.5 shrink-0" :stroke-width="2.5" />
+              </button>
+            </div>
+          </Transition>
+        </div>
+      </div>
+    </section>
+
+    <!-- Startup & Behavior -->
+    <section class="space-y-3">
+      <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+        <span class="w-1 h-4 bg-accent rounded-full"></span>
+        {{ t('general.section') }}
+      </h2>
+      <div class="flex flex-col rounded-xl overflow-hidden bg-white/20 dark:bg-black/10 border border-gray-200/40 dark:border-gray-800/40">
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.launchOnStartup') }}</div>
+          </div>
+          <button @click="launchOnStartup = !launchOnStartup" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" :class="launchOnStartup ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="launchOnStartup ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.checkUpdates') }}</div>
+          </div>
+          <button @click="settings.checkUpdateOnStartup = !settings.checkUpdateOnStartup" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0" :class="settings.checkUpdateOnStartup ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.checkUpdateOnStartup ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.gpuAcceleration') }}</div>
+          </div>
+          <button @click="handleGpuAccelerationChange" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0" :class="settings.gpuAcceleration ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.gpuAcceleration ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.closeToTray') }}</div>
+          </div>
+          <button @click="settings.closeToTray = !settings.closeToTray" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" :class="settings.closeToTray ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.closeToTray ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.qualityBadges') }}</div>
+          </div>
+          <button @click="settings.showQualityBadges = !settings.showQualityBadges" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" :class="settings.showQualityBadges ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.showQualityBadges ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.songComments') }}</div>
+          </div>
+          <button @click="settings.showSongComments = !settings.showSongComments" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" :class="settings.showSongComments ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.showSongComments ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.scrollToTop') }}</div>
+          </div>
+          <button @click="settings.enableScrollToTopButton = !settings.enableScrollToTopButton" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" :class="settings.enableScrollToTopButton ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.enableScrollToTopButton ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.taskbarControls') }}</div>
+          </div>
+          <button @click="settings.showTaskbarPlayer = !settings.showTaskbarPlayer" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" :class="settings.showTaskbarPlayer ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.showTaskbarPlayer ? 'translate-x-6' : 'translate-x-1'" />
+          </button>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.writeArtistAvatar') }}</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <SettingHint severity="warning" :text="t('general.writeArtistAvatarHint')" />
+            <button @click="settings.writeArtistAvatarToTags = !settings.writeArtistAvatarToTags" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0" :class="settings.writeArtistAvatarToTags ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-700'">
+              <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out shadow-sm" :class="settings.writeArtistAvatarToTags ? 'translate-x-6' : 'translate-x-1'" />
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div>
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.songClickAction') }}</div>
+          </div>
+          <div class="flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-white/10 p-0.5">
+            <button
+              @click="settings.songClickAction = 'single'"
+              class="px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap"
+              :class="settings.songClickAction === 'single' ? 'bg-white dark:bg-white/20 text-accent shadow-sm' : 'text-gray-600 dark:text-gray-400'"
+            >
+              {{ t('general.singleClick') }}
+            </button>
+            <button
+              @click="settings.songClickAction = 'double'"
+              class="px-3 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap"
+              :class="settings.songClickAction === 'double' || !settings.songClickAction ? 'bg-white dark:bg-white/20 text-accent shadow-sm' : 'text-gray-600 dark:text-gray-400'"
+            >
+              {{ t('general.doubleClick') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="space-y-3">
+      <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+        <span class="w-1 h-4 bg-accent rounded-full"></span>
+        {{ t('general.storage') }}
+      </h2>
+      <div class="flex flex-col rounded-xl overflow-hidden bg-white/20 dark:bg-black/10 border border-gray-200/40 dark:border-gray-800/40">
+        <!-- 播放缓存上限 -->
+        <div class="p-4 flex items-center justify-between gap-4 hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.streamCacheLimit') }}</div>
+          </div>
+          <div class="flex shrink-0 items-center gap-3">
+            <SettingHint :text="t('general.streamCacheHint')" />
+            <label class="stream-cache-input-wrap">
+              <input
+                :value="settings.audio.streamCacheSizeMB"
+                class="h-8 rounded-lg border border-black/10 bg-white/45 px-3 text-xs text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-accent/50 focus:bg-white/70 focus:ring-2 focus:ring-accent/10 dark:border-white/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-white/35 dark:focus:bg-white/10"
+                type="number"
+                min="1"
+                max="10240"
+                step="1"
+                inputmode="numeric"
+                @change="patchStreamCacheSize($event)"
+              />
+              <span class="text-gray-500 dark:text-gray-400">MB</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 清理在线播放缓存 -->
+        <div class="p-4 flex items-center justify-between gap-4 hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              {{ t('general.clearStreamCache') }}
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                {{ formatStreamCacheBytes(streamCacheCurrent) }} / {{ formatStreamCacheBytes(streamCacheMax) }}
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <SettingHint :text="t('general.clearStreamCacheHint')" />
+            <button
+              type="button"
+              :disabled="isClearingStreamCache || streamCacheCurrent === 0"
+              @click="handleClearStreamCache"
+              class="settings-action-button shrink-0"
+              :class="isClearingStreamCache || streamCacheCurrent === 0
+                ? 'settings-action-button--disabled'
+                : 'settings-action-button--solid'"
+            >
+              {{ isClearingStreamCache ? t('general.clearing') : t('general.clear') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 flex items-center justify-between gap-4 hover:bg-white/40 dark:hover:bg-white/10 transition-colors">
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ t('general.resetData') }}</div>
+          </div>
+          <button
+            type="button"
+            :disabled="isClearingAllData || isLibraryScanActive"
+            @click="openClearAllDataConfirm"
+            class="settings-action-button shrink-0"
+            :class="isClearingAllData || isLibraryScanActive
+              ? 'settings-action-button--disabled'
+              : 'settings-action-button--solid'"
+          >
+            {{ isClearingAllData ? t('general.resetting') : isLibraryScanActive ? t('general.unavailableScanning') : t('general.reset') }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <ConfirmModal
+      :visible="showClearAllDataConfirm"
+      :title="t('general.resetData')"
+      :content="t('general.resetConfirm')"
+      @cancel="!isClearingAllData && (showClearAllDataConfirm = false)"
+      @confirm="handleClearAllData"
+    />
+  </div>
+</template>
+
+<style scoped>
+.language-dropdown-enter-active,
+.language-dropdown-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  transform-origin: top right;
+}
+
+.language-dropdown-enter-from,
+.language-dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-5px) scale(0.98);
+}
+
+.settings-action-button {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid rgb(var(--theme-accent-rgb) / 0.14);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.settings-action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgb(var(--theme-accent-rgb) / 0.08);
+}
+
+.settings-action-button--soft {
+  background: rgb(var(--theme-accent-rgb) / 0.06);
+  color: var(--theme-accent);
+}
+
+.settings-action-button--soft:hover:not(:disabled) {
+  border-color: rgb(var(--theme-accent-rgb) / 0.34);
+  background: rgb(var(--theme-accent-rgb) / 0.1);
+}
+
+.settings-action-button--solid {
+  background: var(--theme-accent);
+  color: white;
+  border-color: rgb(var(--theme-accent-rgb) / 0.5);
+}
+
+.settings-action-button--solid:hover:not(:disabled) {
+  background: var(--theme-accent-hover);
+}
+
+.settings-action-button--disabled {
+  border-color: rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.36);
+  color: rgba(100, 116, 139, 0.8);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+:global(.dark) .settings-action-button--disabled {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* 播放缓存上限数字输入框（复用短音频输入框样式） */
+.stream-cache-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(55, 65, 81, 0.7);
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+:global(.dark) .stream-cache-input-wrap {
+  color: rgba(255, 255, 255, 0.55);
+}
+</style>

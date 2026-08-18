@@ -1,0 +1,162 @@
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import { getCurrentWindow } from '@tauri-apps/api/window'
+import './style.css'
+import '@applemusic-like-lyrics/core/style.css'
+import './utils/requestIdleCallbackPolyfill'
+import App from './App.vue'
+import router from './router'
+import { applyPersistedStartupTheme, shouldApplyStartupThemePaint } from './composables/startupTheme'
+import { createDynamicImportRecovery } from './utils/dynamicImportRecovery'
+import { installApplicationLogger } from './services/applicationLogger'
+import { reportError } from './services/usageStats'
+
+const currentWindowLabel = (() => {
+  try {
+    return getCurrentWindow().label
+  } catch {
+    return 'main'
+  }
+})()
+
+installApplicationLogger(currentWindowLabel)
+
+if (shouldApplyStartupThemePaint(currentWindowLabel)) {
+  applyPersistedStartupTheme()
+}
+
+const formatError = (error: unknown) => {
+  if (error instanceof Error) {
+    return `${error.name}: ${error.message}${error.stack ? `\n\n${error.stack}` : ''}`
+  }
+
+  if (typeof error === 'string') {
+    return error
+  }
+
+  try {
+    return JSON.stringify(error, null, 2)
+  } catch {
+    return String(error)
+  }
+}
+
+const DYNAMIC_IMPORT_RELOAD_KEY = 'xianyu_dynamic_import_reload'
+
+/**
+ * 开发服务器热更新或应用升级后，旧分包地址可能瞬时失效。
+ * 对这类错误自动刷新一次；冷却时间内再次失败则交给致命错误页，避免刷新循环。
+ */
+const recoverDynamicImportError = createDynamicImportRecovery({
+  getLastReloadAt: () => {
+    try {
+      return Number(sessionStorage.getItem(DYNAMIC_IMPORT_RELOAD_KEY) ?? 0)
+    } catch {
+      return 0
+    }
+  },
+  setLastReloadAt: (value) => {
+    try {
+      sessionStorage.setItem(DYNAMIC_IMPORT_RELOAD_KEY, String(value))
+    } catch {
+      // 当前运行周期状态仍可阻止同一错误从多个通道重复处理。
+    }
+  },
+  reload: () => window.location.reload(),
+  schedule: (callback, delay) => {
+    console.warn('动态模块加载失败，正在刷新应用以恢复。')
+    window.setTimeout(callback, delay)
+  },
+})
+
+const showFatalError = (title: string, error: unknown) => {
+  const message = formatError(error)
+  console.error(title, error)
+
+  try {
+    localStorage.setItem('xianyu_last_fatal_error', `${title}\n\n${message}`)
+  } catch {
+    // Ignore storage failures. The visible fallback is the important part.
+  }
+
+  const appRoot = document.getElementById('app')
+  if (!appRoot) return
+
+  appRoot.replaceChildren()
+
+  const page = document.createElement('div')
+  page.className = 'fatal-error-page'
+
+  const card = document.createElement('div')
+  card.className = 'fatal-error-card'
+
+  const titleEl = document.createElement('div')
+  titleEl.className = 'fatal-error-title'
+  titleEl.textContent = title
+
+  const hint = document.createElement('div')
+  hint.className = 'fatal-error-hint'
+  hint.textContent = '应用启动时发生异常。请把下面的错误信息反馈给开发者。'
+
+  const detail = document.createElement('pre')
+  detail.className = 'fatal-error-detail'
+  detail.textContent = message
+
+  card.append(titleEl, hint, detail)
+  page.append(card)
+  appRoot.append(page)
+}
+
+const app = createApp(App)
+const pinia = createPinia()
+
+app.use(pinia)
+app.use(router)
+app.config.errorHandler = (error, _instance, info) => {
+  // 上报到后台报错日志（fire-and-forget，失败静默）
+  if (error instanceof Error) {
+    reportError(error.name || 'VueError', error.message, error.stack, info)
+  } else {
+    reportError('VueError', String(error), '', info)
+  }
+  if (recoverDynamicImportError(error)) return
+  showFatalError(`前端运行错误: ${info}`, error)
+}
+
+document.addEventListener('contextmenu', (e) => e.preventDefault())
+
+window.addEventListener('error', (event) => {
+  const error = event.error ?? event.message
+  // 上报到后台报错日志（fire-and-forget，失败静默）
+  if (error instanceof Error) {
+    reportError(error.name || 'Error', error.message, error.stack, `${event.filename}:${event.lineno}:${event.colno}`)
+  } else if (typeof error === 'string') {
+    reportError('WindowError', error, '', `${event.filename}:${event.lineno}:${event.colno}`)
+  }
+  if (recoverDynamicImportError(error)) {
+    event.preventDefault()
+    return
+  }
+  showFatalError('窗口脚本错误', error)
+})
+
+window.addEventListener('unhandledrejection', (event) => {
+  // 上报到后台报错日志（fire-and-forget，失败静默）
+  const reason = event.reason
+  if (reason instanceof Error) {
+    reportError('unhandledrejection', reason.message, reason.stack)
+  } else {
+    reportError('unhandledrejection', String(reason))
+  }
+  if (recoverDynamicImportError(event.reason)) {
+    event.preventDefault()
+    return
+  }
+  showFatalError('未处理的异步错误', event.reason)
+})
+
+try {
+  app.mount('#app')
+} catch (error) {
+  showFatalError('应用挂载失败', error)
+}

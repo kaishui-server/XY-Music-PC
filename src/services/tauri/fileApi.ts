@@ -1,0 +1,40 @@
+import type { Song } from '../../types';
+import { tauriInvoke } from './invoke';
+
+export const fileApi = {
+  deleteFolder: (path: string): Promise<void> => tauriInvoke('delete_folder', { path }),
+  moveFileToFolder: (sourcePath: string, targetFolder: string) =>
+    tauriInvoke('move_file_to_folder', { sourcePath, targetFolder }),
+  batchMoveMusicFiles: (paths: string[], targetFolder: string) =>
+    tauriInvoke('batch_move_music_files', { paths, targetFolder }),
+  getFolderFirstSong: (folderPath: string) =>
+    tauriInvoke('get_folder_first_song', { folderPath }),
+  scanMusicFolder: (folderPath: string, minimumDurationSeconds = 0) =>
+    tauriInvoke('scan_music_folder', { folderPath, minimumDurationSeconds }),
+  moveMusicFile: (oldPath: string, newPath: string) =>
+    tauriInvoke('move_music_file', { oldPath, newPath }),
+  showInFolder: (path: string): Promise<void> => tauriInvoke('show_in_folder', { path }),
+  deleteMusicFile: (path: string): Promise<void> => tauriInvoke('delete_music_file', { path }),
+  isDirectory: (path: string): Promise<boolean> => tauriInvoke('is_directory', { path }),
+  parseAudioFiles: (paths: string[], minimumDurationSeconds = 0): Promise<Song[]> =>
+    tauriInvoke('parse_audio_files', { paths, minimumDurationSeconds }),
+  parseMusicFolder: (folderPath: string, minimumDurationSeconds = 0): Promise<Song[]> =>
+    tauriInvoke('parse_music_folder', { folderPath, minimumDurationSeconds }),
+  saveSongBackground: (songPath: string, backgroundPath: string): Promise<string> =>
+    tauriInvoke('save_song_background', { songPath, backgroundPath }),
+  getSongBackground: (songPath: string): Promise<string | null> =>
+    tauriInvoke('get_song_background', { songPath }),
+  clearSongBackground: (songPath: string): Promise<void> =>
+    tauriInvoke('clear_song_background', { songPath }),
+  getSongCover: (path: string): Promise<string> =>
+    tauriInvoke('get_song_cover', { path }),
+  getSongCoverThumbnail: (path: string): Promise<string> =>
+    tauriInvoke('get_song_cover_thumbnail', { path }),
+  extractPalette: (
+    source: string,
+    count: number,
+    colorBoost: number,
+    depth: number,
+  ): Promise<string[]> =>
+    tauriInvoke('extract_palette', { source, count, colorBoost, depth }),
+};

@@ -1,0 +1,259 @@
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
+import { useToast } from '../../composables/toast';
+import { toolboxApi } from '../../services/tauri/toolboxApi';
+import SettingHint from './SettingHint.vue';
+
+interface RenamePreview {
+  original_path: string;
+  original_name: string;
+  new_name: string;
+  status: string;
+  error: string | null;
+}
+
+const toast = useToast();
+
+const props = defineProps<{
+  targetPath: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'next'): void;
+  (e: 'back'): void;
+  (e: 'preview-change', payload: {
+    targetPath: string;
+    template: string;
+    isScanning: boolean;
+    hasScanned: boolean;
+    items: Array<{
+      originalName: string;
+      newName: string;
+    }>;
+    skippedCount: number;
+  }): void;
+}>();
+
+const TOOLBOX_TEMPLATE_KEY = 'toolbox_default_template';
+const customTemplate = ref('{title} - {artist}');
+const isScanning = ref(false);
+const isApplying = ref(false);
+const previewItems = ref<RenamePreview[]>([]);
+const hasScanned = ref(false);
+
+const presets = [
+  { label: '歌名 - 歌手', example: '七里香 - 周杰伦', value: '{title} - {artist}' },
+  { label: '歌手 - 歌名', example: '周杰伦 - 七里香', value: '{artist} - {title}' },
+  { label: '轨道. 歌名', example: '01. 七里香', value: '{track}. {title}' },
+];
+
+const variables = [
+  { code: '{title}', name: '标题' },
+  { code: '{artist}', name: '歌手' },
+  { code: '{album}', name: '专辑' },
+  { code: '{year}', name: '年份' },
+  { code: '{track}', name: '轨道号' },
+];
+
+onMounted(() => {
+  const saved = localStorage.getItem(TOOLBOX_TEMPLATE_KEY);
+  if (saved) {
+    customTemplate.value = saved;
+  }
+});
+
+const setAsDefault = () => {
+  localStorage.setItem(TOOLBOX_TEMPLATE_KEY, customTemplate.value);
+  toast.showToast('已设为默认模板', 'success');
+};
+
+const insertVariable = (variable: string) => {
+  customTemplate.value += variable;
+};
+
+const validItems = computed(() =>
+  previewItems.value.filter((item) => item.status === 'tags' && !item.error),
+);
+
+const skippedItems = computed(() =>
+  previewItems.value.filter((item) => item.status === 'skipped'),
+);
+
+const emitPreview = () => {
+  emit('preview-change', {
+    targetPath: props.targetPath,
+    template: customTemplate.value,
+    isScanning: isScanning.value,
+    hasScanned: hasScanned.value,
+    items: validItems.value.map((item) => ({
+      originalName: item.original_name,
+      newName: item.new_name,
+    })),
+    skippedCount: skippedItems.value.length,
+  });
+};
+
+watch(
+  [() => props.targetPath, customTemplate, isScanning, hasScanned, validItems, skippedItems],
+  emitPreview,
+  { immediate: true, deep: true },
+);
+
+const handleScan = async () => {
+  if (!props.targetPath) {
+    return;
+  }
+
+  isScanning.value = true;
+
+  try {
+    const config = {
+      mode: 'tags',
+      template: customTemplate.value,
+      remove_track_prefix: false,
+      remove_source_prefix: false,
+    };
+
+    const result = await toolboxApi.previewRename(props.targetPath, config);
+
+    previewItems.value = result;
+    hasScanned.value = true;
+  } catch (error) {
+    console.error(error);
+    toast.showToast(`扫描失败: ${error}`, 'error');
+  } finally {
+    isScanning.value = false;
+  }
+};
+
+const handleApply = async () => {
+  if (validItems.value.length === 0) {
+    emit('next');
+    return;
+  }
+
+  isApplying.value = true;
+
+  try {
+    const operations = validItems.value.map((item) => ({
+      original_path: item.original_path,
+      new_name: item.new_name,
+    }));
+
+    const count = await toolboxApi.applyRename(operations);
+    toast.showToast(`成功重命名 ${count} 个文件`, 'success');
+    emit('next');
+  } catch (error) {
+    console.error(error);
+    toast.showToast(`应用修改失败: ${error}`, 'error');
+  } finally {
+    isApplying.value = false;
+  }
+};
+</script>
+
+<template>
+  <div class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+    <section class="toolbox-config-card space-y-4">
+      <div class="flex items-center justify-between gap-4 text-sm font-semibold text-gray-800 dark:text-white">
+        <span>命名模板</span>
+        <SettingHint text="点击变量可将其插入到模板末尾" />
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="preset in presets"
+          :key="preset.value"
+          type="button"
+          class="rounded-lg border px-3 py-2 text-xs font-medium transition"
+          :class="
+            customTemplate === preset.value
+              ? 'border-accent bg-accent text-white'
+              : 'border-white/10 bg-white/5 text-gray-300 hover:border-white/20'
+          "
+          @click="customTemplate = preset.value"
+        >
+          {{ preset.label }}
+          <span class="ml-1 opacity-60">({{ preset.example }})</span>
+        </button>
+      </div>
+
+      <div class="flex gap-3">
+        <input
+          v-model="customTemplate"
+          type="text"
+          placeholder="输入自定义模板..."
+          class="flex-1 h-8 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-gray-100 outline-none transition placeholder:text-white/35 focus:border-accent/50 focus:ring-2 focus:ring-accent/10"
+        />
+        <button
+          type="button"
+          class="rounded-lg bg-white/8 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-white/14 disabled:opacity-40"
+          :disabled="!customTemplate"
+          @click="setAsDefault"
+        >
+          设为默认
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="variable in variables"
+            :key="variable.code"
+            type="button"
+            class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs transition hover:border-accent"
+            @click="insertVariable(variable.code)"
+          >
+            <span class="font-mono font-bold text-gray-200">{{ variable.code }}</span>
+            <span class="ml-1 text-gray-500">{{ variable.name }}</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <button
+      type="button"
+      class="flex w-full items-center justify-center gap-2 rounded-xl bg-white/6 border border-white/8 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+      :disabled="!props.targetPath || isScanning"
+      @click="handleScan"
+    >
+      <svg v-if="isScanning" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      {{ isScanning ? '扫描中...' : hasScanned ? '重新扫描' : '扫描并预览' }}
+    </button>
+
+    <div class="flex gap-3 border-t border-white/6 pt-4">
+      <button
+        type="button"
+        class="flex-1 rounded-xl border border-white/10 bg-transparent px-6 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5"
+        @click="emit('back')"
+      >
+        返回上一步
+      </button>
+      <button
+        type="button"
+        class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="isApplying || !hasScanned"
+        @click="handleApply"
+      >
+        <svg v-if="isApplying" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        {{ validItems.length > 0 ? `应用重命名 (${validItems.length})` : '继续下一步' }}
+      </button>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.toolbox-config-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+</style>
