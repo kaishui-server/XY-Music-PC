@@ -59,8 +59,23 @@ export const useSoundEffectStore = defineStore('soundEffect', () => {
   const originalGain = ref(0)
   const envGain = ref(300)
 
-  // 监听混响选择变化：同步 UI 增益状态 + 互斥取消算法混响
+  // ===== 自定义混响（干/湿自定义槽） =====
+  // 两类混响各自持有一个"自定义"模式：用户一旦手动拖动增益条即自动切入该模式，
+  // 并使用自定义的 dry/wet（基准预设/IR 保持不变）。这些值随快照持久化。
+  // 注意：概念版 mainGain/sendGain 为 0~10 尺度，显示值 = ×10（0~100 增益条）。
+  const convIsCustom = ref(false)
+  const algoIsCustom = ref(false)
+  const convCustomDry = ref(8)
+  const convCustomWet = ref(4)
+  const algoCustomDry = ref(10)
+  const algoCustomWet = ref(20)
+  const convCustomBase = ref('hall')
+  const algoCustomBase = ref('algoHall')
+
+  // 监听混响选择变化：同步 UI 增益状态 + 互斥取消算法混响。
+  // 自定义模式下跳过：dry/wet 由自定义值决定，避免预设默认值覆盖用户已存的干湿。
   watch(activeConvolution, (label) => {
+    if (convIsCustom.value) return
     if (label) {
       const conv = convolutions.find((c: { label: string }) => c.label === label)
       if (conv) {
@@ -73,36 +88,138 @@ export const useSoundEffectStore = defineStore('soundEffect', () => {
     }
   })
 
-  /** 选择/取消混响 */
+  /** 选择/取消卷积混响（选中预设时退出自定义模式并加载该预设 dry/wet） */
   const toggleConvolution = (label: string) => {
-    if (activeConvolution.value === label) {
+    if (activeConvolution.value === label && !convIsCustom.value) {
+      // 再次点击当前预设 → 关闭混响
       activeConvolution.value = null
-    } else {
-      activeConvolution.value = label
-      activeAlgoReverb.value = null // 互斥: 取消算法混响
+      activeAlgoReverb.value = null
+      convIsCustom.value = false
+      algoIsCustom.value = false
+      return
+    }
+    const conv = convolutions.find((c: { label: string }) => c.label === label)
+    activeAlgoReverb.value = null
+    algoIsCustom.value = false
+    convIsCustom.value = false
+    activeConvolution.value = label
+    if (conv) {
+      originalGain.value = Math.round(conv.mainGain * 10)
+      envGain.value = Math.round(conv.sendGain * 10)
     }
   }
 
   // ===== 算法混响（程序生成 IR） =====
   const activeAlgoReverb = ref<string | null>(null)
 
+  // 用户手动拖动增益条：若当前是预设则自动切成自定义并保存（定义了首次和后续拖动）
+  const markCustomReverbGain = () => {
+    const dry = originalGain.value
+    const wet = envGain.value
+    if (activeConvolution.value && !convIsCustom.value) {
+      convCustomBase.value = activeConvolution.value
+      convIsCustom.value = true
+      algoIsCustom.value = false
+      activeAlgoReverb.value = null
+      convCustomDry.value = dry
+      convCustomWet.value = wet
+    } else if (activeAlgoReverb.value && !algoIsCustom.value) {
+      algoCustomBase.value = activeAlgoReverb.value
+      algoIsCustom.value = true
+      convIsCustom.value = false
+      activeConvolution.value = null
+      algoCustomDry.value = dry
+      algoCustomWet.value = wet
+    } else if (activeConvolution.value && convIsCustom.value) {
+      convCustomDry.value = dry
+      convCustomWet.value = wet
+    } else if (activeAlgoReverb.value && algoIsCustom.value) {
+      algoCustomDry.value = dry
+      algoCustomWet.value = wet
+    }
+  }
+
+  // 切换"自定义"卷积混响（点击"自定义"项）
+  const toggleConvolutionCustom = () => {
+    if (convIsCustom.value && activeConvolution.value) {
+      activeConvolution.value = null
+      activeAlgoReverb.value = null
+      convIsCustom.value = false
+      algoIsCustom.value = false
+      return
+    }
+    const base =
+      activeConvolution.value && !convIsCustom.value
+        ? activeConvolution.value
+        : (convCustomBase.value || 'hall')
+    activeAlgoReverb.value = null
+    algoIsCustom.value = false
+    convCustomBase.value = base
+    activeConvolution.value = base
+    convIsCustom.value = true
+    originalGain.value = convCustomDry.value
+    envGain.value = convCustomWet.value
+  }
+
+  // 切换"自定义"算法混响（点击"自定义"项）
+  const toggleAlgoReverbCustom = () => {
+    if (algoIsCustom.value && activeAlgoReverb.value) {
+      activeAlgoReverb.value = null
+      activeConvolution.value = null
+      algoIsCustom.value = false
+      convIsCustom.value = false
+      return
+    }
+    const base =
+      activeAlgoReverb.value && !algoIsCustom.value
+        ? activeAlgoReverb.value
+        : (algoCustomBase.value || 'algoHall')
+    activeConvolution.value = null
+    convIsCustom.value = false
+    algoCustomBase.value = base
+    activeAlgoReverb.value = base
+    algoIsCustom.value = true
+    originalGain.value = algoCustomDry.value
+    envGain.value = algoCustomWet.value
+  }
+
   watch(activeAlgoReverb, (label) => {
+    if (algoIsCustom.value) return // 自定义模式：dry/wet 由自定义值决定
     if (label) {
+      const preset = algorithmicReverbs.find((p: { label: string }) => p.label === label)
       activeConvolution.value = null // 互斥: 取消卷积混响
-      // 与 YinDongMusic 对齐：dry=1.0(mainGain), wet=2.0(sendGain)。
-      // Rust 侧 Freeverb 已加 WET_BOOST + 早期反射 + 砖墙限制器（ceiling=0.95），
-      // 可安全处理 wet=2.0，不再削波。
-      originalGain.value = 10
-      envGain.value = 20
+      if (preset) {
+        // 算法混响预设的 dry/wet 已是 0~100 尺度，直接使用
+        originalGain.value = preset.dry
+        envGain.value = preset.wet
+      } else {
+        originalGain.value = 10
+        envGain.value = 20
+      }
     }
   })
 
-  /** 选择/取消算法混响 */
+  /** 选择/取消算法混响（选中预设时退出自定义模式并加载该预设 dry/wet） */
   const toggleAlgoReverb = (label: string) => {
-    if (activeAlgoReverb.value === label) {
+    if (activeAlgoReverb.value === label && !algoIsCustom.value) {
+      // 再次点击当前预设 → 关闭混响
       activeAlgoReverb.value = null
+      activeConvolution.value = null
+      algoIsCustom.value = false
+      convIsCustom.value = false
+      return
+    }
+    const preset = algorithmicReverbs.find((p: { label: string }) => p.label === label)
+    activeConvolution.value = null
+    convIsCustom.value = false
+    algoIsCustom.value = false
+    activeAlgoReverb.value = label
+    if (preset) {
+      originalGain.value = preset.dry
+      envGain.value = preset.wet
     } else {
-      activeAlgoReverb.value = label
+      originalGain.value = 10
+      envGain.value = 20
     }
   }
 
@@ -947,9 +1064,14 @@ export const useSoundEffectStore = defineStore('soundEffect', () => {
     originalGain,
     envGain,
     toggleConvolution,
+    convIsCustom,
+    toggleConvolutionCustom,
+    markCustomReverbGain,
     // 算法混响
     activeAlgoReverb,
     toggleAlgoReverb,
+    algoIsCustom,
+    toggleAlgoReverbCustom,
     // 变调
     pitchShift,
     resetPitch,

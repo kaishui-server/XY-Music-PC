@@ -42,6 +42,8 @@ interface UseSongTableAlphabetIndexOptions {
   folderTree: Ref<FolderNode[]>;
   refreshFolder: (folderPath: string) => Promise<unknown>;
   expandFolderPath: (path: string) => Promise<unknown>;
+  /** 列表首行在整页滚动容器内的偏移（在线整页滚动模式下非 0） */
+  listOffsetTop?: Ref<number>;
 }
 
 export function useSongTableAlphabetIndex({
@@ -59,6 +61,7 @@ export function useSongTableAlphabetIndex({
   folderTree,
   refreshFolder,
   expandFolderPath,
+  listOffsetTop,
 }: UseSongTableAlphabetIndexOptions) {
   const { currentSong } = storeToRefs(usePlaybackStore());
   const indexBarRef = ref<HTMLElement | null>(null);
@@ -81,6 +84,11 @@ export function useSongTableAlphabetIndex({
 
     return null;
   });
+
+  /** 列表相对滚动位置：扣除列表首行在整页滚动容器内的偏移 */
+  const listScrollTop = computed(() =>
+    Math.max(0, scrollTop.value - (listOffsetTop?.value ?? 0)),
+  );
 
   const showAlphabetIndex = computed(() =>
     routePath.value === '/' && !!indexLabelGetter.value && songs.value.length > 0,
@@ -110,7 +118,7 @@ export function useSongTableAlphabetIndex({
 
     const visibleIndex = Math.min(
       songs.value.length - 1,
-      Math.max(0, Math.floor(scrollTop.value / ROW_HEIGHT)),
+      Math.max(0, Math.floor(listScrollTop.value / ROW_HEIGHT)),
     );
 
     return getAlphabetIndexKey(indexLabelGetter.value(songs.value[visibleIndex]));
@@ -167,7 +175,7 @@ export function useSongTableAlphabetIndex({
       return false;
     }
 
-    const viewportTop = scrollTop.value;
+    const viewportTop = listScrollTop.value;
     const viewportBottom = viewportTop + viewportHeight;
     const currentRowTop = currentSongIndex.value * ROW_HEIGHT;
     const currentRowBottom = currentRowTop + ROW_HEIGHT;
@@ -185,7 +193,7 @@ export function useSongTableAlphabetIndex({
     SCROLL_NAV_ENABLED_ROUTES.has(routePath.value) &&
     SCROLL_TO_TOP_VIEW_MODES.has(currentViewMode.value) &&
     songs.value.length > 0 &&
-    scrollTop.value > ROW_HEIGHT,
+    listScrollTop.value > ROW_HEIGHT,
   );
 
   const clearHideIndexBarTimer = () => {
@@ -223,13 +231,17 @@ export function useSongTableAlphabetIndex({
     scheduleHideIndexBar();
   };
 
-  const jumpToSongIndex = (songIndex: number) => {
+  const jumpToSongIndex = (
+    songIndex: number,
+    options?: { behavior?: ScrollBehavior; offset?: number },
+  ) => {
     if (!containerRef.value) {
       return;
     }
 
-    const targetTop = songIndex * ROW_HEIGHT;
-    containerRef.value.scrollTo({ top: targetTop, behavior: 'auto' });
+    const offset = options?.offset ?? 0;
+    const targetTop = songIndex * ROW_HEIGHT + offset;
+    containerRef.value.scrollTo({ top: targetTop, behavior: options?.behavior ?? 'auto' });
     scrollTop.value = targetTop;
   };
 
@@ -260,11 +272,14 @@ export function useSongTableAlphabetIndex({
 
     showIndexBar();
 
+    const offset = listOffsetTop?.value ?? 0;
+    const jumpOptions = { behavior: 'smooth' as ScrollBehavior, offset };
+
     if (currentSongIndex.value >= 0) {
       if (currentViewMode.value === 'folder' && currentFolderFilter.value) {
         scrollFolderTargetsIntoView(currentFolderFilter.value, activeRootPath.value);
       }
-      jumpToSongIndex(currentSongIndex.value);
+      jumpToSongIndex(currentSongIndex.value, jumpOptions);
       scheduleHideIndexBar();
       return;
     }
@@ -293,7 +308,7 @@ export function useSongTableAlphabetIndex({
 
     const refreshedSongIndex = songs.value.findIndex((song) => song.path === currentSong.value?.path);
     if (refreshedSongIndex >= 0) {
-      jumpToSongIndex(refreshedSongIndex);
+      jumpToSongIndex(refreshedSongIndex, jumpOptions);
     }
 
     scheduleHideIndexBar();

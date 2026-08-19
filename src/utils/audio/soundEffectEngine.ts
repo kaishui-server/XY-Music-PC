@@ -26,21 +26,19 @@ export const freqsPreset = [
 // 新增均衡器预设（均衡衍生预设）
 export { advancedEqPresets } from './advancedEffects'
 
-// 卷积混响预设
+// 卷积混响预设（环境类精简集，参考主流专业音频软件的空间命名）。
+// mainGain 即干声增益，sendGain 即湿声增益，直接作为 Web Audio gain 值。
+// 按空间越大越湿拉开梯度，使每个预设的效果与名称空间感对应。
+// 注意：source 仅作说明；实际 IR 由 Rust 按 label 编译期 include_bytes 加载。
 export const convolutions = [
-  { name: '电话', label: 'phone', mainGain: 0.0, sendGain: 3.0, source: 'filter-telephone.wav' },
-  { name: '教堂', label: 'church', mainGain: 1.8, sendGain: 0.9, source: 's2_r4_bd.wav' },
+  { name: '教堂', label: 'church', mainGain: 1.8, sendGain: 0.9, source: 's3_r1_bd.wav' },
   { name: '大厅', label: 'hall', mainGain: 0.8, sendGain: 2.4, source: 'bright-hall.wav' },
   { name: '电影院', label: 'cinema', mainGain: 0.6, sendGain: 2.3, source: 'cinema-diningroom.wav' },
   { name: '餐厅', label: 'restaurant', mainGain: 0.6, sendGain: 1.8, source: 'dining-living-true-stereo.wav' },
-  { name: '卫生间', label: 'bathroom', mainGain: 0.6, sendGain: 2.1, source: 'living-bedroom-leveled.wav' },
-  { name: '室内', label: 'room', mainGain: 1, sendGain: 2.5, source: 'spreader50-65ms.wav' },
-  { name: '立体声', label: 'stereo', mainGain: 1.8, sendGain: 0.8, source: 's3_r1_bd.wav' },
-  { name: '矩阵混响（1）', label: 'matrixReverb1', mainGain: 1.5, sendGain: 0.9, source: 'matrix-reverb1.wav' },
-  { name: '矩阵混响（2）', label: 'matrixReverb2', mainGain: 1.3, sendGain: 1, source: 'matrix-reverb2.wav' },
-  { name: '心形扩散', label: 'cardioidSpread', mainGain: 1.8, sendGain: 0.6, source: 'cardiod-35-10-spread.wav' },
-  { name: '磁性立体声', label: 'magneticStereo', mainGain: 1, sendGain: 0.2, source: 'tim-omni-35-10-magnetic.wav' },
-  { name: '反馈抑制', label: 'feedbackSuppressor', mainGain: 1.8, sendGain: 0.8, source: 'feedback-spring.wav' },
+  { name: '弹簧混响', label: 'feedbackSuppressor', mainGain: 1.8, sendGain: 0.8, source: 'feedback-spring.wav' },
+  { name: '起居室', label: 'bathroom', mainGain: 0.6, sendGain: 2.1, source: 'living-bedroom-leveled.wav' },
+  { name: '房间', label: 'room', mainGain: 1, sendGain: 2.5, source: 'medium-room1.wav' },
+  { name: '电话', label: 'phone', mainGain: 0.0, sendGain: 3.0, source: 'filter-telephone.wav' },
 ] as const
 
 // 算法混响预设（程序生成 IR，无需音频文件）

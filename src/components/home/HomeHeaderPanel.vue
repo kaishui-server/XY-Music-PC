@@ -23,6 +23,8 @@ interface Props {
   playlistDetail: PlaylistDetail | null;
   localSongList: Song[];
   localSongPaths?: string[];
+  /** 整页滚动容器引用，透传给 DetailHeader 用于驱动封面收缩效果 */
+  scrollContainerRef?: HTMLElement | null;
 }
 
 const props = defineProps<Props>();
@@ -88,6 +90,7 @@ const isManagementModeModel = computed({
     :showRename="true"
     :showAddToPlaylist="true"
     :showHeaderAddToPlaylist="false"
+    :scrollContainerRef="scrollContainerRef"
     @playAll="$emit('playAll')"
     @batchPlay="$emit('batchPlay')"
     @openAddToPlaylist="$emit('showAddToPlaylist')"

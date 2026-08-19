@@ -83,6 +83,9 @@ const contextMenuX = ref(0);
 const contextMenuY = ref(0);
 const contextMenuTargetSong = ref<Song | null>(null);
 
+/** 整页滚动容器引用，透传给详情头部驱动封面收缩效果 */
+const scrollContainerRef = ref<HTMLElement | null>(null);
+
 const title = computed(() => ctx.value?.title || '');
 const subtitle = computed(() => ctx.value?.subtitle || '');
 const coverUrl = computed(() => ctx.value?.coverUrl || '');
@@ -823,7 +826,7 @@ watch(artistActiveTab, () => {
     </div>
 
     <!-- 详情内容：hasInitialLoad 后始终在 DOM 中，保证 Transition 动画生效 -->
-    <div v-else class="flex-1 overflow-y-auto custom-scrollbar relative">
+    <div v-else ref="scrollContainerRef" class="flex-1 overflow-y-auto custom-scrollbar relative">
       <!-- 后续加载指示器（叠加在内容上方，不替换内容，不卸载 Transition） -->
       <Transition name="fade">
         <div v-if="loading" class="absolute top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
@@ -848,6 +851,7 @@ watch(artistActiveTab, () => {
             :totalSongCount="songList.length"
             :readOnly="true"
             :coverUrlOverride="coverUrl"
+            :scrollContainerRef="scrollContainerRef"
             @playAll="handlePlayAll"
             @selectAll="handleSelectAll"
           />
@@ -872,7 +876,12 @@ watch(artistActiveTab, () => {
                   class="group cursor-pointer rounded-xl p-2 md:p-3 transition-all duration-300 flex flex-col relative select-none hover:bg-white/40 dark:hover:bg-white/5"
                   @click="handleAlbumClick(album)"
                 >
-                  <div class="relative w-full aspect-square mb-3 mt-4">
+                  <div class="relative w-full aspect-square mb-3 mt-1">
+                    <div class="absolute inset-x-2 top-0 bottom-1/2 bg-[#1c1c1c] rounded-t-full shadow-inner origin-bottom translate-y-[-10%] group-hover:translate-y-[-24%] transition-transform duration-500 ease-out z-0 flex items-center justify-center overflow-hidden border border-[#333]">
+                      <div class="absolute inset-0 rounded-t-full border border-white/5 scale-90"></div>
+                      <div class="absolute inset-0 rounded-t-full border border-white/5 scale-75"></div>
+                      <div class="absolute inset-0 rounded-t-full border border-white/5 scale-50"></div>
+                    </div>
                     <div class="absolute inset-0 z-10 bg-white dark:bg-gray-800 rounded-md shadow-md border border-gray-100 dark:border-white/10 p-1 flex items-center justify-center overflow-hidden group-hover:shadow-xl transition-shadow duration-300">
                       <AppCoverImage
                         :src="album.coverUrl"
@@ -920,6 +929,7 @@ watch(artistActiveTab, () => {
             :totalSongCount="songList.length"
             :readOnly="true"
             :coverUrlOverride="coverUrl"
+            :scrollContainerRef="scrollContainerRef"
             @playAll="handlePlayAll"
             @addToPlaylist="handleAddToPlaylist"
             @selectAll="handleSelectAll"
@@ -942,6 +952,7 @@ watch(artistActiveTab, () => {
             :totalSongCount="songList.length"
             :readOnly="true"
             :coverUrlOverride="coverUrl"
+            :scrollContainerRef="scrollContainerRef"
             @playAll="handlePlayAll"
             @openAddToPlaylist="handleAddToPlaylist"
             @selectAll="handleSelectAll"

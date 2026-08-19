@@ -169,7 +169,7 @@ const {
         item-key="download"
         :loading="isDownloading"
         :completed="Boolean(downloadedRecord)"
-        class="h-5 w-5"
+        :class="isDownloading ? 'h-6 w-6' : 'h-5 w-5'"
       />
     </button>
 

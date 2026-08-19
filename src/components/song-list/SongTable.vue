@@ -73,6 +73,8 @@ const props = defineProps<{
   isBatchMode: boolean;
   selectedPaths: Set<string>;
   memoryScopeKey: string;
+  /** 整页滚动容器（在线容器整页滚动模式下传入，用于计算列表首行偏移） */
+  scrollContainerRef?: HTMLElement | null;
 }>();
 
 const emit = defineEmits<{
@@ -122,6 +124,19 @@ const loadedSongCount = ref(0);
 const isScrollbarHot = ref(false);
 const isScrollbarScrolling = ref(false);
 const isScrollbarActive = computed(() => isScrollbarHot.value || isScrollbarScrolling.value);
+
+/** 列表首行在整页滚动容器内的偏移（在线整页滚动模式下非 0） */
+const listOffsetTop = ref(0);
+const updateListOffsetTop = () => {
+  const scrollEl = props.scrollContainerRef;
+  if (!scrollEl || !rootRef.value) {
+    listOffsetTop.value = 0;
+    return;
+  }
+  const rootRect = rootRef.value.getBoundingClientRect();
+  const scrollRect = scrollEl.getBoundingClientRect();
+  listOffsetTop.value = Math.max(0, rootRect.top - scrollRect.top + scrollEl.scrollTop);
+};
 const displayedCoverUrls = reactive(new Map<string, string>());
 const songCommentCache = reactive(new Map<string, string>());
 const loadingSongCommentPaths = new Set<string>();
@@ -490,6 +505,7 @@ const onScroll = (event: Event) => {
     loadNextSongSegment();
   }
   showScrollbarDuringScroll();
+  updateListOffsetTop();
 };
 
 const {
@@ -528,6 +544,7 @@ const {
   folderTree,
   refreshFolder,
   expandFolderPath,
+  listOffsetTop,
 });
 
 watch(
@@ -581,8 +598,20 @@ const handlePointerDown = (event: PointerEvent, song: Song, index: number) => {
   emit('drag-start', { event, song, index });
 };
 
-const showDragIcon = computed(() =>
-  ['folder', 'playlist', 'all', 'artist', 'album', 'genre', 'year'].includes(currentViewMode.value),
+const showDragIcon = computed(() => {
+  if (['/search', '/online-detail'].includes(route.path)) return false;
+  return ['folder', 'playlist', 'all', 'artist', 'album', 'genre', 'year'].includes(currentViewMode.value);
+});
+
+/** 整页滚动模式：在线容器（/search、/online-detail）下列表随整页滚动 */
+const pageScrollMode = computed(() => ['/search', '/online-detail'].includes(route.path));
+
+watch(
+  () => props.scrollContainerRef,
+  () => {
+    updateListOffsetTop();
+  },
+  { immediate: true },
 );
 const {
   showHeroScanCard,
@@ -828,7 +857,7 @@ const getRowStyle = (songIndex: number, songPath: string) => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
                 </span>
-                <span v-else class="text-gray-500 dark:text-white/60">
+                <span v-else class="text-gray-500 dark:text-white/60 cursor-pointer hover:text-accent" @click.stop="handlePlayClick(song)">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
                   </svg>
@@ -905,7 +934,7 @@ const getRowStyle = (songIndex: number, songPath: string) => {
 
           <div class="shrink-0 flex items-center gap-3 text-xs font-mono text-gray-900 dark:text-gray-100" :class="{ 'opacity-20 pointer-events-none': dragSession.active }">
             <button v-if="!isBatchMode" @click.stop="toggleFavorite(song)" class="focus:outline-none">
-              <svg v-if="isFavorite(song)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#EC4141] transition-colors hover:text-[#d63838]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>
+              <svg v-if="isFavorite(song)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent transition-colors hover:text-accent/80" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>
               <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white opacity-0 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
             </button>
             <span class="w-10 text-right">{{ formatDuration(song.duration) }}</span>
@@ -1028,7 +1057,7 @@ const getRowStyle = (songIndex: number, songPath: string) => {
       </div>
     </div>
 
-    <div class="absolute right-6 bottom-6 z-30 grid grid-cols-[36px_36px] gap-3">
+    <div :class="pageScrollMode ? 'sticky bottom-6 z-[60] ml-auto mr-6 w-fit grid grid-cols-[36px_36px] gap-3' : 'absolute right-6 bottom-6 z-30 grid grid-cols-[36px_36px] gap-3'">
       <div class="h-9 w-9">
         <transition name="locate-fab">
           <button

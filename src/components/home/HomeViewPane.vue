@@ -38,6 +38,8 @@ interface Props {
   loadingSet: Set<string>;
   selectedPaths: Set<string>;
   setSongTableRef?: (instance: any | null) => void;
+  /** 整页滚动容器引用，透传给详情头部用于驱动封面收缩效果 */
+  scrollContainerRef?: HTMLElement | null;
 }
 
 const props = defineProps<Props>();
@@ -131,6 +133,7 @@ const viewInstanceKey = computed(() =>
         :playlistDetail="playlistDetail"
         :localSongList="localSongList"
         :localSongPaths="localSongPaths"
+        :scrollContainerRef="scrollContainerRef"
         @update:isBatchMode="$emit('update:isBatchMode', $event)"
         @update:isManagementMode="$emit('update:isManagementMode', $event)"
         @playAll="$emit('playAll')"
@@ -170,6 +173,7 @@ const viewInstanceKey = computed(() =>
         :loadingSet="loadingSet"
         :selectedPaths="selectedPaths"
         :setSongTableRef="setSongTableRef"
+        :scrollContainerRef="scrollContainerRef"
         @update:isBatchMode="$emit('update:isBatchMode', $event)"
         @update:artistActiveTab="$emit('update:artistActiveTab', $event)"
         @update:selectedPaths="$emit('update:selectedPaths', $event)"

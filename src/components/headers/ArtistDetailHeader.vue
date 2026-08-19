@@ -9,8 +9,10 @@ import { useSettings } from '../../features/settings/useSettings';
 import { useToast } from '../../composables/toast';
 import { artistHeaderCache } from '../../caches/imageCaches';
 import { useCoverCache } from '../../composables/useCoverCache';
+import { useScrollShrinkHeader } from '../../composables/useScrollShrinkHeader';
 import { type ArtistTabId, getOrderedArtistTabs, saveTabsOrder } from '../../utils/artistTabsOrder';
 import AppCoverImage from '../common/AppCoverImage.vue';
+import { getDisplayCoverUrl, tryProxyImage } from '../../utils/coverProxy';
 
 const props = defineProps<{
   artistName: string;
@@ -23,7 +25,24 @@ const props = defineProps<{
   readOnly?: boolean;
   /** 在线封面 URL（readOnly 模式下优先使用） */
   coverUrlOverride?: string;
+  /** 滚动容器引用，用于驱动封面收缩效果 */
+  scrollContainerRef?: HTMLElement | null;
+  /** 在线歌手是否拥有详情简介（readOnly 模式下决定 details tab 与简介框是否展示） */
+  hasArtistDetail?: boolean;
+  /** 歌手简介文本（本地或在线回退展示） */
+  description?: string;
 }>();
+
+const scrollRef = computed(() => props.scrollContainerRef ?? null);
+const { scrollProgress } = useScrollShrinkHeader(scrollRef, 144);
+
+const coverSize = computed(() => `${144 * (1 - scrollProgress.value)}px`);
+const columnHeight = computed(() => `${144 * (1 - scrollProgress.value)}px`);
+const titleSize = computed(() => `${32 * (1 - scrollProgress.value)}px`);
+const titleLineHeight = computed(() => `${40 * (1 - scrollProgress.value)}px`);
+const buttonsMarginTop = computed(() => `${16 * (1 - scrollProgress.value)}px`);
+const descriptionOpacity = computed(() => 1 - scrollProgress.value);
+const descriptionMaxHeight = computed(() => `${60 * (1 - scrollProgress.value)}px`);
 
 const emit = defineEmits([
   'update:isBatchMode',
@@ -45,9 +64,9 @@ const tabs = ref(getOrderedArtistTabs());
 const draggedTabId = ref<ArtistTabId | null>(null);
 const suppressClick = ref<boolean>(false);
 
-/** readOnly 模式下过滤掉 details tab */
+/** readOnly 模式下：有详情简介时保留 details tab，否则过滤掉 */
 const visibleTabs = computed(() => {
-  if (props.readOnly) {
+  if (props.readOnly && !props.hasArtistDetail) {
     return tabs.value.filter(t => t.id !== 'details');
   }
   return tabs.value;
@@ -186,16 +205,27 @@ const currentArtist = computed(() => {
   return libraryStore.artistCatalog.find(item => item.name === props.artistName);
 });
 
+// 在线头像（如 bilibili）需走后端代理处理防盗链，直连会 403 显示空白
+const coverRefreshTick = ref(0);
 const displayedCover = computed(() => {
+  void coverRefreshTick.value;
   // readOnly 模式优先使用在线封面 URL
   if (props.readOnly && props.coverUrlOverride) {
-    return props.coverUrlOverride;
+    return getDisplayCoverUrl(props.coverUrlOverride, () => { coverRefreshTick.value++; });
   }
   if (currentArtist.value?.avatarPath) {
     return convertFileSrc(currentArtist.value.avatarPath);
   }
   return coverUrl.value;
 });
+const handleAvatarImgError = (e: Event) => {
+  const img = e.target as HTMLImageElement;
+  const src = img.src;
+  if (!src || src.startsWith('data:')) return;
+  void tryProxyImage(src).then((dataUrl) => {
+    if (dataUrl) coverRefreshTick.value++;
+  });
+};
 
 const isSavingAvatar = ref(false);
 const showWriteBackDialog = ref(false);
@@ -473,15 +503,16 @@ const handlePlayAll = () => {
     </div>
 
     <!-- 正常模式: 歌手详情展示区 -->
-    <div v-else class="flex gap-6 h-auto mt-2 mb-6">
+    <div v-else class="flex gap-6 h-auto mt-2 mb-6 transition-all duration-200">
       <!-- 封面图 (圆形) -->
-      <div 
+      <div
         @click="!readOnly ? handleAvatarClick : undefined"
-        class="w-36 h-36 rounded-full shadow-sm flex items-center justify-center shrink-0 overflow-hidden group relative select-none bg-gray-100 dark:bg-white/5 border-4 border-white/50 dark:border-white/5"
+        :style="{ width: coverSize, height: coverSize }"
+        class="rounded-full shadow-sm flex items-center justify-center shrink-0 overflow-hidden group relative select-none bg-gray-100 dark:bg-white/5 border-4 border-white/50 dark:border-white/5"
         :class="!readOnly ? 'cursor-pointer' : 'cursor-default'"
       >
         <div v-if="isLoading" class="w-full h-full bg-gray-200 dark:bg-white/10 animate-pulse"></div>
-        <AppCoverImage v-else :src="displayedCover" class="w-full h-full object-cover select-none animate-in fade-in duration-300" draggable="false" :alt="artistName" decoding="async">
+        <AppCoverImage v-else :src="displayedCover" class="w-full h-full object-cover select-none animate-in fade-in duration-300" draggable="false" :alt="artistName" decoding="async" @primary-error="handleAvatarImgError">
           <div class="w-full h-full flex items-center justify-center text-4xl font-bold text-white bg-gradient-to-br animate-in fade-in duration-300" :class="getGradientForArtist(artistName)">
             {{ artistName.charAt(0).toUpperCase() }}
           </div>
@@ -511,16 +542,22 @@ const handlePlayAll = () => {
       </div>
       
       <!-- 文本信息与操作 -->
-      <div class="h-36 flex flex-col justify-start pt-2 pb-1 flex-1 min-w-0">
+      <div :style="{ height: columnHeight }" class="flex flex-col justify-start pt-2 pb-1 flex-1 min-w-0 overflow-hidden">
         <!-- 歌手名字 -->
         <div class="mb-4">
-          <h1 class="text-[32px] font-bold text-gray-900 dark:text-white truncate max-w-[600px] leading-tight">
+          <h1 class="font-bold text-gray-900 dark:text-white truncate max-w-[600px]" :style="{ fontSize: titleSize, lineHeight: titleLineHeight }">
             {{ artistName }}
           </h1>
+          <!-- 简介展示框：readOnly && hasArtistDetail 时不展示（详情 tab 有完整简介） -->
+          <p
+            v-if="description && !(readOnly && hasArtistDetail)"
+            class="text-[13px] text-gray-500 dark:text-gray-400 mt-2 line-clamp-2 overflow-hidden transition-all duration-200"
+            :style="{ opacity: descriptionOpacity, maxHeight: descriptionMaxHeight }"
+          >{{ description }}</p>
         </div>
 
         <!-- 操作按钮组 -->
-        <div class="flex items-center gap-3 mt-2">
+        <div class="flex items-center gap-3" :style="{ marginTop: buttonsMarginTop }">
            <button 
              @click="handlePlayAll" 
              class="bg-white/1 hover:bg-white/10 border border-white/1 text-gray-900 dark:text-gray-100 px-6 py-2 rounded-full text-[15px] font-medium transition flex items-center gap-2 active:scale-95 shadow-sm hover:border-gray-200 dark:hover:border-white/20"

@@ -1262,7 +1262,7 @@ onUnmounted(() => {
         <header class="px-[clamp(1.5rem,2.8vw,3.5rem)] pt-[clamp(1.25rem,1.8vw,2rem)] pb-[clamp(0.5rem,1vw,1rem)] flex items-center justify-between gap-6 flex-wrap animate-fade-in-up">
           <div class="flex items-center gap-[clamp(0.75rem,1.2vw,1.25rem)] min-w-0">
             <!-- 头像（可点击） -->
-            <div class="relative shrink-0">
+            <div class="relative shrink-0 flex flex-col items-center gap-2">
               <button
                 ref="avatarBtnRef"
                 type="button"
@@ -1283,30 +1283,30 @@ onUnmounted(() => {
                 :disabled="avatarUploading || loading"
                 @change="handleAvatarFileChange"
               />
-            </div>
-            <!-- 头像审核状态提示 -->
-            <div
-              v-if="avatarStatus === 'pending'"
-              class="ml-2 flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] text-amber-600 dark:text-amber-300"
-            >
-              <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              头像审核中
-              <button
-                type="button"
-                class="ml-1 flex items-center gap-0.5 underline-offset-2 hover:underline"
-                :disabled="refreshingAvatarStatus"
-                @click="refreshAvatarStatus"
+              <!-- 头像审核状态提示 -->
+              <div
+                v-if="avatarStatus === 'pending'"
+                class="flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-1 text-[10px] text-amber-600 dark:text-amber-300"
               >
-                <svg v-if="refreshingAvatarStatus" class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                刷新
-              </button>
-            </div>
-            <div
-              v-else-if="avatarStatus === 'rejected'"
-              class="ml-2 flex items-center gap-1 rounded-md bg-rose-500/10 px-2 py-1 text-[10px] text-rose-600 dark:text-rose-300"
-            >
-              <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-              头像审核未通过
+                <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                头像审核中
+                <button
+                  type="button"
+                  class="ml-1 flex items-center gap-0.5 underline-offset-2 hover:underline"
+                  :disabled="refreshingAvatarStatus"
+                  @click="refreshAvatarStatus"
+                >
+                  <svg v-if="refreshingAvatarStatus" class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                  刷新
+                </button>
+              </div>
+              <div
+                v-else-if="avatarStatus === 'rejected'"
+                class="flex items-center gap-1 rounded-md bg-rose-500/10 px-2 py-1 text-[10px] text-rose-600 dark:text-rose-300"
+              >
+                <svg class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                头像审核未通过
+              </div>
             </div>
             <!-- 昵称 + 副信息 -->
             <div class="min-w-0">

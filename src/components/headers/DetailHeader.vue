@@ -5,6 +5,7 @@ import type { Song } from '../../types';
 import { usePlayerViewState } from '../../composables/usePlayerViewState';
 import { useLibraryCollections } from '../../features/collections/useLibraryCollections';
 import { useCoverCache } from '../../composables/useCoverCache';
+import { useScrollShrinkHeader } from '../../composables/useScrollShrinkHeader';
 import SortModeIcon from '../common/SortModeIcon.vue';
 import AppCoverImage from '../common/AppCoverImage.vue';
 
@@ -58,7 +59,17 @@ const props = defineProps<{
   showHeaderAddToPlaylist?: boolean;
   /** 在线封面 URL（readOnly 模式下优先使用） */
   coverUrlOverride?: string;
+  /** 滚动容器引用，用于驱动封面收缩效果 */
+  scrollContainerRef?: HTMLElement | null;
 }>();
+
+const scrollRef = computed(() => props.scrollContainerRef ?? null);
+const { scrollProgress } = useScrollShrinkHeader(scrollRef, 160);
+
+const coverSize = computed(() => `${160 * (1 - scrollProgress.value)}px`);
+const columnHeight = computed(() => `${160 * (1 - scrollProgress.value)}px`);
+const subtitleOpacity = computed(() => 1 - scrollProgress.value);
+const subtitleMaxHeight = computed(() => `${20 * (1 - scrollProgress.value)}px`);
 
 const emit = defineEmits([
   'update:isBatchMode',
@@ -254,18 +265,18 @@ const handlePlayAll = () => {
     </div>
 
     <!-- 详情展示模式 -->
-    <div v-else class="flex gap-6 h-auto mt-1">
+    <div v-else class="flex gap-6 h-auto mt-1 transition-all duration-200">
       <!-- 封面图 -->
-      <div class="w-40 h-40 rounded-2xl shadow-sm flex items-center justify-center shrink-0 overflow-hidden group relative select-none bg-gray-100 dark:bg-white/5">
+      <div :style="{ width: coverSize, height: coverSize }" class="rounded-2xl shadow-sm flex items-center justify-center shrink-0 overflow-hidden group relative select-none bg-gray-100 dark:bg-white/5">
         <AppCoverImage :src="headerCover" class="w-full h-full object-cover animate-in fade-in duration-300" alt="Cover" decoding="async">
           <div class="flex flex-col items-center justify-center h-full w-full">
              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-16 h-16 text-indigo-500/50 mb-2 drop-shadow-md"><path fill-rule="evenodd" d="M19.952 1.651a.75.75 0 01.298.599V16.303a3 3 0 01-2.176 2.884l-1.32.377a2.553 2.553 0 11-1.403-4.909l2.311-.66a1.5 1.5 0 001.088-1.442V6.994l-9 2.572v9.737a3 3 0 01-2.176 2.884l-1.32.377a2.553 2.553 0 11-1.403-4.909l2.311-.66a1.5 1.5 0 001.088-1.442V9.017c0-.528.246-1.032.67-1.371l10.038-5.996z" clip-rule="evenodd" /></svg>
           </div>
         </AppCoverImage>
       </div>
-      
+
       <!-- 文本信息与操作 -->
-      <div class="h-40 flex flex-col justify-between py-1 flex-1 min-w-0">
+      <div :style="{ height: columnHeight }" class="flex flex-col justify-between py-1 flex-1 min-w-0 overflow-hidden">
         <div>
           <div class="flex items-center gap-2 mb-1">
             <h1 class="text-3xl font-bold text-gray-800 dark:text-white truncate max-w-[500px]">{{ title }}</h1>
@@ -280,8 +291,8 @@ const handlePlayAll = () => {
               </svg>
             </button>
           </div>
-          
-          <div v-if="subtitle" class="text-xs text-gray-600 dark:text-gray-300 font-medium">
+
+          <div v-if="subtitle" class="text-xs text-gray-600 dark:text-gray-300 font-medium overflow-hidden transition-all duration-200" :style="{ opacity: subtitleOpacity, maxHeight: subtitleMaxHeight }">
              {{ subtitle }}
           </div>
         </div>

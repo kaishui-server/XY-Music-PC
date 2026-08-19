@@ -36,6 +36,8 @@ interface Props {
   loadingSet: Set<string>;
   selectedPaths: Set<string>;
   setSongTableRef?: (instance: any | null) => void;
+  /** 整页滚动容器引用，透传给详情头部用于驱动收缩效果 */
+  scrollContainerRef?: HTMLElement | null;
 }
 
 const props = defineProps<Props>();
@@ -66,6 +68,11 @@ const artistActiveTabModel = computed({
 });
 
 const localSongTableRef = ref<any>(null);
+
+/** 取 SongTable 内部滚动容器引用，透传给详情头部驱动封面收缩 */
+const songTableScrollContainer = computed<HTMLElement | null>(
+  () => localSongTableRef.value?.containerRef ?? null,
+);
 
 watch(localSongTableRef, value => {
   props.setSongTableRef?.(value);
@@ -99,6 +106,7 @@ const handleTableDragStart = (...args: any[]) => {
         :artistName="localFilterCondition || 'Unknown Artist'"
         :songs="localSongList"
         :selectedCount="selectedCount"
+        :scrollContainerRef="songTableScrollContainer"
         @playAll="$emit('playAll')"
         @batchPlay="$emit('batchPlay')"
         @addToPlaylist="$emit('showAddToPlaylist')"
@@ -113,6 +121,7 @@ const handleTableDragStart = (...args: any[]) => {
         :albumArtist="selectedAlbumSong?.album_artist || selectedAlbumSong?.artist || 'Unknown Artist'"
         :songs="localSongList"
         :selectedCount="selectedCount"
+        :scrollContainerRef="songTableScrollContainer"
         @playAll="$emit('playAll')"
         @batchPlay="$emit('batchPlay')"
         @addToPlaylist="$emit('showAddToPlaylist')"

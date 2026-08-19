@@ -20,6 +20,7 @@
       :loadingSet="loadingSet"
       :selectedPaths="selectedPaths"
       :setSongTableRef="setSongTableRef"
+      :scrollContainerRef="songTableScrollContainer"
       @update:isBatchMode="isBatchMode = $event"
       @update:isManagementMode="isManagementMode = $event"
       @update:artistActiveTab="artistActiveTab = $event"
@@ -132,7 +133,7 @@
 <script setup lang="ts">
 defineOptions({ name: 'Home' });
 
-import { defineAsyncComponent } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import { useHomePageModel } from '../composables/useHomePageModel';
 
 const DragGhost = defineAsyncComponent(() => import('../components/common/DragGhost.vue'));
@@ -162,6 +163,7 @@ const {
   coverCache,
   loadingSet,
   setSongTableRef,
+  songTableRef,
   handlePlayAll,
   handleBatchPlay,
   handleAddToPlaylistRequest,
@@ -214,6 +216,11 @@ const {
   editingPlaylistId,
   confirmRename,
 } = useHomePageModel();
+
+/** 取 SongTable 内部滚动容器引用，透传给详情头部驱动封面收缩 */
+const songTableScrollContainer = computed<HTMLElement | null>(
+  () => songTableRef.value?.containerRef ?? null,
+);
 </script>
 
 <style scoped>

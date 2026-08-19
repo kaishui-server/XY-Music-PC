@@ -5,6 +5,7 @@ import { useSettings } from '../../features/settings/useSettings';
 import { launchFlyingCover } from '../../composables/useFlyingCover';
 import { usePlaybackController } from '../../features/playback/usePlaybackController';
 import AppCoverImage from '../common/AppCoverImage.vue';
+import { getDisplayCoverUrl, tryProxyImage } from '../../utils/coverProxy';
 
 const { settings } = useSettings();
 const { currentSong, isPlaying } = usePlaybackController();
@@ -34,6 +35,23 @@ const handlePlayClick = (song: Song) => {
 
   void launchFlyingCover(song.path, song.cover_thumb_path || '');
   emit('play', song);
+};
+
+// 在线歌曲封面（如 bilibili）需走后端代理处理防盗链，直连会 403 显示空白
+const coverRefreshTick = ref(0);
+const getCoverUrl = (item: Song) => {
+  void coverRefreshTick.value;
+  const url = item.cover_thumb_path || '';
+  if (!url) return '';
+  return getDisplayCoverUrl(url, () => { coverRefreshTick.value++; });
+};
+const handleImgError = (e: Event) => {
+  const img = e.target as HTMLImageElement;
+  const src = img.src;
+  if (!src || src.startsWith('data:')) return;
+  void tryProxyImage(src).then((dataUrl) => {
+    if (dataUrl) coverRefreshTick.value++;
+  });
 };
 
 // --- 渐进式渲染 ---
@@ -120,10 +138,11 @@ onBeforeUnmount(() => {
         <td class="py-2 px-2">
           <div class="w-11 h-11 rounded-lg bg-black/10 dark:bg-white/10 overflow-hidden flex items-center justify-center text-accent text-lg font-black shrink-0" :data-cover-path="item.path">
             <AppCoverImage
-              :src="item.cover_thumb_path"
+              :src="getCoverUrl(item)"
               class="w-full h-full object-cover"
               alt=""
               loading="lazy"
+              @primary-error="handleImgError"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />

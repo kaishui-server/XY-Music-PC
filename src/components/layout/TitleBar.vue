@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Moon, Sun, Bell, X, Clock, Trash2, Mic } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { usePlayerViewState } from '../../composables/usePlayerViewState';
@@ -62,8 +62,49 @@ const handleSearchEnter = () => {
   void router.push('/search');
 };
 
+// 逐条渐进展示：面板保持完整形态，内容一条条浮现，避免等云端返回后整体跳动
+const revealedCount = ref(0);
+let revealTimer: ReturnType<typeof setTimeout> | null = null;
+
+const clearRevealTimer = () => {
+  if (revealTimer) {
+    clearTimeout(revealTimer);
+    revealTimer = null;
+  }
+};
+
+// 重置计数并让列表逐条出现（条数少也逐条，保证每次都有进入动画）
+// 首条做一点延迟，避免逐条下滑与面板整体淡入重叠、抢走"淡进淡出"的视觉
+const REVEAL_START_DELAY_MS = 140;
+const startReveal = (count: number) => {
+  clearRevealTimer();
+  revealedCount.value = 0;
+  if (count <= 0) return;
+  let i = 0;
+  const begin = () => {
+    i += 1;
+    revealedCount.value = i;
+    if (i < count) revealTimer = setTimeout(begin, 50);
+  };
+  revealTimer = setTimeout(begin, REVEAL_START_DELAY_MS);
+};
+
+const visibleHistoryList = computed(() =>
+  navigationStore.searchHistory.slice(0, revealedCount.value),
+);
+
+// 搜索记录变化时重新逐条出现
+watch(
+  () => navigationStore.searchHistory.length,
+  (count) => {
+    if (showHistory.value) startReveal(count);
+  },
+);
+
 const handleSearchFocus = () => {
   showHistory.value = true;
+  // 每次重新打开面板都逐条出现当前记录内容
+  startReveal(navigationStore.searchHistory.length);
 };
 
 let searchBlurTimer: ReturnType<typeof setTimeout> | null = null;
@@ -134,6 +175,7 @@ onUnmounted(() => {
     clearTimeout(searchBlurTimer);
     searchBlurTimer = null;
   }
+  clearRevealTimer();
 });
 </script>
 
@@ -204,20 +246,22 @@ onUnmounted(() => {
           </button>
         </div>
         <div class="py-1">
-          <button
-            v-for="item in navigationStore.searchHistory"
-            :key="item"
-            class="w-full text-left px-3 py-1.5 text-sm text-black/70 dark:text-white/70 hover:text-accent hover:bg-accent/5 dark:hover:bg-accent/10 flex items-center justify-between gap-2 cursor-pointer transition-colors group"
-            @click="handleSelectHistory(item)"
-          >
-            <span class="truncate">{{ item }}</span>
-            <span
-              class="text-black/30 dark:text-white/30 group-hover:text-accent p-0.5 shrink-0 transition-colors"
-              @click.stop="handleRemoveHistory($event, item)"
+          <TransitionGroup tag="div" name="hot-reveal">
+            <button
+              v-for="item in visibleHistoryList"
+              :key="item"
+              class="w-full text-left px-3 py-1.5 text-sm text-black/70 dark:text-white/70 hover:text-accent hover:bg-accent/5 dark:hover:bg-accent/10 flex items-center justify-between gap-2 cursor-pointer transition-colors group"
+              @click="handleSelectHistory(item)"
             >
-              <X class="h-3 w-3" />
-            </span>
-          </button>
+              <span class="truncate">{{ item }}</span>
+              <span
+                class="text-black/30 dark:text-white/30 group-hover:text-accent p-0.5 shrink-0 transition-colors"
+                @click.stop="handleRemoveHistory($event, item)"
+              >
+                <X class="h-3 w-3" />
+              </span>
+            </button>
+          </TransitionGroup>
         </div>
       </div>
       </Transition>
@@ -336,6 +380,15 @@ onUnmounted(() => {
 
 .search-history-fade-enter-from,
 .search-history-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.hot-reveal-enter-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hot-reveal-enter-from {
   opacity: 0;
   transform: translateY(-4px);
 }

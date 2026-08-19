@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { albumHeaderCache } from '../../caches/imageCaches';
 import { useCoverCache } from '../../composables/useCoverCache';
 import { usePlayerViewState } from '../../composables/usePlayerViewState';
+import { useScrollShrinkHeader } from '../../composables/useScrollShrinkHeader';
 import SortModeIcon from '../common/SortModeIcon.vue';
 import AppCoverImage from '../common/AppCoverImage.vue';
 
@@ -17,7 +18,17 @@ const props = defineProps<{
   readOnly?: boolean;
   /** 在线封面 URL（readOnly 模式下优先使用） */
   coverUrlOverride?: string;
+  /** 滚动容器引用，用于驱动封面收缩效果 */
+  scrollContainerRef?: HTMLElement | null;
 }>();
+
+const scrollRef = computed(() => props.scrollContainerRef ?? null);
+const { scrollProgress } = useScrollShrinkHeader(scrollRef, 144);
+
+const coverSize = computed(() => `${144 * (1 - scrollProgress.value)}px`);
+const columnHeight = computed(() => `${144 * (1 - scrollProgress.value)}px`);
+const titleSize = computed(() => `${32 * (1 - scrollProgress.value)}px`);
+const titleLineHeight = computed(() => `${40 * (1 - scrollProgress.value)}px`);
 
 const emit = defineEmits([
   'update:isBatchMode',
@@ -185,8 +196,8 @@ const getGradientForAlbum = (name: string) => {
       </div>
     </div>
 
-    <div v-else class="flex gap-6 h-auto mt-2 mb-6">
-      <div class="w-36 h-36 rounded-lg shadow-sm flex items-center justify-center shrink-0 overflow-hidden group relative select-none bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+    <div v-else class="flex gap-6 h-auto mt-2 mb-6 transition-all duration-200">
+      <div :style="{ width: coverSize, height: coverSize }" class="rounded-lg shadow-sm flex items-center justify-center shrink-0 overflow-hidden group relative select-none bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10">
         <div v-if="isLoading" class="w-full h-full bg-gray-200 dark:bg-white/10 animate-pulse"></div>
         <AppCoverImage v-else :src="coverUrl" class="w-full h-full object-cover select-none animate-in fade-in duration-300" draggable="false" :alt="albumName" decoding="async">
           <div class="w-full h-full flex items-center justify-center text-4xl font-bold text-white bg-gradient-to-br animate-in fade-in duration-300" :class="getGradientForAlbum(albumName)">
@@ -195,9 +206,9 @@ const getGradientForAlbum = (name: string) => {
         </AppCoverImage>
       </div>
 
-      <div class="h-36 flex flex-col justify-start pt-2 pb-1 flex-1 min-w-0">
+      <div :style="{ height: columnHeight }" class="flex flex-col justify-start pt-2 pb-1 flex-1 min-w-0 overflow-hidden">
         <div class="mb-4">
-          <h1 class="text-[32px] font-bold text-gray-900 dark:text-white truncate max-w-[600px] leading-tight flex items-center gap-2">
+          <h1 class="font-bold text-gray-900 dark:text-white truncate max-w-[600px] flex items-center gap-2" :style="{ fontSize: titleSize, lineHeight: titleLineHeight }">
             <span class="bg-accent text-white text-[12px] px-1.5 py-0.5 rounded border border-accent font-normal leading-none -mt-1 relative top-[1px]">专辑</span>
             {{ albumName }}
           </h1>

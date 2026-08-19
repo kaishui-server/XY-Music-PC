@@ -370,7 +370,7 @@ const handleImportAppBackup = async () => {
       </p>
     </section>
 
-    <section class="space-y-3 border-t border-black/10 pt-6 dark:border-white/10">
+    <section class="space-y-3">
       <div>
         <h2 class="flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-gray-200">
           <span class="h-4 w-1 rounded-full bg-accent"></span>
@@ -406,7 +406,7 @@ const handleImportAppBackup = async () => {
       <LogExportActions />
     </section>
 
-    <section class="space-y-3 border-t border-black/10 pt-6 dark:border-white/10">
+    <section class="space-y-3">
       <div>
         <h2 class="flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-gray-200">
           <span class="h-4 w-1 rounded-full bg-accent"></span>
@@ -527,7 +527,21 @@ const handleImportAppBackup = async () => {
                   <div class="mt-3 flex gap-4">
                     <div class="min-w-0 flex-1">
                       <p class="whitespace-pre-wrap text-sm leading-6">{{ item.content }}</p>
-                      <div v-if="item.status === 'resolved' && item.resolveNote" class="mt-3 rounded-lg bg-black/[.03] p-3 text-xs dark:bg-white/[.04]">处理说明（{{ item.assignee || '管理员' }}）：{{ item.resolveNote }}</div>
+                      <div v-if="item.status === 'resolved' && (item.resolveNote || (item.resolveImages && item.resolveImages.length > 0))" class="mt-3 rounded-lg bg-black/[.03] p-3 text-xs dark:bg-white/[.04]">
+                        <span v-if="item.resolveNote">处理说明（{{ item.assignee || '管理员' }}）：{{ item.resolveNote }}</span>
+                        <div v-if="item.resolveImages && item.resolveImages.length > 0" class="fb-my-resolve-imgs">
+                          <a
+                            v-for="(rimg, ri) in item.resolveImages"
+                            :key="ri"
+                            :href="rimg"
+                            target="_blank"
+                            rel="noopener"
+                            class="fb-my-resolve-img"
+                          >
+                            <img :src="rimg" alt="处理图片" loading="lazy" />
+                          </a>
+                        </div>
+                      </div>
                       <p class="mt-2 text-[11px] text-gray-400">{{ item.createdAt }}</p>
                     </div>
                     <button
@@ -640,5 +654,37 @@ const handleImportAppBackup = async () => {
 .feedback-viewer-fade-enter-from,
 .feedback-viewer-fade-leave-to {
   opacity: 0;
+}
+
+.fb-my-resolve-imgs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 6px;
+  margin-top: 4px;
+}
+.fb-my-resolve-img {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: zoom-in;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+.fb-my-resolve-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 140ms ease;
+}
+.fb-my-resolve-img:hover img {
+  transform: scale(1.06);
+}
+:global(.dark) .fb-my-resolve-img,
+.dark .fb-my-resolve-img {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: #262626;
 }
 </style>

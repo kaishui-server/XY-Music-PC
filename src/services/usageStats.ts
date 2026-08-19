@@ -337,6 +337,7 @@ export interface MyFeedbackItem {
   category: string;
   assignee: string;
   resolveNote: string;
+  resolveImages: string[];
   hasErrorLogs: boolean;
   hasAllLogs: boolean;
   createdAt: string;
