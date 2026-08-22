@@ -17,7 +17,7 @@
  */
 
 import { authApi } from '../tauri/authApi';
-import { getDeviceId } from '../usageStats';
+import { getDeviceId, getDeviceInfo } from '../usageStats';
 
 export type AuthUser = {
   id: string;
@@ -489,7 +489,7 @@ export async function login(
     const data = await requestAction<Record<string, unknown>>('user_login', withCaptcha({
       ciyuanxi_id: ciyuanxiId,
       password,
-      device_id: getDeviceId(),
+      ...getDeviceInfo(),
     }, captcha));
     if (!data.token) throw new Error('登录响应无效');
     const payload: AuthPayload = { token: String(data.token), user: mapUser(data) };
@@ -519,7 +519,7 @@ export async function register(
       password,
       email,
       verify_code: code,
-      device_id: getDeviceId(),
+      ...getDeviceInfo(),
     }, captcha));
     if (!data.token) throw new Error('注册响应无效');
     const payload: AuthPayload = { token: String(data.token), user: mapUser(data) };

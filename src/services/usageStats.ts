@@ -71,17 +71,21 @@ export interface DeviceInfo {
   app_version: string;
   os_version: string;
   device_model: string;
+  client_type: 'desktop';
+  platform: 'windows';
 }
 
 let cachedDeviceInfo: DeviceInfo | null = null;
 
-function getDeviceInfo(): DeviceInfo {
+export function getDeviceInfo(): DeviceInfo {
   if (!cachedDeviceInfo) {
     cachedDeviceInfo = {
       device_id: getDeviceId(),
       app_version: APP_VERSION,
       os_version: parseOsVersion(),
       device_model: getDeviceModel(),
+      client_type: 'desktop',
+      platform: 'windows',
     };
   }
   return cachedDeviceInfo;
