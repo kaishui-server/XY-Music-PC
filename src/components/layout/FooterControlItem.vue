@@ -57,6 +57,15 @@ const ctx = inject<{
   selectQuality: (qualityKey: QualityKey) => Promise<void>;
   qualityButtonRef: Ref<HTMLElement | null>;
   qualityMenuRef: Ref<HTMLElement | null>;
+  // 视频画质（B站视频背景激活时显示）
+  showVideoQualitySelector: Ref<boolean>;
+  availableVideoQualities: Ref<Array<{ qn: number; label: string }>>;
+  currentVideoQuality: Ref<number>;
+  changeVideoQuality: (qualityId: number) => Promise<void>;
+  showVideoQualityMenu: Ref<boolean>;
+  toggleVideoQualityMenu: (e: MouseEvent) => void;
+  videoQualityButtonRef: Ref<HTMLElement | null>;
+  videoQualityMenuRef: Ref<HTMLElement | null>;
   // 音量
   volume: Ref<number>;
   showVolumeSlider: Ref<boolean>;
@@ -110,6 +119,12 @@ const {
   QUALITY_OPTIONS,
   activeQualityKey,
   selectQuality,
+  showVideoQualitySelector,
+  availableVideoQualities,
+  currentVideoQuality,
+  changeVideoQuality,
+  showVideoQualityMenu,
+  toggleVideoQualityMenu,
   volume,
   showVolumeSlider,
   isDraggingVolume,
@@ -291,6 +306,56 @@ const {
           >
             未探测到可播放音质
           </div>
+        </div>
+      </div>
+    </transition>
+  </div>
+
+  <!-- 视频画质选择按钮（仅 B站视频背景激活时显示） -->
+  <div v-else-if="itemKey === 'videoQuality' && showVideoQualitySelector" class="relative flex items-center justify-center h-full z-[70]">
+    <button
+      :ref="el => { if (el) ctx.videoQualityButtonRef.value = el as HTMLElement; }"
+      @click="!isAudioControlLocked && toggleVideoQualityMenu($event)"
+      class="flex shrink-0 items-center justify-center whitespace-nowrap w-9 h-9 text-[12px] font-semibold rounded-full transition-colors select-none"
+      :class="[
+        isAudioControlLocked
+          ? 'opacity-40 cursor-not-allowed'
+          : showVideoQualityMenu
+            ? 'text-accent bg-accent/10'
+            : (showPlayerDetail
+                ? 'text-white/80 hover:text-white hover:bg-white/10'
+                : 'text-gray-700 dark:text-white/80 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10')
+      ]"
+      :title="isAudioControlLocked ? audioLockTooltip : '视频画质'"
+    >
+      <FooterControlIcon item-key="videoQuality" :quality-label="availableVideoQualities.find(q => q.qn === currentVideoQuality)?.label || '画质'" />
+    </button>
+
+    <transition name="fade-scale">
+      <div
+        v-if="!isAudioControlLocked && showVideoQualityMenu"
+        :ref="el => { if (el) ctx.videoQualityMenuRef.value = el as HTMLElement; }"
+        class="absolute bottom-full left-1/2 -translate-x-1/2 pb-6 z-[80]"
+      >
+        <div
+          class="min-w-[120px] backdrop-blur-xl shadow-2xl rounded-xl border py-1.5 px-1 transition-colors"
+          :class="showPlayerDetail ? 'bg-[#262626]/90 border-white/10' : 'bg-white/95 dark:bg-zinc-900/90 border-gray-100 dark:border-white/10'"
+        >
+          <div class="px-3 py-1 text-[10px] font-semibold text-gray-400 dark:text-white/40 select-none">
+            视频画质
+          </div>
+          <button
+            v-for="opt in availableVideoQualities"
+            :key="opt.qn"
+            @click="changeVideoQuality(opt.qn)"
+            class="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg transition-colors select-none"
+            :class="currentVideoQuality === opt.qn
+              ? 'text-accent bg-accent/8'
+              : (showPlayerDetail ? 'text-white/75 hover:text-white hover:bg-white/8' : 'text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/8')"
+          >
+            <span class="text-[12px] font-medium whitespace-nowrap">{{ opt.label }}</span>
+            <span v-if="currentVideoQuality === opt.qn" class="ml-auto w-1.5 h-1.5 rounded-full bg-accent shrink-0"></span>
+          </button>
         </div>
       </div>
     </transition>

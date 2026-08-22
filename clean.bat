@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul 2>&1
-title XianYu Music Concept - Cache Clean
+title XY Music - Cache Clean
 
 echo ============================================
-echo   XianYu Music Concept - Cache Clean
+echo   XY Music - Cache Clean
 echo ============================================
 echo.
 

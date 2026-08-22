@@ -9,10 +9,10 @@ import tauriConfigSource from '../../src-tauri/tauri.conf.json?raw';
 
 describe('concept edition preservation', () => {
   it('keeps concept edition branding after upstream feature ports', () => {
-    expect(tauriConfigSource).toContain('弦予音乐概念版');
+    expect(tauriConfigSource).toContain('XY Music');
     expect(tauriConfigSource).toContain('com.xymusic.concept');
     expect(tauriConfigSource).not.toContain('com.xymusic.desktop');
-    expect(appSource).toContain('弦予音乐概念版');
+    expect(appSource).toContain('XY Music');
   });
 
   it('keeps concept home modules and download dialog behavior', () => {

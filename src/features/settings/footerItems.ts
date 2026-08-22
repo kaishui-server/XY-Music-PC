@@ -9,7 +9,7 @@ export const FOOTER_CONTAINER_LIMITS: Record<FooterContainerKey, number> = {
   left: 2,
   middleLeft: 1,
   middleRight: 1,
-  right: 5,
+  right: 6,
 };
 
 /** 所有容器（用于设置面板遍历） */
@@ -20,7 +20,7 @@ export const DEFAULT_FOOTER_LAYOUT: FooterLayoutSettings = {
   left: ['favorite', 'download'],
   middleLeft: 'playMode',
   middleRight: 'desktopLyrics',
-  right: ['quality', 'volume', 'equalizer', 'playlist', 'comment'],
+  right: ['quality', 'videoQuality', 'volume', 'equalizer', 'playlist', 'comment'],
   hidden: [],
 };
 
@@ -40,7 +40,7 @@ export interface FooterItemMeta {
   label: string;
   description: string;
   /** lucide 图标名（用于设置面板展示，运行时由 PlayerFooter 内联渲染） */
-  icon: 'download' | 'heart' | 'repeat' | 'lyrics' | 'gauge' | 'volume' | 'equalizer' | 'playlist' | 'message-circle';
+  icon: 'download' | 'heart' | 'repeat' | 'lyrics' | 'gauge' | 'monitor' | 'volume' | 'equalizer' | 'playlist' | 'message-circle';
 }
 
 /**
@@ -53,6 +53,7 @@ export const FOOTER_ITEMS: FooterItemMeta[] = [
   { key: 'playMode',       label: '播放模式',   description: '列表循环/单曲循环/随机播放', icon: 'repeat' },
   { key: 'desktopLyrics',  label: '桌面歌词',   description: '开关桌面歌词悬浮窗', icon: 'lyrics' },
   { key: 'quality',        label: '音质',       description: '在线歌曲音质切换、本地歌曲音质标签', icon: 'gauge' },
+  { key: 'videoQuality',  label: '视频画质',   description: 'B站插件视频背景画质切换（仅 B站视频激活时显示）', icon: 'monitor' },
   { key: 'volume',         label: '音量',       description: '音量调节与静音', icon: 'volume' },
   { key: 'equalizer',      label: '均衡器',     description: 'EQ 频段调节', icon: 'equalizer' },
   { key: 'playlist',       label: '播放队列',   description: '展开当前播放队列', icon: 'playlist' },
@@ -252,7 +253,8 @@ export type FooterPreviewSlot =
   | 'right-1'
   | 'right-2'
   | 'right-3'
-  | 'right-4';
+  | 'right-4'
+  | 'right-5';
 
 export const FOOTER_PREVIEW_SLOTS: FooterPreviewSlot[] = [
   'left-0',
@@ -264,6 +266,7 @@ export const FOOTER_PREVIEW_SLOTS: FooterPreviewSlot[] = [
   'right-2',
   'right-3',
   'right-4',
+  'right-5',
 ];
 
 export type FooterPreviewSlotItems = Record<FooterPreviewSlot, FooterItemKey | null>;
@@ -284,6 +287,7 @@ export const getFooterPreviewSlotItems = (value: FooterLayoutSettings): FooterPr
     'right-2': visibleItem(layout.right[2]),
     'right-3': visibleItem(layout.right[3]),
     'right-4': visibleItem(layout.right[4]),
+    'right-5': visibleItem(layout.right[5]),
   };
 };
 
@@ -299,6 +303,7 @@ const getRawFooterPreviewSlotItems = (value: FooterLayoutSettings): FooterPrevie
     'right-2': layout.right[2] ?? null,
     'right-3': layout.right[3] ?? null,
     'right-4': layout.right[4] ?? null,
+    'right-5': layout.right[5] ?? null,
   };
 };
 
@@ -315,6 +320,7 @@ const layoutFromPreviewSlots = (
     slots['right-2'],
     slots['right-3'],
     slots['right-4'],
+    slots['right-5'],
   ].filter((key): key is FooterItemKey => key !== null),
   hidden,
 });

@@ -13,6 +13,7 @@ import { useDownloadStore } from '../../features/download/store';
 import { downloadToLocal } from '../../composables/useDownloadToLocal';
 import { useDownloadDialog } from '../../composables/useDownloadDialog';
 import { useRenderingPower } from '../../composables/renderingPower';
+import { useBilibiliVideoBackground } from '../../composables/useBilibiliVideoBackground';
 import { computed, defineAsyncComponent, ref, onMounted, onUnmounted, watch, nextTick, provide } from 'vue';
 import FooterControlItem from './FooterControlItem.vue';
 import type { DownloadQuality, QualityKey, RemoteDownloadProgress } from '../../types';
@@ -46,6 +47,15 @@ const handleOpenDetail = () => {
 const { showDesktopLyrics, showLyricsPlayerSettingsPanel } = useLyrics();
 const { settings, footerLayout } = useSettings();
 const { isMainWindowLowPower } = useRenderingPower();
+const {
+  availableVideoQualities,
+  currentVideoQuality,
+  changeVideoQuality,
+  active: videoBackgroundActive,
+} = useBilibiliVideoBackground();
+const showVideoQualitySelector = computed(() =>
+  videoBackgroundActive.value && availableVideoQualities.value.length > 0
+);
 const downloadStore = useDownloadStore();
 
 // --- 底部栏容器化布局 ---
@@ -456,15 +466,28 @@ const showQualityMenu = ref(false);
 const qualityButtonRef = ref<HTMLElement | null>(null);
 const qualityMenuRef = ref<HTMLElement | null>(null);
 
+const showVideoQualityMenu = ref(false);
+const videoQualityButtonRef = ref<HTMLElement | null>(null);
+const videoQualityMenuRef = ref<HTMLElement | null>(null);
+
 const toggleQualityMenu = (e: MouseEvent) => {
   if (!isQualitySelectableSong.value) return; // 本地歌曲或不支持的在线歌曲：禁用
   e.stopPropagation();
-  // 关闭下载音质菜单，避免两个下拉同时打开
+  // 关闭其他下拉菜单，避免两个下拉同时打开
   showDownloadQualityMenu.value = false;
+  showVideoQualityMenu.value = false;
   showQualityMenu.value = !showQualityMenu.value;
   if (showQualityMenu.value) {
     void ensureFooterQualityInfo();
   }
+};
+
+const toggleVideoQualityMenu = (e: MouseEvent) => {
+  if (!showVideoQualitySelector.value) return;
+  e.stopPropagation();
+  showDownloadQualityMenu.value = false;
+  showQualityMenu.value = false;
+  showVideoQualityMenu.value = !showVideoQualityMenu.value;
 };
 
 const selectQuality = async (qualityKey: QualityKey) => {
@@ -751,6 +774,11 @@ const handleWindowClick = (e: MouseEvent) => {
       showDownloadQualityMenu.value = false;
     }
   }
+  if (showVideoQualityMenu.value && videoQualityMenuRef.value && videoQualityButtonRef.value) {
+    if (!videoQualityMenuRef.value.contains(target) && !videoQualityButtonRef.value.contains(target)) {
+      showVideoQualityMenu.value = false;
+    }
+  }
 };
 
 // --- Idle State for Auto-Hide ---
@@ -896,6 +924,15 @@ provide('footerContext', {
   isPluginSong,
   showComment,
   toggleComment: wrapToggleComment,
+  // 视频画质（B站插件视频背景激活时显示）
+  showVideoQualitySelector,
+  availableVideoQualities,
+  currentVideoQuality,
+  changeVideoQuality,
+  showVideoQualityMenu,
+  toggleVideoQualityMenu,
+  videoQualityButtonRef,
+  videoQualityMenuRef,
 });
 
 onMounted(async () => {

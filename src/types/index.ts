@@ -329,6 +329,7 @@ export type FooterItemKey =
   | 'playMode'        // 播放模式
   | 'desktopLyrics'  // 桌面歌词
   | 'quality'         // 音质选择
+  | 'videoQuality'   // 视频画质
   | 'volume'          // 音量
   | 'equalizer'       // 均衡器
   | 'playlist'        // 播放队列

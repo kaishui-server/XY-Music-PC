@@ -666,7 +666,6 @@ export const LEGACY_ENGLISH_TEXT: Readonly<Record<string, string>> = {
   '我的': 'Mine',
   '我的下载支持多选删除；删除只影响本机已保存的壁纸文件': 'My Downloads supports multi-select deletion. Only local wallpaper files are removed.',
   '弦予号是唯一登录标识，每月仅可修改一次，请谨慎设置。': 'Your XianYu ID is your unique sign-in ID and can be changed only once per month.',
-  '弦予音乐概念版': 'XianYu Music Concept',
   '弦予音乐账号系统': 'XianYu Music Account',
   '详情数据不可用': 'Details Unavailable',
   '详细内容': 'Details',

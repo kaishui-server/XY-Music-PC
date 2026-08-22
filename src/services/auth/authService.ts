@@ -86,9 +86,9 @@ export type ProfileChangeLimitStatus = {
   blockMessage: string;
 };
 
-/** 默认后端地址：测试构建与正式构建统一指向弦予音乐 API */
-export const DEFAULT_AUTH_BASE_URL = 'https://back.xymusic.cc/api';
-export const DEFAULT_AUTH_API_SECRET = 'bf027fedb4d1b4f969c10495f12f17042bf0de02de128200';
+/** 默认后端地址：自建服务器 */
+export const DEFAULT_AUTH_BASE_URL = 'http://156.233.228.213:8081/api';
+export const DEFAULT_AUTH_API_SECRET = '53dab6e42c380c4502f73b40fc2e9af9c2ee523ecb92b6884ad17156c9c762af';
 
 // ─── localStorage 兼容键（仅用于迁移） ──────────────────
 const LEGACY_STORAGE_TOKEN_KEY = 'xy.auth.token';

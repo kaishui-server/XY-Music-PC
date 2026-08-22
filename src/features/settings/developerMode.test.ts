@@ -33,7 +33,7 @@ describe('developer mode settings entry', () => {
       aboutSource.indexOf('] as const;'),
     );
 
-    expect(conceptCredits).toContain("title: '弦予音乐概念版'");
+    expect(conceptCredits).toContain("title: 'XY Music'");
     expect(conceptCredits).toContain("label: '@绛狐'");
     expect(conceptCredits).not.toContain("label: '@ShenYichenCN'");
     expect(conceptCredits).not.toContain("label: '@知难辞'");

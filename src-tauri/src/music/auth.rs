@@ -23,12 +23,12 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager};
 
 /// 默认 API 签名密钥。自建后端可在客户端账号设置页覆盖。
-const DEFAULT_API_SECRET: &str = "bf027fedb4d1b4f969c10495f12f17042bf0de02de128200";
+const DEFAULT_API_SECRET: &str = "53dab6e42c380c4502f73b40fc2e9af9c2ee523ecb92b6884ad17156c9c762af";
 
-/// 官方后端地址
-const OFFICIAL_AUTH_BASE_URL: &str = "https://back.xymusic.cc/api";
+/// 自建后端地址
+const OFFICIAL_AUTH_BASE_URL: &str = "http://156.233.228.213:8081/api";
 
-/// 默认后端地址：测试构建与正式构建统一指向弦予音乐 API
+/// 默认后端地址：指向自建服务器
 const DEFAULT_AUTH_BASE_URL: &str = OFFICIAL_AUTH_BASE_URL;
 
 /// keyring 服务名 / 账户名

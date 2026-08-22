@@ -646,13 +646,7 @@ onUnmounted(() => {
                   class="mt-6 font-light tracking-[0.5em] text-black/50 dark:text-white/50 uppercase"
                   style="font-size: clamp(28px, 3.5vw, 48px);"
                 >
-                  Concept Edition
-                </div>
-                <div
-                  class="mt-[clamp(2.5rem,5vh,4rem)] font-light text-black/75 dark:text-white/75"
-                  style="font-size: clamp(28px, 2.8vw, 40px);"
-                >
-                  弦予音乐概念版
+                  致力于做更美观的音乐软件
                 </div>
               </div>
             </transition>
@@ -691,7 +685,7 @@ onUnmounted(() => {
                   class="font-black tracking-tight text-black dark:text-white"
                   style="font-size: clamp(18px, 1.5vw, 22px);"
                 >
-                  弦予音乐概念版
+                  XY Music
                 </span>
                 <span class="text-black/20 dark:text-white/20">/</span>
                 <span

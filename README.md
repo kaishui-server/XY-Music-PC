@@ -1,9 +1,9 @@
 <div align="center">
 
 
-# 弦予音乐概念版(XY Music Concept Edition)
+# XY Music
 
-一款在 **[弦予音乐](https://github.com/Billy636/LyciaMusic)** 原版基础上界面极简化的极简在线音乐播放器，保留了原版弦予音乐的大部分功能,适合极简风格爱好者使用。
+一款在 **[XY Music](https://github.com/Billy636/LyciaMusic)** 原版基础上界面极简化的极简在线音乐播放器，保留了原版 XY Music 的大部分功能,适合极简风格爱好者使用。
 
  [](https://tauri.app/)
  [](https://vuejs.org/)
@@ -11,9 +11,9 @@
  [](https://www.rust-lang.org/)
  [](https://tailwindcss.com/)
 
-[](https://github.com/TaXiaoQi/XY-Music-Desktop/commits/dev)
- [](https://github.com/TaXiaoQi/XY-Music-Desktop/stargazers)
- [](https://github.com/TaXiaoQi/XY-Music_Desktop/graphs/contributors)
+[](https://github.com/kaishui-server/XY-Music-Desktop/commits/main)
+ [](https://github.com/kaishui-server/XY-Music-Desktop/stargazers)
+ [](https://github.com/kaishui-server/XY-Music-Desktop/graphs/contributors)
  [](./LICENSE)
 
 </div>
@@ -65,8 +65,8 @@
 1. 克隆本仓库：
   
   ```bash
-  git clone https://github.com/ShenYichenCN/XianYu-Music-Desktop.git
-  cd XianYu-Music-Desktop
+  git clone https://github.com/kaishui-server/XY-Music-Desktop.git
+  cd XY-Music-Desktop
   ```
   
 2. 安装依赖项：
@@ -98,7 +98,7 @@
 
 ## 📐 技术架构
 
-弦予音乐采用 Tauri 2.x 驱动的前后端分离架构，前端 Vue 3 负责 UI 渲染与状态管理，Rust 后端负责音频引擎、数据库、文件扫描等高性能计算，两者通过 Tauri IPC（命令式 `invoke` + 事件式 `emit/listen`）进行跨进程通信。
+XY Music 采用 Tauri 2.x 驱动的前后端分离架构，前端 Vue 3 负责 UI 渲染与状态管理，Rust 后端负责音频引擎、数据库、文件扫描等高性能计算，两者通过 Tauri IPC（命令式 `invoke` + 事件式 `emit/listen`）进行跨进程通信。
 
 ```mermaid
 graph TD
@@ -215,7 +215,7 @@ Rust 后端由多个业务模块组成，通过 `src-tauri/src/lib.rs` 集中注
 ## ⚖️ 许可与资产声明
 
 - **开源协议**：本项目基于 **AGPL-3.0-only** 许可协议开源，完整协议内容及歌词改编归属说明请分别参阅 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。
-- **资产版权**：本项目内包含的所有视觉资产（包括但不限于应用 Logo、插图、截图等）均属原作者[Billy636](https://github.com/Billy636)个人及弦予开发团队（后称原团队）所有。未经原团队明确授权，请勿将这些图片资产用于任何商业用途或二次分发。
+- **资产版权**：本项目内包含的所有视觉资产（包括但不限于应用 Logo、插图、截图等）均属原作者[Billy636](https://github.com/Billy636)个人及 XY Music 开发团队（后称原团队）所有。未经原团队明确授权，请勿将这些图片资产用于任何商业用途或二次分发。
 
 ---
 

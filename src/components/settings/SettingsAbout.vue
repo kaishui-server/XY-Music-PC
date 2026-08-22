@@ -11,7 +11,7 @@ const appVersion = APP_VERSION;
 const aboutSections = [
   {
     id: 'concept',
-    title: '弦予音乐概念版',
+    title: 'XY Music',
     versionLabel: `v${appVersion}`,
     developerModeEntry: true,
     developers: [
@@ -35,16 +35,11 @@ const aboutSections = [
   },
 ] as const;
 
-// [页面切换] 概念版与正式版关于页互相切换，右上角按钮控制
 const currentAboutPage = ref<'concept' | 'formal'>('concept');
 const currentSection = computed(() =>
   currentAboutPage.value === 'concept' ? aboutSections[0] : aboutSections[1],
 );
 const isConceptPage = computed(() => currentAboutPage.value === 'concept');
-
-function switchAboutPage() {
-  currentAboutPage.value = currentAboutPage.value === 'concept' ? 'formal' : 'concept';
-}
 
 const DEVELOPER_MODE_CLICK_COUNT = 5;
 const DEVELOPER_MODE_CLICK_INTERVAL = 1500;
@@ -129,18 +124,6 @@ onUnmounted(stopAboutConfigPolling);
 
 <template>
   <div class="relative min-w-0">
-    <!-- 右上角页面切换按钮 -->
-    <button
-      type="button"
-      @click="switchAboutPage"
-      class="absolute right-0 top-0 z-10 flex shrink-0 items-center gap-2 rounded-xl border border-gray-200/50 bg-white/30 px-5 py-2.5 text-sm font-medium text-gray-600 backdrop-blur-md transition active:scale-95 hover:bg-white/50 hover:text-gray-800 dark:border-white/10 dark:bg-black/10 dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white/80"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18l6-6-6-6" />
-      </svg>
-      {{ isConceptPage ? '关于正式版' : '关于概念版' }}
-    </button>
-
     <section
       class="flex h-[calc(100vh-8rem)] min-w-0 flex-col items-center overflow-hidden"
     >

@@ -169,7 +169,7 @@ if (currentWindowLabel === 'main') {
 
     try {
       const version = await getVersion();
-      showToast(`欢迎使用弦予音乐概念版，当前版本 v${version}`, 'info');
+      showToast(`欢迎使用XY Music，当前版本 v${version}`, 'info');
     } catch (error) {
       console.error('Failed to get version for welcome toast:', error);
     }

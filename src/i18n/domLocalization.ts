@@ -40,7 +40,7 @@ const translateDynamicText = (source: string): string | null => {
     [/^更新于\s*(.+)$/u, value => `Updated ${value}`],
     [/^搜索歌曲：(.+)$/u, value => `Search for: ${value}`],
     [/^已自动更新\s*(\d+)\s*个插件$/u, count => `${count} plugins updated automatically`],
-    [/^欢迎使用弦予音乐概念版，当前版本\s*(.+)$/u, version => `Welcome to XianYu Music Concept, version ${version}`],
+    [/^欢迎使用XY Music，当前版本\s*(.+)$/u, version => `Welcome to XY Music, version ${version}`],
     [/^找到\s*(\d+)\s*项设置$/u, count => `${count} settings found`],
     [/^(\d+)\s*分钟前$/u, count => `${count} min ago`],
     [/^(\d+)\s*小时前$/u, count => `${count} hr ago`],
