@@ -6,7 +6,7 @@
  *
  * 备份格式：
  * {
- *   schema: "xianyu-music.app-backup",
+ *   schema: "xy-music.app-backup",
  *   version: 1,
  *   createdAt: ISOString,
  *   data: {
@@ -23,7 +23,8 @@ import { playerStorage } from './storage/playerStorage';
 
 // ==================== 类型定义 ====================
 
-const APP_BACKUP_SCHEMA = 'xianyu-music.app-backup';
+const APP_BACKUP_SCHEMA = 'xy-music.app-backup';
+const LEGACY_APP_BACKUP_SCHEMA = 'xianyu-music.app-backup';
 const APP_BACKUP_VERSION = 1;
 
 type PlaylistType = 'local' | 'online' | 'mixed';
@@ -237,7 +238,7 @@ export function parseAppBackup(jsonContent: string): AppBackup {
     throw new Error('文件不是有效的 JSON 格式');
   }
 
-  if (data?.schema !== APP_BACKUP_SCHEMA) {
+  if (data?.schema !== APP_BACKUP_SCHEMA && data?.schema !== LEGACY_APP_BACKUP_SCHEMA) {
     throw new Error('无法识别的备份格式，请选择本应用导出的备份文件');
   }
 

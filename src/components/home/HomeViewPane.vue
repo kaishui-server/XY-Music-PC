@@ -133,6 +133,8 @@ const viewInstanceKey = computed(() =>
         :playlistDetail="playlistDetail"
         :localSongList="localSongList"
         :localSongPaths="localSongPaths"
+        :playlistId="localFilterCondition"
+        :resolveSongByPath="resolveSongByPath"
         :scrollContainerRef="scrollContainerRef"
         @update:isBatchMode="$emit('update:isBatchMode', $event)"
         @update:isManagementMode="$emit('update:isManagementMode', $event)"

@@ -24,6 +24,13 @@ export interface SidebarItemMeta {
 
 export const SIDEBAR_ITEMS: SidebarItemMeta[] = [
   {
+    key: 'explore',
+    label: '探索',
+    visibilityKey: 'showExplore',
+    iconKind: 'path',
+    iconPath: 'M12 2a10 10 0 100 20 10 10 0 000-20zm3.5 6.5l-2.2 5.3-5.3 2.2 2.2-5.3 5.3-2.2z',
+  },
+  {
     key: 'localMusic',
     label: '本地音乐',
     visibilityKey: 'showLocalMusic',
@@ -82,8 +89,24 @@ export const SIDEBAR_ITEMS: SidebarItemMeta[] = [
   },
 ];
 
-/** 默认排列顺序（与历史上硬编码的顺序保持一致） */
-export const DEFAULT_SIDEBAR_ORDER: SidebarItemKey[] = SIDEBAR_ITEMS.map(item => item.key);
+/** 默认排列顺序：首页由 SidebarNavigation 固定渲染，因此探索会紧跟在首页下方。 */
+export const DEFAULT_SIDEBAR_ORDER: SidebarItemKey[] = [
+  'explore',
+  'localMusic',
+  'artists',
+  'albums',
+  'favorites',
+  'recent',
+  'folders',
+  'plugins',
+  'account',
+];
+
+/** 旧版本新增探索页时曾把它追加在默认排序末尾，用于兼容迁移。 */
+const LEGACY_DEFAULT_SIDEBAR_ORDER: SidebarItemKey[] = [
+  ...DEFAULT_SIDEBAR_ORDER.filter(key => key !== 'explore'),
+  'explore',
+];
 
 const SIDEBAR_ITEM_KEY_SET = new Set<SidebarItemKey>(DEFAULT_SIDEBAR_ORDER);
 
@@ -118,6 +141,11 @@ export const normalizeSidebarOrder = (value: unknown): SidebarItemKey[] => {
     if (!seen.has(key)) {
       result.push(key);
     }
+  }
+
+  // 只迁移旧的“默认顺序”，不干预用户真正自定义过的排列。
+  if (result.every((key, index) => key === LEGACY_DEFAULT_SIDEBAR_ORDER[index])) {
+    return [...DEFAULT_SIDEBAR_ORDER];
   }
 
   return result;

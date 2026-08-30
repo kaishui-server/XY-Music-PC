@@ -9,6 +9,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
+const STATS_EXPORT_FORMAT: &str = "xy-stats";
+const LEGACY_STATS_EXPORT_FORMAT: &str = "xianyu-stats";
+
 // =====================================================
 // 辅助函数
 // =====================================================
@@ -1387,7 +1390,7 @@ fn load_portable_export(file_path: &str) -> Result<PortableStatisticsExport, Str
     let export: PortableStatisticsExport =
         serde_json::from_str(&raw).map_err(|_| "文件格式不正确或已损坏".to_string())?;
 
-    if export.format != "xianyu-stats" {
+    if export.format != STATS_EXPORT_FORMAT && export.format != LEGACY_STATS_EXPORT_FORMAT {
         return Err("文件格式不正确或已损坏".to_string());
     }
 
@@ -1800,7 +1803,7 @@ pub fn export_statistics_file(
     let exported_at = now_iso_timestamp()?;
     let export_id = format!("stats-{}-{}", now_unix_seconds(), now_unix_millis());
     let payload = PortableStatisticsExport {
-        format: "xianyu-stats".to_string(),
+        format: STATS_EXPORT_FORMAT.to_string(),
         version: SUPPORTED_STATS_VERSION,
         exported_at: exported_at.clone(),
         app_version: env!("CARGO_PKG_VERSION").to_string(),

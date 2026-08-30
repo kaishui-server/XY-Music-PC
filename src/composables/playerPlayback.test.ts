@@ -296,6 +296,46 @@ describe('player playback domain', () => {
     vi.unstubAllGlobals();
   });
 
+  it('does not report the same sub-threshold listening segment twice', async () => {
+    const song = makeSong({ duration: 195 });
+    let periodicFlush: (() => void) | undefined;
+    const dateNow = vi.spyOn(Date, 'now').mockReturnValue(100_000);
+    vi.stubGlobal('requestAnimationFrame', vi.fn().mockReturnValue(1));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    vi.stubGlobal('setInterval', vi.fn((callback: () => void, delay: number) => {
+      if (delay === 30_000) periodicFlush = callback;
+      return delay;
+    }));
+    vi.stubGlobal('clearInterval', vi.fn());
+
+    const playerPlayback = createPlayerPlayback({
+      getDisplaySongList: () => [song],
+      addToHistory: vi.fn(),
+      loadLyrics: vi.fn(),
+      handleAutoNext: vi.fn(),
+    });
+
+    await playerPlayback.playSong(song);
+
+    // 第一次刷写只有 5 秒，不应提前上报；该时长会保留到下一次结算。
+    dateNow.mockReturnValue(105_000);
+    periodicFlush?.();
+    expect(reportUserBehavior).not.toHaveBeenCalled();
+
+    // 第二次结算得到完整 10 秒，只向服务端发送一次 10 秒增量，而不是 5+10 秒。
+    dateNow.mockReturnValue(110_000);
+    periodicFlush?.();
+    expect(reportUserBehavior).toHaveBeenCalledTimes(1);
+    expect(reportUserBehavior).toHaveBeenCalledWith(expect.objectContaining({
+      listen_duration: 10,
+      play_count: 1,
+    }));
+
+    playerPlayback.dispose();
+    dateNow.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
   it('does not count or report listening time while no audio output device is active', async () => {
     const song = makeSong({ duration: 195 });
     let periodicFlush: (() => void) | undefined;

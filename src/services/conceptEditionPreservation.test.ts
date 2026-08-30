@@ -5,6 +5,7 @@ import downloadDialogSource from '../components/overlays/DownloadDialog.vue?raw'
 import homeItemsSource from '../features/settings/homeItems.ts?raw';
 import aboutSource from '../components/settings/SettingsAbout.vue?raw';
 import mainShellSource from '../components/layout/MainShell.vue?raw';
+import tauriLibSource from '../../src-tauri/src/lib.rs?raw';
 import tauriConfigSource from '../../src-tauri/tauri.conf.json?raw';
 
 describe('concept edition preservation', () => {
@@ -12,6 +13,8 @@ describe('concept edition preservation', () => {
     expect(tauriConfigSource).toContain('XY Music');
     expect(tauriConfigSource).toContain('com.xymusic.concept');
     expect(tauriConfigSource).not.toContain('com.xymusic.desktop');
+    expect(tauriLibSource).toContain('"com.xymusic.concept\\0"');
+    expect(tauriLibSource).not.toContain('"com.xymusic.desktop\\0"');
     expect(appSource).toContain('XY Music');
   });
 
@@ -26,7 +29,7 @@ describe('concept edition preservation', () => {
 
   it('keeps concept about behavior and excludes unrelated official layout ports', () => {
     expect(aboutSource).toContain("id: 'concept'");
-    expect(aboutSource).toContain("id: 'xianyu-music'");
+    expect(aboutSource).toContain("id: 'xy-music'");
     expect(aboutSource).toContain('维护中，暂不可用');
     expect(mainShellSource).not.toContain('TopBarControlItem');
     expect(mainShellSource).not.toContain('SettingsTopBarLayout');

@@ -115,8 +115,8 @@ export async function uploadSettings(settings: AppSettings): Promise<SettingsSyn
 
   const ciyuanxiId = getCiyuanxiId();
   if (!ciyuanxiId) {
-    logSyncError('uploadSettings: 未获取到弦予号');
-    result.errors.push('未登录或未获取到弦予号');
+    logSyncError('uploadSettings: 未获取到 XY 号');
+    result.errors.push('未登录或未获取到 XY 号');
     return result;
   }
 
@@ -167,8 +167,8 @@ export async function downloadSettings(): Promise<{ settings: AppSettings | null
 
   const ciyuanxiId = getCiyuanxiId();
   if (!ciyuanxiId) {
-    logSyncError('downloadSettings: 未获取到弦予号');
-    result.errors.push('未登录或未获取到弦予号');
+    logSyncError('downloadSettings: 未获取到 XY 号');
+    result.errors.push('未登录或未获取到 XY 号');
     return { settings: null, uploadedAt: null, result };
   }
 

@@ -35,7 +35,8 @@ interface DownloadedWallpaper extends Wallpaper {
 
 type WallpaperTab = 'browse' | 'mine' | 'downloads';
 
-const DOWNLOADED_WALLPAPERS_KEY = 'xianyu_downloaded_wallpapers_v1';
+const DOWNLOADED_WALLPAPERS_KEY = 'xy_downloaded_wallpapers_v1';
+const LEGACY_DOWNLOADED_WALLPAPERS_KEY = 'xianyu_downloaded_wallpapers_v1';
 
 const wallpapers = ref<Wallpaper[]>([]);
 const isLoading = ref(true);
@@ -62,7 +63,7 @@ const activeTab = ref<WallpaperTab>('browse');
 
 // 登录态
 const auth = getStoredAuth();
-const isLoggedIn = computed(() => !!auth && !!auth.user?.ciyuanxi_id);
+const isLoggedIn = computed(() => !!auth && !!(auth.user?.ciyuanxi_id ?? auth.user?.xymusic_id));
 const currentUser = computed(() => auth?.user);
 
 // 我的上传
@@ -123,12 +124,12 @@ const fetchWallpapers = async () => {
 };
 
 const fetchMyWallpapers = async () => {
-  if (!isLoggedIn.value || !currentUser.value?.ciyuanxi_id) return;
+  if (!isLoggedIn.value || !(currentUser.value?.ciyuanxi_id ?? currentUser.value?.xymusic_id)) return;
   myLoading.value = true;
   myError.value = '';
   try {
     const data = await signedRequest<Record<string, unknown>[]>('my_wallpapers', {
-      ciyuanxi_id: currentUser.value.ciyuanxi_id,
+      xymusic_id: currentUser.value.ciyuanxi_id ?? currentUser.value.xymusic_id,
     });
     myWallpapers.value = Array.isArray(data) ? data.map(w => ({
       id: Number(w.id || 0),
@@ -153,11 +154,19 @@ const fetchMyWallpapers = async () => {
 
 const loadDownloadedWallpapers = () => {
   try {
-    const raw = localStorage.getItem(DOWNLOADED_WALLPAPERS_KEY);
+    const currentRaw = localStorage.getItem(DOWNLOADED_WALLPAPERS_KEY);
+    const legacyRaw = currentRaw === null
+      ? localStorage.getItem(LEGACY_DOWNLOADED_WALLPAPERS_KEY)
+      : null;
+    const raw = currentRaw ?? legacyRaw;
     const parsed = raw ? JSON.parse(raw) : [];
     downloadedWallpapers.value = Array.isArray(parsed)
       ? parsed.filter((item): item is DownloadedWallpaper => !!item && typeof item.id === 'number' && typeof item.localPath === 'string')
       : [];
+    if (currentRaw === null && legacyRaw !== null) {
+      localStorage.setItem(DOWNLOADED_WALLPAPERS_KEY, legacyRaw);
+      localStorage.removeItem(LEGACY_DOWNLOADED_WALLPAPERS_KEY);
+    }
   } catch {
     downloadedWallpapers.value = [];
   }
@@ -165,6 +174,7 @@ const loadDownloadedWallpapers = () => {
 
 const persistDownloadedWallpapers = () => {
   localStorage.setItem(DOWNLOADED_WALLPAPERS_KEY, JSON.stringify(downloadedWallpapers.value));
+  localStorage.removeItem(LEGACY_DOWNLOADED_WALLPAPERS_KEY);
 };
 
 const downloadedIdSet = computed(() => new Set(downloadedWallpapers.value.map(item => item.id)));
@@ -286,7 +296,7 @@ const compressImageToDataUrl = (file: File, maxWidth = 1920, quality = 0.85): Pr
 };
 
 const doUpload = async () => {
-  if (!isLoggedIn.value || !currentUser.value?.ciyuanxi_id) {
+  if (!isLoggedIn.value || !(currentUser.value?.ciyuanxi_id ?? currentUser.value?.xymusic_id)) {
     uploadError.value = '请先登录';
     return;
   }
@@ -307,7 +317,7 @@ const doUpload = async () => {
     await signedRequest(
       'upload_wallpaper',
       {
-        ciyuanxi_id: currentUser.value.ciyuanxi_id,
+        xymusic_id: currentUser.value.ciyuanxi_id ?? currentUser.value.xymusic_id,
         nickname: currentUser.value.nickname || currentUser.value.username || '',
         title,
         description: uploadForm.value.description.trim(),

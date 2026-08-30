@@ -616,7 +616,10 @@ const authStore = useAuthStore();
     const totalDuration = accumulatedTime + currentSession;
     const shouldPersist = totalDuration >= 10 || (currentPlayCountRecorded && totalDuration > 0);
 
-    // 上报用户播放行为到后台统计（不受 shouldPersist 限制，确保切歌/暂停都能及时上报）
+    // report_user_behavior 的 listen_duration 是服务端按增量相加的字段。
+    // 只有本次片段真正达到本地统计的结算阈值时才上报；否则下面会把
+    // accumulatedTime 保留下来，下一次 flush 会再次包含它，若提前上报就会
+    // 把同一段不足 10 秒的时长重复累加到云端排行榜。
     const user = authStore.user;
     let songSource = 'local';
     if (song.path.startsWith('lx://')) {
@@ -626,20 +629,19 @@ const authStore = useAuthStore();
     } else if (song.path.startsWith('plugin://')) {
       songSource = song.path.slice('plugin://'.length).split('/')[0] || 'plugin';
     }
-    reportUserBehavior({
-      song_id: song.id != null ? String(song.id) : song.path,
-      song_name: song.name,
-      singer: song.artist || '',
-      song_hash: song.path,
-      source: songSource,
-      action: totalDuration >= 10 ? (currentPlayCountRecorded ? 'switch' : 'play') : 'switch',
-      listen_duration: Math.floor(totalDuration),
-      play_count: totalDuration >= 10 && !currentPlayCountRecorded ? 1 : 0,
-      ciyuanxi_id: user?.ciyuanxi_id,
-      user_id: user?.id ? Number(user.id) : undefined,
-    });
-
     if (shouldPersist) {
+      reportUserBehavior({
+        song_id: song.id != null ? String(song.id) : song.path,
+        song_name: song.name,
+        singer: song.artist || '',
+        song_hash: song.path,
+        source: songSource,
+        action: currentPlayCountRecorded ? 'switch' : 'play',
+        listen_duration: Math.floor(totalDuration),
+        play_count: currentPlayCountRecorded ? 0 : 1,
+        xymusic_id: user?.ciyuanxi_id ?? user?.xymusic_id,
+      });
+
       const countAsPlay = !currentPlayCountRecorded;
       if (countAsPlay) currentPlayCountRecorded = true;
       playbackApi.recordPlay({

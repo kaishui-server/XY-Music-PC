@@ -316,7 +316,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos();
-        let dir = std::env::temp_dir().join(format!("xianyu_scanner_test_{unique}"));
+        let dir = std::env::temp_dir().join(format!("xy_scanner_test_{unique}"));
         fs::create_dir_all(&dir).expect("create temp dir");
         dir
     }

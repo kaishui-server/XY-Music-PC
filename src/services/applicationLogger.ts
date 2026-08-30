@@ -2,7 +2,8 @@ import { shallowReadonly, shallowRef } from 'vue';
 
 import type { LogLevel, LogSettings } from '../types';
 
-export const APPLICATION_LOG_STORAGE_KEY = 'xianyu_application_logs_v1';
+export const APPLICATION_LOG_STORAGE_KEY = 'xy_application_logs_v1';
+const LEGACY_APPLICATION_LOG_STORAGE_KEY = 'xianyu_application_logs_v1';
 export const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
 const MAX_LOG_ENTRIES = 200;
 const MAX_ERROR_LOG_ENTRIES = 10;
@@ -105,7 +106,15 @@ const normalizeStoredEntry = (value: unknown): ApplicationLogEntry | null => {
 const readStoredEntries = (): ApplicationLogEntry[] => {
   if (typeof localStorage === 'undefined') return [];
   try {
-    const parsed = JSON.parse(localStorage.getItem(APPLICATION_LOG_STORAGE_KEY) ?? '[]') as unknown;
+    const currentRaw = localStorage.getItem(APPLICATION_LOG_STORAGE_KEY);
+    const legacyRaw = currentRaw === null
+      ? localStorage.getItem(LEGACY_APPLICATION_LOG_STORAGE_KEY)
+      : null;
+    const parsed = JSON.parse(currentRaw ?? legacyRaw ?? '[]') as unknown;
+    if (currentRaw === null && legacyRaw !== null) {
+      localStorage.setItem(APPLICATION_LOG_STORAGE_KEY, legacyRaw);
+      localStorage.removeItem(LEGACY_APPLICATION_LOG_STORAGE_KEY);
+    }
     if (!Array.isArray(parsed)) return [];
     return parsed.map(normalizeStoredEntry).filter((entry): entry is ApplicationLogEntry => !!entry);
   } catch {
@@ -316,7 +325,7 @@ export function formatApplicationLogExport(
 ) {
   const selected = mode === 'error' ? source.filter(entry => entry.level === 'error') : source;
   const header = [
-    '弦予音乐调试日志',
+    'XY Music 调试日志',
     `导出范围：${mode === 'error' ? '错误日志' : '全部日志'}`,
     `导出时间：${new Date().toISOString()}`,
     `日志数量：${selected.length}`,

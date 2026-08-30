@@ -21,3 +21,18 @@ describe('App imported lyrics fonts registration', () => {
     expect(source).not.toContain('if (!isDesktopLyricsWindow)');
   });
 });
+
+describe('App Tauri window lifecycle', () => {
+  it('guards native window APIs outside the Tauri runtime', () => {
+    expect(source).toContain("import { isTauri } from '@tauri-apps/api/core';");
+    expect(source).toContain('const runningInTauri = isTauri();');
+    expect(source).toContain('if (runningInTauri) {');
+  });
+
+  it('catches asynchronous listener cleanup failures during HMR', () => {
+    expect(source).toContain('const disposeTauriListener = (');
+    expect(source).toContain('.then(() => unlisten())');
+    expect(source).toContain("disposeTauriListener(unlistenCloseRequested, 'close-requested');");
+    expect(source).toContain("disposeTauriListener(unlistenFocusChanged, 'focus-changed');");
+  });
+});

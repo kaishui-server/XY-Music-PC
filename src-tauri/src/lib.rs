@@ -89,7 +89,7 @@ use toolbox::{
     apply_rename, build_download_basename, check_update_by_rust,
     clear_player_detail_fallback_cover, decrypt_qmc_file, delete_wallpaper_file,
     download_online_song, download_update_file, download_wallpaper, embed_audio_metadata,
-    fetch_announcement, fetch_image_bytes, file_exists, finalize_download_extras,
+    fetch_image_bytes, file_exists, finalize_download_extras,
     import_player_detail_fallback_cover, open_external_program, preview_rename, probe_url_size,
     read_download_history, read_state_json, refresh_folder_songs, resolve_download_full_path,
     resolve_download_path, run_installer, save_download_bytes, save_download_lyrics,
@@ -117,7 +117,9 @@ pub fn run() {
         // 仅设置当前进程的 AppUserModelID 字符串，无副作用。
         unsafe {
             use windows_sys::Win32::UI::Shell::SetCurrentProcessExplicitAppUserModelID;
-            let app_id: Vec<u16> = "com.xymusic.desktop\0".encode_utf16().collect();
+            // 必须使用 XY Music 自己的 AppUserModelID，不能继续沿用旧版 XianYu
+            // 的 com.xymusic.desktop，否则 Windows 会把两个程序归到同一个任务栏组。
+            let app_id: Vec<u16> = "com.xymusic.concept\0".encode_utf16().collect();
             let _ = SetCurrentProcessExplicitAppUserModelID(app_id.as_ptr());
         }
 
@@ -335,7 +337,6 @@ pub fn run() {
             build_download_basename,
             finalize_download_extras,
             run_installer,
-            fetch_announcement,
             write_state_json,
             read_state_json,
             open_devtools,

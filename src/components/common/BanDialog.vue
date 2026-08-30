@@ -33,7 +33,7 @@ async function handleSubmit() {
       <div class="ban-card">
         <div class="ban-icon">!</div>
         <h3>{{ title }}</h3>
-        <p class="ban-account">{{ banDialogState.ciyuanxiId ? `弦予号 ${banDialogState.ciyuanxiId}` : '当前设备已受限' }}</p>
+        <p class="ban-account">{{ banDialogState.ciyuanxiId ? `XY 号 ${banDialogState.ciyuanxiId}` : '当前设备已受限' }}</p>
         <div class="ban-content">
           <p v-if="!appealing">{{ banDialogState.reason || '如有疑问，请联系管理员或提交申诉。' }}</p>
           <template v-else><textarea v-model="appealText" maxlength="1000" rows="4" placeholder="请填写申诉理由…"></textarea><small>{{ appealText.length }} / 1000</small></template>

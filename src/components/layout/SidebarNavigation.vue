@@ -71,6 +71,8 @@ const activeKey = computed<SidebarItemKey | null>(() => {
   }
 
   switch (currentPath) {
+    case '/explore':
+      return 'explore';
     case '/artists':
       return 'artists';
     case '/albums':

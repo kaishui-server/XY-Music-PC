@@ -62,7 +62,8 @@ export type { PluginUpdateCheckResult } from './pluginUpdates';
 
 // ==================== 常量 ====================
 
-const PLUGIN_SOURCES_KEY = 'xianyu_plugin_sources_v4';
+const PLUGIN_SOURCES_KEY = 'xy_plugin_sources_v4';
+const LEGACY_PLUGIN_SOURCES_KEY = 'xianyu_plugin_sources_v4';
 const PLUGIN_SOURCES_KEY_LEGACY = 'xianyu_plugin_sources_v3';
 const MAX_PLUGIN_SIZE = 2 * 1024 * 1024;
 
@@ -950,10 +951,31 @@ export function getLastPluginError(): string {
 
 // ==================== 插件歌单搜索 ====================
 
+/**
+ * 少数插件不识别 search 的第三个参数，会把歌曲结果返回给 sheet/playlist 查询。
+ * 这类结果不能直接当作歌单展示，否则探索页的歌曲和歌单会完全重复。
+ */
+const isPlaylistSearchCandidate = (item: any): boolean => {
+  if (!item || typeof item !== 'object') return false;
+  const raw = item.rawData && typeof item.rawData === 'object' ? item.rawData : item;
+  const hasPlaylistMarker = [
+    'trackCount', 'trackcount', 'track_count', 'songCount', 'songcount',
+    'song_count', 'trackNum', 'tracknum', 'playlistId', 'sheetId',
+  ].some(key => raw[key] !== undefined && raw[key] !== null);
+  const hasSongMarker = [
+    'duration', 'interval', 'dt', 'timelength', 'songTime', 'songname',
+    'musicId', 'songId',
+  ].some(key => raw[key] !== undefined && raw[key] !== null);
+  return hasPlaylistMarker || !hasSongMarker;
+};
+
+const filterPlaylistSearchCandidates = (items: any[]) => items.filter(isPlaylistSearchCandidate);
+
 export async function pluginPlaylistSearch(
   source: PluginSource,
   keyword: string,
   page: number,
+  options: { allowFallback?: boolean } = {},
 ): Promise<PluginPlaylistSearchResult[]> {
   const inst = await ensurePluginInstance(source);
   if (!inst) return [];
@@ -963,15 +985,18 @@ export async function pluginPlaylistSearch(
 
     // 尝试 'sheet' 类型；部分插件使用 'playlist' 类型
     let result = (await inst.instance.search(keyword, page, 'sheet')) ?? {};
-    let list = extractResultList(result);
+    let list = filterPlaylistSearchCandidates(extractResultList(result));
     if (list.length === 0) {
       result = (await inst.instance.search(keyword, page, 'playlist')) ?? {};
-      list = extractResultList(result);
+      list = filterPlaylistSearchCandidates(extractResultList(result));
     }
+    // 推荐歌单只能接受插件明确提供的 sheet/playlist 搜索结果。
+    // 专辑和排行榜回退项虽然可用于普通搜索，但会制造“只有一首歌”的假歌单。
+    if (list.length === 0 && options.allowFallback === false) return [];
     // 回退 0: 尝试 'album' 类型，将专辑也索引到歌单页
     if (list.length === 0) {
       result = (await inst.instance.search(keyword, page, 'album')) ?? {};
-      list = extractResultList(result);
+      list = filterPlaylistSearchCandidates(extractResultList(result));
       if (list.length > 0) {
         return list.map((item: any) => {
           resetMediaItem(item, source.name);
@@ -1076,6 +1101,56 @@ export async function pluginPlaylistSearch(
     });
   } catch (e: any) {
     log(`[${source.name}] 歌单搜索失败: ${e?.message}`);
+    return [];
+  }
+}
+
+/**
+ * 获取 MusicFree 插件提供的热门榜单，并统一为可直接打开的歌单条目。
+ * 探索页与搜索页共用同一套插件实例和详情解析逻辑。
+ */
+export async function pluginTopListSearch(
+  source: PluginSource,
+): Promise<PluginPlaylistSearchResult[]> {
+  const inst = await ensurePluginInstance(source);
+  if (!inst || typeof inst.instance.getTopLists !== 'function') return [];
+
+  try {
+    const raw = await inst.instance.getTopLists();
+    const categories = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+    const results: PluginPlaylistSearchResult[] = [];
+
+    for (const category of categories) {
+      const entries = Array.isArray(category?.data)
+        ? category.data
+        : Array.isArray(category?.list)
+          ? category.list
+          : (category?.id || category?.title || category?.name ? [category] : []);
+
+      for (const item of entries) {
+        const id = String(item?.id ?? item?.topId ?? item?.key ?? '');
+        const title = stripHtmlTags(String(item?.title ?? item?.name ?? item?.label ?? ''));
+        if (!title) continue;
+        results.push({
+          id,
+          title,
+          coverUrl: extractCoverUrl(item) || String(item?.coverImg ?? item?.cover ?? ''),
+          playCount: item?.playCount ?? item?.playcount ?? item?.play_count,
+          trackCount: item?.trackCount ?? item?.trackcount ?? item?.track_count,
+          artist: stripHtmlTags(String(category?.title ?? category?.name ?? '')),
+          platform: source.name,
+          platformId: id,
+          pluginId: source.id,
+          rawData: { ...item, _isTopList: true },
+        });
+        if (results.length >= 8) break;
+      }
+      if (results.length >= 8) break;
+    }
+
+    return results;
+  } catch (error: any) {
+    log(`[${source.name}] 获取热门榜单失败: ${error?.message || error}`);
     return [];
   }
 }
@@ -2151,16 +2226,24 @@ async function ensurePluginInstance(source: PluginSource): Promise<PluginInstanc
 
 // ==================== 用户变量存储 ====================
 
-// 每个插件的用户变量值独立存储，key 格式: xianyu_plugin_user_vars_<pluginId>
-const userVarKey = (pluginId: string) => `xianyu_plugin_user_vars_${pluginId}`;
+// 每个插件的用户变量值独立存储，key 格式: xy_plugin_user_vars_<pluginId>
+const userVarKey = (pluginId: string) => `xy_plugin_user_vars_${pluginId}`;
+const legacyUserVarKey = (pluginId: string) => `xianyu_plugin_user_vars_${pluginId}`;
 
 /** 读取指定插件的用户变量值 */
 export function getPluginUserVariableValues(pluginId: string): Record<string, string> {
   try {
     const storageKey = userVarKey(pluginId);
-    const raw = localStorage.getItem(storageKey);
+    const legacyKey = legacyUserVarKey(pluginId);
+    const currentRaw = localStorage.getItem(storageKey);
+    const legacyRaw = currentRaw === null ? localStorage.getItem(legacyKey) : null;
+    const raw = currentRaw ?? legacyRaw;
     if (raw) {
       const parsed = JSON.parse(raw);
+      if (currentRaw === null && legacyRaw !== null) {
+        localStorage.setItem(storageKey, legacyRaw);
+        localStorage.removeItem(legacyKey);
+      }
       const keys = Object.keys(parsed);
       log(`[getPluginUserVariableValues] pluginId=${pluginId.substring(0, 12)}... storageKey=${storageKey.substring(0, 40)}... keys=[${keys.join(',')}] count=${keys.length}`);
       return parsed;
@@ -2181,6 +2264,7 @@ export function setPluginUserVariableValues(pluginId: string, values: Record<str
       log(`[setPluginUserVariableValues]  ${k}=${values[k] ? '(已设置,' + String(values[k]).length + '字符)' : '(空)'}`);
     }
     localStorage.setItem(userVarKey(pluginId), JSON.stringify(values));
+    localStorage.removeItem(legacyUserVarKey(pluginId));
   } catch (e) {
     log(`[setPluginUserVariableValues] 保存异常: ${e}`);
   }
@@ -2190,6 +2274,7 @@ export function setPluginUserVariableValues(pluginId: string, values: Record<str
 function removePluginUserVariableValues(pluginId: string) {
   try {
     localStorage.removeItem(userVarKey(pluginId));
+    localStorage.removeItem(legacyUserVarKey(pluginId));
   } catch { /* ignore */ }
 }
 
@@ -2322,18 +2407,23 @@ export function reloadPluginInstance(pluginId: string) {
 // 所有插件（内置 + 用户导入）都持久化到 localStorage，跨重启保留。
 function readPluginsFromLocalStorage(): PluginSource[] {
   try {
-    const raw = localStorage.getItem(PLUGIN_SOURCES_KEY);
-    if (raw) return JSON.parse(raw);
+    const currentRaw = localStorage.getItem(PLUGIN_SOURCES_KEY);
+    const brandedV4Raw = currentRaw === null
+      ? localStorage.getItem(LEGACY_PLUGIN_SOURCES_KEY)
+      : null;
+    const legacyRaw = currentRaw === null && brandedV4Raw === null
+      ? localStorage.getItem(PLUGIN_SOURCES_KEY_LEGACY)
+      : null;
+    const raw = currentRaw ?? brandedV4Raw ?? legacyRaw;
+    if (!raw) return [];
 
-    const legacyRaw = localStorage.getItem(PLUGIN_SOURCES_KEY_LEGACY);
-    if (legacyRaw) {
-      const legacyPlugins = JSON.parse(legacyRaw);
-      localStorage.setItem(PLUGIN_SOURCES_KEY, legacyRaw);
+    const plugins = JSON.parse(raw);
+    if (currentRaw === null) {
+      localStorage.setItem(PLUGIN_SOURCES_KEY, raw);
+      localStorage.removeItem(LEGACY_PLUGIN_SOURCES_KEY);
       localStorage.removeItem(PLUGIN_SOURCES_KEY_LEGACY);
-      return legacyPlugins;
     }
-
-    return [];
+    return plugins;
   } catch {
     return [];
   }

@@ -702,18 +702,18 @@ pub async fn download_update_file(
     let url_lower = url.to_lowercase();
     let filename = if url_lower.contains(".msi") {
         if url_lower.contains("portable") {
-            "XianYu.Player_Setup_Portable.msi"
+            "XY.Player_Setup_Portable.msi"
         } else {
-            "XianYu.Player_Setup_Standard.msi"
+            "XY.Player_Setup_Standard.msi"
         }
     } else if url_lower.contains(".exe") {
         if url_lower.contains("portable") {
-            "XianYu.Player_Setup_Portable.exe"
+            "XY.Player_Setup_Portable.exe"
         } else {
-            "XianYu.Player_Setup_Standard.exe"
+            "XY.Player_Setup_Standard.exe"
         }
     } else {
-        "XianYu.Player_Setup.msi"
+        "XY.Player_Setup.msi"
     };
     let dest_path = download_dir.join(filename);
 
@@ -1397,70 +1397,6 @@ pub async fn probe_url_size(url: String) -> Result<ProbeUrlInfo, String> {
         size: 0,
         error: Some(format!("HTTP {status}")),
     })
-}
-
-#[tauri::command]
-pub async fn fetch_announcement() -> Result<String, String> {
-    // 公告数据源：自建服务器（xy.zh2026.cn），接口返回 {code, msg, data}
-    // data 为公告对象或 null（无启用公告）。这里解包 data 后返回纯公告 JSON，前端接口无需改动。
-    let url = "https://xy.zh2026.cn/chaoguan/public/api/app.php?action=app_announcement";
-
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(15))
-        .user_agent("XY-Music-Updater")
-        .http1_only() // 强制 HTTP/1.1，规避服务器 TLS 重协商下 HTTP/2 的兼容问题
-        .build()
-        .map_err(|e| format!("创建请求客户端失败: {e}"))?;
-
-    let resp = client
-        .get(url)
-        .header("Accept", "application/json")
-        .header("Cache-Control", "no-cache")
-        .send()
-        .await
-        .map_err(|e| {
-            // 打印完整错误链，便于诊断 TLS / DNS / 连接问题
-            let mut msg = format!("请求公告接口失败: {e}");
-            let mut src = std::error::Error::source(&e);
-            while let Some(s) = src {
-                msg.push_str(&format!(" | {s}"));
-                src = s.source();
-            }
-            msg
-        })?;
-
-    let status = resp.status();
-    let text = resp
-        .text()
-        .await
-        .map_err(|e| format!("读取公告数据失败: {e}"))?;
-
-    if !status.is_success() {
-        let snippet: String = text.chars().take(200).collect();
-        return Err(format!("公告接口返回错误状态: {status} | 响应: {snippet}"));
-    }
-
-    // 解包 {code, msg, data}：仅 code==200 时取 data
-    match serde_json::from_str::<serde_json::Value>(&text) {
-        Ok(v) => {
-            let code = v.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
-            if code == 200 {
-                match v.get("data") {
-                    Some(d) if !d.is_null() => return Ok(d.to_string()),
-                    _ => return Ok("{}".to_string()), // 无启用公告
-                }
-            }
-            let msg = v
-                .get("msg")
-                .and_then(|m| m.as_str())
-                .unwrap_or("公告接口返回未知错误");
-            Err(format!("公告接口返回错误: {msg}"))
-        }
-        Err(_) => {
-            let snippet: String = text.chars().take(200).collect();
-            Err(format!("公告数据解析失败，原始响应: {snippet}"))
-        }
-    }
 }
 
 #[tauri::command]

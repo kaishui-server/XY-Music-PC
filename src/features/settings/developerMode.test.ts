@@ -23,13 +23,13 @@ describe('developer mode settings entry', () => {
     expect(aboutSource).toContain("showToast('已进入开发者模式', 'success')");
   });
 
-  it('separates concept-edition and XianYu Music developer credits', () => {
+  it('separates concept-edition and XY Music developer credits', () => {
     const conceptCredits = aboutSource.slice(
       aboutSource.indexOf("id: 'concept'"),
-      aboutSource.indexOf("id: 'xianyu-music'"),
+      aboutSource.indexOf("id: 'xy-music'"),
     );
-    const xianyuMusicCredits = aboutSource.slice(
-      aboutSource.indexOf("id: 'xianyu-music'"),
+    const xyMusicCredits = aboutSource.slice(
+      aboutSource.indexOf("id: 'xy-music'"),
       aboutSource.indexOf('] as const;'),
     );
 
@@ -38,11 +38,11 @@ describe('developer mode settings entry', () => {
     expect(conceptCredits).not.toContain("label: '@ShenYichenCN'");
     expect(conceptCredits).not.toContain("label: '@知难辞'");
     expect(conceptCredits).not.toContain("label: '@TaXiaoQi'");
-    expect(xianyuMusicCredits).toContain("title: '弦予音乐'");
-    expect(xianyuMusicCredits).toContain("label: '@ShenYichenCN'");
-    expect(xianyuMusicCredits).toContain("label: '@知难辞'");
-    expect(xianyuMusicCredits).toContain("label: '@绛狐'");
-    expect(xianyuMusicCredits).toContain("label: '@TaXiaoQi'");
+    expect(xyMusicCredits).toContain("title: 'XY Music'");
+    expect(xyMusicCredits).toContain("label: '@ShenYichenCN'");
+    expect(xyMusicCredits).toContain("label: '@知难辞'");
+    expect(xyMusicCredits).toContain("label: '@绛狐'");
+    expect(xyMusicCredits).toContain("label: '@TaXiaoQi'");
   });
 
   it('shows Debug only in developer mode and allows exiting it', () => {

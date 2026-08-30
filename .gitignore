@@ -55,6 +55,7 @@ src-tauri/examples/*_probe.rs
 /test_*.txt
 
 .codex/
+target-codex-debug/
 
 tool/
 
@@ -81,4 +82,3 @@ AGENTS.md
 
 # --- NarraFork 计划/临时文件 ---
 .narrafork/
-

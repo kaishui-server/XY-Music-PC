@@ -57,6 +57,8 @@ const props = defineProps<{
   showAddToPlaylist?: boolean;
   /** 是否在详情展示模式显示"收藏至歌单"入口，默认跟随 showAddToPlaylist */
   showHeaderAddToPlaylist?: boolean;
+  /** 详情展示模式歌单操作按钮文案 */
+  headerAddToPlaylistLabel?: string;
   /** 在线封面 URL（readOnly 模式下优先使用） */
   coverUrlOverride?: string;
   /** 滚动容器引用，用于驱动封面收缩效果 */
@@ -92,6 +94,7 @@ const shouldShowAddToPlaylist = computed(() => props.showAddToPlaylist !== false
 const shouldShowHeaderAddToPlaylist = computed(() =>
   props.showHeaderAddToPlaylist ?? shouldShowAddToPlaylist.value,
 );
+const headerAddToPlaylistLabel = computed(() => props.headerAddToPlaylistLabel ?? '收藏至歌单');
 
 const headerCover = ref('');
 let coverRequestId = 0;
@@ -308,11 +311,11 @@ const handlePlayAll = () => {
            <button
              v-if="shouldShowHeaderAddToPlaylist"
              @click="emit('openAddToPlaylist')"
-             title="收藏至歌单"
+             :title="headerAddToPlaylistLabel"
              class="bg-white/1 hover:bg-white/10 border border-white/1 text-gray-900 dark:text-gray-100 px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 active:scale-95 shadow-sm hover:border-gray-200 dark:hover:border-white/20"
            >
              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-             收藏至歌单
+             {{ headerAddToPlaylistLabel }}
            </button>
            
            <button

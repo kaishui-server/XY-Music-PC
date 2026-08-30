@@ -38,7 +38,7 @@ export async function getServerLoad(): Promise<ServerLoadStatus | null> {
 
   try {
     const data = await signedRequest<ServerLoadStatus>('get_server_load', {
-      user_id: ciyuanxiId,
+      xymusic_id: ciyuanxiId,
     });
 
     return {
@@ -123,7 +123,7 @@ export class AutoSyncScheduler {
     }
 
     if (!this.canSync()) {
-      log('start: 未登录或无弦予号，跳过');
+      log('start: 未登录或无 XY 号，跳过');
       return;
     }
 

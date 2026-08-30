@@ -13,7 +13,7 @@ vi.mock('@applemusic-like-lyrics/lyric/pkg/amll_lyric.js', async () => {
   const cwd = (globalThis as any).process?.cwd?.() ?? '.';
 
   const pkgDir = path.resolve(cwd, 'node_modules', '@applemusic-like-lyrics', 'lyric', 'pkg');
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'xianyu-amll-'));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'xy-amll-'));
   const tempModulePath = path.join(tempDir, 'amll_lyric_bg.mjs');
 
   await fs.copyFile(path.join(pkgDir, 'amll_lyric_bg.js'), tempModulePath);
@@ -1005,10 +1005,12 @@ describe('lyrics settings normalization', async () => {
     expect(normalized.showDoubleLine).toBe(false);
   });
 
-  it('defaults desktop word effect to enabled', () => {
+  it('defaults desktop lyrics to solid-color lines without word gradients', () => {
     const normalized = normalizeDesktopLyricsSettingsPatch({});
 
-    expect(normalized.enableWordEffect).toBe(true);
+    expect(normalized.enableWordEffect).toBe(false);
+    expect(normalized.colorScheme).toBe('default');
+    expect(normalized.isAlwaysOnTop).toBe(true);
   });
 
   it('restores desktop split-corner alignment from migrated settings', () => {

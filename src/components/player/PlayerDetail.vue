@@ -49,7 +49,7 @@ const shouldRenderHeavyContent = ref(false);
 let heavyContentFrameId: number | null = null;
 
 // 封面组件（PlayerDetailLeft）单独提前挂载：有歌曲播放时即渲染，
-// 避免第一首歌底栏无封面承接（歌词页打开前 PlayerDetailLeft 未挂载的窗口期）。
+// 为详情页展开动画保留承接点；底栏封面由 PlayerFooter 独立负责显示。
 // 其他重型内容（LyricsView/QueueList 等）仍受 shouldRenderHeavyContent 延迟加载。
 //
 // 第一首歌特殊处理：PlayerDetailLeft 尚未挂载，飞行动画飞向固定坐标兜底位置。
@@ -420,10 +420,8 @@ const resolveInitialCoverHidden = () => {
   return false;
 };
 
-// 退出详情页时临时恢复封面，避免与详情页共用元素的底栏封面消失；
+// 底栏和详情页使用独立封面元素。退出详情页时恢复底栏封面，
 // 再次打开时按“展示 / 隐藏 / 跟随上次选择”应用初始状态。
-// 详情页封面与底栏封面是同一个元素（靠 isExpanded 切换位置/大小），
-// 因此关闭期间 coverHidden 必须为 false，但不会覆盖上次手动选择的持久状态。
 watch(showPlayerDetail, (visible) => {
   coverHidden.value = visible ? resolveInitialCoverHidden() : false;
 });

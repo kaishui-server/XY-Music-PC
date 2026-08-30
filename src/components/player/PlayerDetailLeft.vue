@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useCoverCache } from '../../composables/useCoverCache';
 import { usePlaybackController } from '../../features/playback/usePlaybackController';
@@ -177,6 +177,54 @@ const onFallbackCoverError = () => {
 const detailCoverRef = ref<HTMLElement | null>(null);
 defineExpose({ detailCoverRef });
 
+// 详情封面需要在收起状态保留一个不可见的动画承接点，
+// 这样从底栏展开详情时仍能从小封面平滑放大，而不会在页面上显示第二份封面。
+const collapsedCoverStyle = ref<Record<string, string>>({});
+let footerCoverResizeObserver: ResizeObserver | null = null;
+let collapsedCoverFrame = 0;
+
+const syncCollapsedCoverPosition = () => {
+  if (props.isExpanded) return;
+
+  const footerCover = document.querySelector<HTMLElement>('[data-footer-cover]');
+  if (!footerCover) return;
+
+  const rect = footerCover.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+
+  collapsedCoverStyle.value = {
+    top: `${rect.top}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  };
+};
+
+const scheduleCollapsedCoverPositionSync = () => {
+  if (collapsedCoverFrame) cancelAnimationFrame(collapsedCoverFrame);
+  collapsedCoverFrame = requestAnimationFrame(() => {
+    collapsedCoverFrame = 0;
+    syncCollapsedCoverPosition();
+  });
+};
+
+onMounted(() => {
+  void nextTick(scheduleCollapsedCoverPositionSync);
+  window.addEventListener('resize', scheduleCollapsedCoverPositionSync);
+  footerCoverResizeObserver = new ResizeObserver(scheduleCollapsedCoverPositionSync);
+  const footerCover = document.querySelector<HTMLElement>('[data-footer-cover]');
+  if (footerCover) footerCoverResizeObserver.observe(footerCover);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', scheduleCollapsedCoverPositionSync);
+  footerCoverResizeObserver?.disconnect();
+  footerCoverResizeObserver = null;
+  if (collapsedCoverFrame) {
+    cancelAnimationFrame(collapsedCoverFrame);
+    collapsedCoverFrame = 0;
+  }
+});
+
 const handleCoverClick = (event: MouseEvent) => {
   event.stopPropagation();
   emit('toggle-cover');
@@ -191,14 +239,17 @@ const handleCoverClick = (event: MouseEvent) => {
       ref="detailCoverRef"
       class="absolute aspect-square transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] z-[70] will-change-transform"
       :class="[
-        props.isExpanded ? 'top-[45%] left-[calc(75px+18%)] -translate-x-1/2 -translate-y-1/2 w-[clamp(220px,45vh,580px)] rounded-2xl' : 'top-[calc(100vh-64px)] left-[16px] translate-x-0 translate-y-0 w-12 rounded-lg',
-        props.coverHidden ? 'opacity-0 pointer-events-none' : (props.isExpanded ? 'pointer-events-auto cursor-pointer' : 'pointer-events-none'),
+        props.isExpanded
+          ? 'top-[45%] left-[calc(75px+18%)] -translate-x-1/2 -translate-y-1/2 w-[clamp(220px,45vh,580px)] rounded-2xl'
+          : 'top-[calc(100vh-76px)] left-[16px] translate-x-0 translate-y-0 w-12 rounded-lg opacity-0 pointer-events-none',
+        props.isExpanded && props.coverHidden ? 'opacity-0 pointer-events-none' : '',
+        props.isExpanded && !props.coverHidden ? 'pointer-events-auto cursor-pointer' : '',
       ]"
       :style="{
         boxShadow: props.isExpanded && isPlaying
           ? `0 30px 60px -12px rgba(0,0,0,0.6), 0 18px 36px -18px rgba(0,0,0,0.7), 0 0 80px -20px ${dominantColors[0]}44`
-          : (props.isExpanded ? `0 10px 20px -5px rgba(0,0,0,0.4)` : 'none'),
-        transform: props.isExpanded ? (isPlaying ? 'scale(1)' : 'scale(1)') : 'scale(1)',
+          : (props.isExpanded ? '0 10px 20px -5px rgba(0,0,0,0.4)' : 'none'),
+        ...(props.isExpanded ? {} : collapsedCoverStyle),
       }"
       @click="handleCoverClick"
     >

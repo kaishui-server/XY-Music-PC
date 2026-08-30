@@ -370,7 +370,7 @@ fn build_tray<R: tauri::Runtime>(app: &tauri::App<R>) -> tauri::Result<()> {
                 .ok_or_else(|| std::io::Error::other("no default window icon"))?
                 .clone(),
         )
-        .tooltip("弦予音乐")
+        .tooltip("XY Music")
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| {
             let action = event.id().as_ref();

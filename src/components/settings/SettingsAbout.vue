@@ -22,8 +22,8 @@ const aboutSections = [
     ],
   },
   {
-    id: 'xianyu-music',
-    title: '弦予音乐',
+    id: 'xy-music',
+    title: 'XY Music',
     versionLabel: '正式版',
     developerModeEntry: false,
     developers: [
@@ -132,7 +132,7 @@ onUnmounted(stopAboutConfigPolling);
       <div class="flex min-w-0 flex-col items-center gap-3 text-center">
       <div class="flex items-center justify-center">
         <img
-          src="/logo.png"
+          src="/logo.jpg"
           alt="Logo"
           class="h-28 w-28 object-contain dark:invert"
         />

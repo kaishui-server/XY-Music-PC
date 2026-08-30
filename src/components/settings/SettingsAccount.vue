@@ -107,11 +107,11 @@ async function submitCiyuanxi() {
   const oldId = ciyuanxiForm.value.oldId.trim();
   const newId = ciyuanxiForm.value.newId.trim();
   if (!oldId) {
-    showToast('未获取到当前弦予号，请重新登录', 'error');
+    showToast('未获取到当前 XY 号，请重新登录', 'error');
     return;
   }
   if (!/^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/.test(newId)) {
-    showToast('弦予号需 6-20 位，字母开头，仅含字母、数字、下划线、中划线', 'error');
+    showToast('XY 号需 6-20 位，字母开头，仅含字母、数字、下划线、中划线', 'error');
     return;
   }
   if (!ciyuanxiForm.value.password) {
@@ -122,11 +122,11 @@ async function submitCiyuanxi() {
   try {
     const result = await updateCiyuanxiId(oldId, newId, ciyuanxiForm.value.password);
     const user = authStore.user;
-    if (user) authStore.setUser({ ...user, ciyuanxi_id: result.ciyuanxi_id });
+    if (user) authStore.setUser({ ...user, ciyuanxi_id: result.ciyuanxi_id, xymusic_id: result.ciyuanxi_id });
     showCiyuanxiModal.value = false;
-    showToast(result.message || '弦予号修改成功', 'success');
+    showToast(result.message || 'XY 号修改成功', 'success');
   } catch (error) {
-    showToast(error instanceof Error ? error.message : '弦予号修改失败', 'error');
+    showToast(error instanceof Error ? error.message : 'XY 号修改失败', 'error');
   } finally {
     ciyuanxiLoading.value = false;
   }
@@ -147,7 +147,7 @@ function confirmLogout() {
 
 // 上传选项
 const uploadItems: Array<{ key: keyof typeof settingsStore.settings.upload; label: string; desc: string }> = [
-  { key: 'playlists', label: '歌单', desc: '同步本地创建与编辑的歌单' },
+  { key: 'playlists', label: '歌单', desc: '同步本地创建与编辑的歌单（含收藏）' },
   { key: 'plugins', label: '插件', desc: '同步已安装的插件配置' },
   { key: 'settings', label: '本地设置', desc: '同步播放设置、歌词设置、快捷键等偏好配置' },
 ];
@@ -273,9 +273,9 @@ function updateAutoSyncMaxDelay(event: Event) {
 </script>
 
 <template>
-  <div class="w-full space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+  <div class="flex w-full flex-col gap-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
     <!-- 登录状态 -->
-    <section class="space-y-3">
+    <section class="order-0 space-y-3">
       <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
         <span class="w-1 h-4 bg-accent rounded-full"></span>
         账号状态
@@ -315,7 +315,7 @@ function updateAutoSyncMaxDelay(event: Event) {
             </div>
             <div class="text-xs text-gray-500 dark:text-white/50 truncate mt-0.5">
               <template v-if="authStore.isLoggedIn">
-                @{{ authStore.user?.ciyuanxi_id || authStore.user?.username || '未设置弦予号' }} · {{ authStore.user?.email }}
+                @{{ authStore.user?.ciyuanxi_id || authStore.user?.username || '未设置 XY 号' }} · {{ authStore.user?.email }}
               </template>
               <template v-else>登录后可同步个人资料到云端服务器</template>
             </div>
@@ -341,29 +341,29 @@ function updateAutoSyncMaxDelay(event: Event) {
       </div>
     </section>
 
-    <section v-if="authStore.isLoggedIn" class="space-y-3">
+    <section v-if="authStore.isLoggedIn" class="order-2 space-y-3">
       <h2 class="flex items-center justify-between gap-4 text-sm font-bold text-gray-800 dark:text-gray-200">
         <span class="flex items-center gap-2">
           <span class="w-1 h-4 bg-accent rounded-full"></span>
-          弦予号
+          XY 号
         </span>
-        <SettingHint text="弦予号是登录账号的唯一标识，格式为 6-20 位，字母开头，可含数字、下划线或中划线，每月可修改一次。" />
+        <SettingHint text="XY 号是登录账号的唯一标识，格式为 6-20 位，字母开头，可含数字、下划线或中划线，每月可修改一次。" />
       </h2>
       <div class="flex items-center justify-between gap-4 rounded-xl border border-black/10 bg-white/45 p-4 transition-colors hover:bg-white/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
         <div class="min-w-0">
-          <div class="text-xs text-gray-500 dark:text-white/50">当前弦予号</div>
+          <div class="text-xs text-gray-500 dark:text-white/50">当前 XY 号</div>
           <div class="mt-0.5 truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
             @{{ authStore.user?.ciyuanxi_id || authStore.user?.username || '未设置' }}
           </div>
         </div>
         <button type="button" class="shrink-0 border border-black/15 px-4 h-9 rounded-full text-xs font-medium text-black/70 transition hover:border-accent/40 hover:text-accent cursor-pointer dark:text-white/70 dark:border-white/15" @click="openCiyuanxiModal">
-          修改弦予号
+          修改 XY 号
         </button>
       </div>
     </section>
 
     <!-- 服务端设置 -->
-    <section class="space-y-3">
+    <section class="order-2 space-y-3">
       <h2 class="flex items-center justify-between gap-4 text-sm font-bold text-gray-800 dark:text-gray-200">
         <span class="flex items-center gap-2">
           <span class="w-1 h-4 bg-accent rounded-full"></span>
@@ -414,13 +414,13 @@ function updateAutoSyncMaxDelay(event: Event) {
     </section>
 
     <!-- 上传选项 -->
-    <section class="space-y-3">
+    <section v-if="false" class="order-1 space-y-3">
       <h2 class="flex items-center justify-between gap-4 text-sm font-bold text-gray-800 dark:text-gray-200">
         <span class="flex items-center gap-2">
           <span class="w-1 h-4 bg-accent rounded-full"></span>
-          上传
+          账号云同步
         </span>
-        <SettingHint text="选择需要同步到云端的数据类型，关闭后该项数据将仅保留在本地。" />
+        <SettingHint text="在不同设备间同步歌单、收藏、插件和本地偏好设置。" />
       </h2>
       <div class="flex flex-col rounded-xl overflow-hidden bg-white/20 dark:bg-black/10 border border-gray-200/40 dark:border-gray-800/40">
         <div
@@ -449,13 +449,23 @@ function updateAutoSyncMaxDelay(event: Event) {
     </section>
 
     <!-- 手动同步 -->
-    <section v-if="authStore.isLoggedIn" class="space-y-3">
+    <section v-if="false" class="order-1 space-y-3">
       <h2 class="flex items-center justify-between gap-4 text-sm font-bold text-gray-800 dark:text-gray-200">
         <span class="flex items-center gap-2">
           <span class="w-1 h-4 bg-accent rounded-full"></span>
           手动同步
         </span>
-        <SettingHint text="手动将本地歌单、插件、设置同步到云端，或从云端拉取到本地。支持多设备间数据共享。" />
+        <div class="flex items-center gap-2">
+          <SettingHint text="先恢复云端插件，再合并云端歌单与收藏，最后上传合并后的完整数据。" />
+          <button
+            type="button"
+            class="bg-accent hover:bg-accent-hover text-white px-3 h-8 rounded-full text-xs font-medium transition active:scale-95 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="playlistSync.syncing.value || playlistSync.pluginSyncing.value || playlistSync.settingsSyncing.value"
+            @click="playlistSync.syncAll()"
+          >
+            立即同步全部
+          </button>
+        </div>
       </h2>
 
       <div class="flex flex-col rounded-xl overflow-hidden bg-white/20 dark:bg-black/10 border border-gray-200/40 dark:border-gray-800/40">
@@ -595,7 +605,7 @@ function updateAutoSyncMaxDelay(event: Event) {
     </section>
 
     <!-- 自动同步 -->
-    <section v-if="authStore.isLoggedIn" class="space-y-3">
+    <section v-if="false" class="order-1 space-y-3">
       <h2 class="flex items-center justify-between gap-4 text-sm font-bold text-gray-800 dark:text-gray-200">
         <span class="flex items-center gap-2">
           <span class="w-1 h-4 bg-accent rounded-full"></span>
@@ -666,7 +676,7 @@ function updateAutoSyncMaxDelay(event: Event) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>自动同步将按上方「上传」设置中开启的项目执行（歌单、插件、本地设置）。</span>
+            <span>自动同步将按上方“账号云同步”中的项目执行（歌单、插件、本地设置）。</span>
           </div>
 
           <!-- 自动同步状态 -->
@@ -725,15 +735,15 @@ function updateAutoSyncMaxDelay(event: Event) {
       <Transition name="logout-modal">
         <div v-if="showCiyuanxiModal" class="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" @click.self="showCiyuanxiModal = false">
           <div class="logout-confirm-card">
-            <h3 class="logout-confirm-title">修改弦予号</h3>
-            <p class="logout-confirm-desc">弦予号是唯一登录标识，每月仅可修改一次，请谨慎设置。</p>
+            <h3 class="logout-confirm-title">修改 XY 号</h3>
+            <p class="logout-confirm-desc">XY 号是唯一登录标识，每月仅可修改一次，请谨慎设置。</p>
             <div class="flex flex-col gap-3 mt-4">
               <label class="flex flex-col gap-1.5">
-                <span class="text-xs text-gray-500 dark:text-white/50">当前弦予号</span>
+                <span class="text-xs text-gray-500 dark:text-white/50">当前 XY 号</span>
                 <input v-model="ciyuanxiForm.oldId" type="text" readonly spellcheck="false" class="w-full h-8 rounded-lg border border-black/10 bg-white/45 px-3 text-xs text-gray-800 outline-none dark:border-white/10 dark:bg-white/5 dark:text-gray-100" />
               </label>
               <label class="flex flex-col gap-1.5">
-                <span class="text-xs text-gray-500 dark:text-white/50">新弦予号</span>
+                <span class="text-xs text-gray-500 dark:text-white/50">新 XY 号</span>
                 <input v-model="ciyuanxiForm.newId" type="text" placeholder="6-20 位，字母开头" spellcheck="false" class="w-full h-8 rounded-lg border border-black/10 bg-white/45 px-3 text-xs text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-accent/50 focus:ring-2 focus:ring-accent/10 dark:border-white/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-white/35 dark:focus:bg-white/10" />
               </label>
               <label class="flex flex-col gap-1.5">

@@ -16,11 +16,11 @@ describe('debugApi', () => {
   });
 
   it('exports logs through the write_text_file command', () => {
-    debugApi.writeLogExport('C:\\Logs\\xianyu.log', 'log content');
+    debugApi.writeLogExport('C:\\Logs\\xy.log', 'log content');
 
     expect(tauriInvoke).toHaveBeenCalledWith('write_text_file', {
       content: 'log content',
-      destPath: 'C:\\Logs\\xianyu.log',
+      destPath: 'C:\\Logs\\xy.log',
     });
   });
 });

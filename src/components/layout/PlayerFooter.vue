@@ -16,6 +16,7 @@ import { useRenderingPower } from '../../composables/renderingPower';
 import { useBilibiliVideoBackground } from '../../composables/useBilibiliVideoBackground';
 import { computed, defineAsyncComponent, ref, onMounted, onUnmounted, watch, nextTick, provide } from 'vue';
 import FooterControlItem from './FooterControlItem.vue';
+import AppCoverImage from '../common/AppCoverImage.vue';
 import type { DownloadQuality, QualityKey, RemoteDownloadProgress } from '../../types';
 import { QUALITY_META } from '../../types';
 import {
@@ -29,7 +30,7 @@ const FooterContextMenu = defineAsyncComponent(() => import("../overlays/FooterC
 const ModernModal = defineAsyncComponent(() => import('../common/ModernModal.vue'));
 
 const {
-  currentSong,
+  currentSong, currentCover,
   currentPlayingQuality,
   sessionQualityOverride,
   setSessionQualityOverride,
@@ -969,7 +970,11 @@ onUnmounted(() => {
 
 <template>
   <footer 
-    class="player-footer h-20 flex items-center justify-between px-4 z-[60] relative select-none bg-transparent"
+    class="player-footer h-20 w-full flex items-center justify-between px-4 z-[60] relative select-none"
+    :class="{
+      'player-footer--detail': showPlayerDetail,
+      'player-footer--detail-idle': showPlayerDetail && isIdle,
+    }"
     @mouseenter="handleFooterMouseEnter"
     @mousemove="handleFooterMouseMove"
     @mouseleave="handleFooterMouseLeave"
@@ -1037,11 +1042,26 @@ onUnmounted(() => {
       <div
         data-footer-cover
         @click.stop="handleOpenDetail"
-        class="group relative w-12 h-12 rounded-lg flex-shrink-0 cursor-pointer active:scale-95 z-10"
-      ></div>
+        class="group relative w-12 h-12 rounded-lg flex-shrink-0 cursor-pointer active:scale-95 z-10 overflow-hidden"
+        :class="showPlayerDetail ? 'bg-transparent' : 'bg-gray-200/50 dark:bg-white/5'"
+      >
+        <AppCoverImage
+          v-if="currentSong && !showPlayerDetail"
+          :src="currentCover"
+          class="h-full w-full object-cover transition-opacity duration-300"
+          alt="Cover"
+          decoding="async"
+        >
+          <div class="flex h-full w-full items-center justify-center text-gray-400 dark:text-white/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+          </div>
+        </AppCoverImage>
+      </div>
 
       <div
-        class="footer-left-content flex-1 relative h-10 transition-transform duration-500 flex items-center gap-1 ml-3 min-w-0"
+        class="footer-left-content flex-1 relative h-10 flex items-center gap-1 ml-3 min-w-0"
         :class="showPlayerDetail ? '-translate-x-[60px]' : 'translate-x-0'"
       >
         <div class="footer-track-info overflow-hidden w-28 relative h-full shrink-0">
@@ -1240,6 +1260,45 @@ onUnmounted(() => {
     </template>
 
 <style scoped>
+.player-footer {
+  width: min(1180px, calc(100% - 32px));
+  margin: 8px auto 12px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  /* 进度条位于底栏上沿：上方保持直角与进度条两端衔接，下方保留悬浮圆角。 */
+  border-radius: 0 0 24px 24px;
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.46);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+  pointer-events: auto;
+}
+
+.player-footer--detail {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(8, 8, 12, 0.24);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* 详情页自动隐藏时保留进度条，但移除底栏外框本身，避免出现空白圆角框。 */
+.player-footer--detail-idle {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:global(html.dark) .player-footer {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(38, 38, 38, 0.50);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+:global(html.dark) .player-footer--detail {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(8, 8, 12, 0.28);
+}
+
 /* 拖拽气泡进入与离开的动画过渡 */
 .fade-scale-enter-active,
 .fade-scale-leave-active {

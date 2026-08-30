@@ -49,6 +49,7 @@ const {
 const {
   playlists,
   createPlaylist,
+  setPlaylistCover,
   deletePlaylist,
   reorderPlaylists,
   getSongsFromPlaylist,
@@ -61,9 +62,11 @@ const {
   openHomeFolder,
   openHomePlaylist,
   openHomeStatistics,
+  openExplore,
   openArtists,
   openAlbums,
   openFavorites,
+  openPlaylists,
   openRecent,
   openPlugins,
   openAuth,
@@ -176,6 +179,13 @@ function importResultToSongs(result: PlaylistImportResult): Song[] {
     // 使用 lx://sourceKey/songId 协议，与 YinDongMusic 的 platformTrackToSong 一致
     const sourceKey = item.pluginId || 'wy';
     const path = `lx://${sourceKey}/${item.id}`;
+    const raw = item.rawData as any;
+    // 兼容部分平台把封面放在原始字段 img/cover/coverUrl 中的返回格式。
+    const coverUrl = item.coverUrl
+      || raw?.img
+      || raw?.cover
+      || raw?.coverUrl
+      || '';
     return {
       name: item.title,
       title: item.title,
@@ -189,7 +199,7 @@ function importResultToSongs(result: PlaylistImportResult): Song[] {
       is_various_artists_album: false,
       collapse_artist_credits: false,
       duration: Math.floor((item.duration || 0) / 1000),
-      cover_thumb_path: item.coverUrl || '',
+      cover_thumb_path: coverUrl,
       source_type: 'remote' as const,
       remote_source_id: path,
       rawData: item.rawData ?? item,
@@ -240,6 +250,12 @@ const confirmImportPlaylist = (payload: { result: PlaylistImportResult; rename?:
   const playlistId = createPlaylist(playlistName, songPaths, songs);
 
   if (playlistId) {
+    // 云端导入结果中的歌单封面需要单独写入 Playlist.coverPath；否则只保存歌曲，
+    // 侧边栏和歌单详情页无法使用接口返回的歌单封面。
+    const playlistCover = result.info.img || songs.find(song => song.cover_thumb_path)?.cover_thumb_path || '';
+    if (playlistCover) {
+      setPlaylistCover(playlistId, playlistCover);
+    }
     showToast(`已创建歌单「${playlistName}」，共 ${songPaths.length} 首歌曲`, 'success');
   } else {
     showToast('创建歌单失败', 'error');
@@ -368,6 +384,10 @@ const handleOpenFavoritesView = () => {
   void openFavorites();
 };
 
+const handleOpenPlaylistsView = () => {
+  void openPlaylists();
+};
+
 const handleOpenRecentView = () => {
   void openRecent();
 };
@@ -384,8 +404,13 @@ const handleOpenAccountView = () => {
   void openAuth();
 };
 
+const handleOpenExploreView = () => {
+  void openExplore();
+};
+
 /** 侧边栏项点击分发：侧边栏顺序可自定义，故统一用 key 派发到对应 handler */
 const sidebarSelectHandlers: Record<SidebarItemKey, () => void> = {
+  explore: handleOpenExploreView,
   localMusic: handleOpenAllView,
   artists: handleOpenArtistsView,
   albums: handleOpenAlbumsView,
@@ -507,6 +532,7 @@ onBeforeUnmount(() => {
         @playlistClick="handleSidebarPlaylistClick"
         @playlistContextMenu="handlePlaylistContextMenu"
         @deletePlaylist="handleDeletePlaylist"
+        @openAll="handleOpenPlaylistsView"
       />
     </nav>
 

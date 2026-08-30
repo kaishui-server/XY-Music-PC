@@ -179,19 +179,19 @@ describe('useDesktopLyricsDisplay', () => {
       customLyricsFonts: [{
         id: 'font-1',
         name: 'My Lyrics Font',
-        family: 'XianYu Imported Lyrics Font font-1',
+        family: 'XY Imported Lyrics Font font-1',
         filePath: 'C:\\Fonts\\my-lyrics-font.ttf',
         importedAt: 1,
         format: 'truetype',
       }],
       settings: {
         ...payload.settings,
-        playerFontPreset: 'XianYu Imported Lyrics Font font-1',
+        playerFontPreset: 'XY Imported Lyrics Font font-1',
       },
     });
 
     expect(display.availableFontOptions.value[0]).toMatchObject({
-      value: 'XianYu Imported Lyrics Font font-1',
+      value: 'XY Imported Lyrics Font font-1',
       label: 'My Lyrics Font',
       isImported: true,
     });

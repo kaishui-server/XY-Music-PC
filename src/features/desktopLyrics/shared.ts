@@ -19,8 +19,9 @@ export const DESKTOP_LYRICS_REVEAL_SURFACE_EVENT = 'desktop-lyrics:reveal-surfac
 export const DESKTOP_LYRICS_RESET_BOUNDS_EVENT = 'desktop-lyrics:reset-bounds';
 export const DESKTOP_LYRICS_BOUNDS_KEY = 'desktop_lyrics_window_bounds';
 
-export const DESKTOP_LYRICS_WINDOW_DEFAULT_WIDTH = 900;
-export const DESKTOP_LYRICS_WINDOW_DEFAULT_HEIGHT = 280;
+// 默认尺寸保持歌词清晰可读，同时避免首次打开占用过大的屏幕区域。
+export const DESKTOP_LYRICS_WINDOW_DEFAULT_WIDTH = 760;
+export const DESKTOP_LYRICS_WINDOW_DEFAULT_HEIGHT = 220;
 export const DESKTOP_LYRICS_WINDOW_MIN_WIDTH = 520;
 export const DESKTOP_LYRICS_WINDOW_MIN_HEIGHT = 160;
 export const DESKTOP_LYRICS_WINDOW_MAX_WIDTH = 1440;

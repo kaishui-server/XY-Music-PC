@@ -415,11 +415,11 @@ const handleAuthSubmit = async () => {
   if (authMode.value === 'register') {
     const ciyuanxi = authForm.value.account.trim();
     if (!ciyuanxi) {
-      showAuthMessage('请填写弦予号');
+      showAuthMessage('请填写 XY 号');
       return;
     }
     if (!/^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/.test(ciyuanxi)) {
-      showAuthMessage('弦予号需 6-20 位，字母开头，仅含字母、数字、下划线、中划线');
+      showAuthMessage('XY 号需 6-20 位，字母开头，仅含字母、数字、下划线、中划线');
       return;
     }
     if (!authForm.value.email.trim()) {
@@ -476,14 +476,14 @@ const handleAuthSubmit = async () => {
 
 // --- 用户协议 ---
 const agreementAccepted = ref(false);
-const agreementTitle = ref('弦予音乐用户协议');
+const agreementTitle = ref('XY Music 用户协议');
 const agreementContent = ref('');
 const agreementModalOpen = ref(false);
 const agreementScrolledToEnd = ref(false);
 const agreementBodyRef = ref<HTMLElement | null>(null);
 
 const defaultAgreementContent = `一、协议范围
-本协议适用于弦予音乐客户端账号系统及相关云端同步、资料管理、统计上报、风控安全服务。用户注册、登录或继续使用账号功能，即表示已阅读并同意本协议。
+本协议适用于 XY Music 客户端账号系统及相关云端同步、资料管理、统计上报、风控安全服务。用户注册、登录或继续使用账号功能，即表示已阅读并同意本协议。
 
 二、账号注册与使用
 用户应使用真实、有效的邮箱完成注册，并妥善保管账号、密码和邮箱验证码。因用户主动泄露、共享账号或使用非官方客户端造成的损失，由用户自行承担。
@@ -506,10 +506,10 @@ const defaultAgreementContent = `一、协议范围
 async function loadUserAgreement() {
   try {
     const agreement = await getUserAgreement();
-    agreementTitle.value = agreement.title.trim() || '弦予音乐用户协议';
+    agreementTitle.value = agreement.title.trim() || 'XY Music 用户协议';
     agreementContent.value = agreement.content.trim() || defaultAgreementContent;
   } catch {
-    agreementTitle.value = '弦予音乐用户协议';
+    agreementTitle.value = 'XY Music 用户协议';
     agreementContent.value = defaultAgreementContent;
   }
 }
@@ -1368,7 +1368,7 @@ onUnmounted(() => {
                               class="mt-1 truncate text-black/55 dark:text-white/55 font-light"
                               style="font-size: clamp(12px, 1vw, 15px);"
                             >
-                              @{{ authStore.user?.ciyuanxi_id || authStore.user?.username || '未设置弦予号' }}
+                              @{{ authStore.user?.ciyuanxi_id || authStore.user?.username || '未设置 XY 号' }}
                             </div>
                             <div
                               v-if="authStore.user?.email"
@@ -1451,11 +1451,11 @@ onUnmounted(() => {
                             <span
                               class="text-black/70 dark:text-white/70 font-light tracking-wider"
                               style="font-size: clamp(13px, 1.1vw, 16px);"
-                            >{{ authMode === 'login' ? '弦予号/邮箱' : '弦予号' }}</span>
+                            >{{ authMode === 'login' ? 'XY 号/邮箱' : 'XY 号' }}</span>
                             <input
                               v-model="authForm.account"
                               type="text"
-                              :placeholder="authMode === 'login' ? '输入弦予号或邮箱登录' : '6-20位，字母开头，同微信号规则'"
+                              :placeholder="authMode === 'login' ? '输入 XY 号或邮箱登录' : '6-20位，字母开头，同微信号规则'"
                               autocomplete="username"
                               required
                               class="h-[clamp(2.75rem,4vw,3.5rem)] bg-transparent border-b border-black/15 dark:border-white/15 px-1 text-black dark:text-white outline-none transition-all focus:border-accent placeholder:text-black/30 dark:placeholder:text-white/30"
@@ -1472,7 +1472,7 @@ onUnmounted(() => {
                               <input
                                 v-model="authForm.nickname"
                                 type="text"
-                                placeholder='留空则默认"弦予+弦予号"'
+                                placeholder='留空则默认"XY+XY号"'
                                 autocomplete="nickname"
                                 class="h-[clamp(2.75rem,4vw,3.5rem)] bg-transparent border-b border-black/15 dark:border-white/15 px-1 text-black dark:text-white outline-none transition-all focus:border-accent placeholder:text-black/30 dark:placeholder:text-white/30"
                                 style="font-size: clamp(15px, 1.3vw, 18px);"
@@ -1801,7 +1801,7 @@ onUnmounted(() => {
         <div class="agreement-card">
           <div class="agreement-header">
             <div>
-              <p>弦予音乐账号系统</p>
+              <p>XY Music 账号系统</p>
               <h3>{{ agreementTitle }}</h3>
             </div>
             <button type="button" class="agreement-close" aria-label="关闭" @click="closeAgreementModal">×</button>

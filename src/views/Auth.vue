@@ -9,6 +9,7 @@ import { downloadApi } from '../services/tauri/downloadApi';
 import { useCollectionsStore } from '../features/collections/store';
 import { useToast } from '../composables/toast';
 import { useUiStore } from '../shared/stores/ui';
+import AccountCloudSyncPanel from '../components/account/AccountCloudSyncPanel.vue';
 import { showProfileLimitDialog, type ProfileLimitDialogTarget } from '../composables/useProfileLimitDialog';
 import {
   changePassword,
@@ -52,7 +53,7 @@ const agreementAccepted = ref(false);
 const termsModalOpen = ref(false);
 const termsScrolledToEnd = ref(false);
 const termsBodyRef = ref<HTMLElement | null>(null);
-const agreementTitle = ref('弦予音乐用户协议');
+const agreementTitle = ref('XY Music 用户协议');
 const captchaModalOpen = ref(false);
 const captchaModalTitle = ref('人机验证');
 const captchaModalDescription = ref('请先完成验证，验证通过后将继续当前操作。');
@@ -276,7 +277,7 @@ const headerLabel = computed(() =>
 );
 
 const defaultAgreementContent = `一、协议范围
-本协议适用于弦予音乐客户端账号系统及相关云端同步、资料管理、统计上报、风控安全服务。用户注册、登录或继续使用账号功能，即表示已阅读并同意本协议。
+本协议适用于 XY Music 客户端账号系统及相关云端同步、资料管理、统计上报、风控安全服务。用户注册、登录或继续使用账号功能，即表示已阅读并同意本协议。
 
 二、账号注册与使用
 用户应使用真实、有效的邮箱完成注册，并妥善保管账号、密码和邮箱验证码。因用户主动泄露、共享账号或使用非官方客户端造成的损失，由用户自行承担。
@@ -308,7 +309,7 @@ async function loadUserAgreement() {
       agreementContent.value = agreement.content.trim();
     }
   } catch {
-    agreementTitle.value = '弦予音乐用户协议';
+    agreementTitle.value = 'XY Music 用户协议';
     agreementContent.value = defaultAgreementContent;
   }
 }
@@ -394,19 +395,19 @@ async function onSubmit() {
   }
   if (mode.value === 'login') {
     if (!form.value.account.trim()) {
-      showMessage('请输入弦予号或邮箱');
-      showToast('请输入弦予号或邮箱', 'error');
+      showMessage('请输入 XY 号或邮箱');
+      showToast('请输入 XY 号或邮箱', 'error');
       return;
     }
   } else {
     const ciyuanxi = form.value.account.trim();
     if (!ciyuanxi) {
-      showMessage('请填写弦予号');
-      showToast('请填写弦予号', 'error');
+      showMessage('请填写 XY 号');
+      showToast('请填写 XY 号', 'error');
       return;
     }
     if (!/^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/.test(ciyuanxi)) {
-      const tip = '弦予号需 6-20 位，字母开头，仅含字母、数字、下划线、中划线';
+      const tip = 'XY 号需 6-20 位，字母开头，仅含字母、数字、下划线、中划线';
       showMessage(tip);
       showToast(tip, 'error');
       return;
@@ -1113,11 +1114,11 @@ onUnmounted(() => {
             @submit.prevent="onSubmit"
           >
             <label class="grid gap-3">
-              <span class="text-black/70 dark:text-white/70 text-[clamp(0.875rem,1.2vw,1.125rem)] font-light tracking-wider">{{ mode === 'login' ? '弦予号/邮箱' : '弦予号' }}</span>
+              <span class="text-black/70 dark:text-white/70 text-[clamp(0.875rem,1.2vw,1.125rem)] font-light tracking-wider">{{ mode === 'login' ? 'XY 号/邮箱' : 'XY 号' }}</span>
               <input
                 v-model="form.account"
                 type="text"
-                :placeholder="mode === 'login' ? '输入弦予号或邮箱登录' : '6-20位，字母开头，同微信号规则'"
+                :placeholder="mode === 'login' ? '输入 XY 号或邮箱登录' : '6-20位，字母开头，同微信号规则'"
                 :autocomplete="mode === 'login' ? 'off' : 'username'"
                 class="h-[clamp(2.75rem,4vw,3.5rem)] bg-transparent border-b border-black/15 dark:border-white/15 px-1 text-[clamp(1rem,1.3vw,1.125rem)] text-black dark:text-white outline-none transition-all focus:border-accent placeholder:text-black/30 dark:placeholder:text-white/30"
               />
@@ -1129,7 +1130,7 @@ onUnmounted(() => {
                 <input
                   v-model="form.nickname"
                   type="text"
-                  placeholder='留空则默认"弦予+弦予号"'
+                  placeholder='留空则默认"XY+XY号"'
                   autocomplete="nickname"
                   class="h-[clamp(2.75rem,4vw,3.5rem)] bg-transparent border-b border-black/15 dark:border-white/15 px-1 text-[clamp(1rem,1.3vw,1.125rem)] text-black dark:text-white outline-none transition-all focus:border-accent placeholder:text-black/30 dark:placeholder:text-white/30"
                 />
@@ -1345,7 +1346,7 @@ onUnmounted(() => {
               </div>
               <div class="flex items-center gap-2 mt-1.5 min-w-0 flex-wrap">
                 <p class="text-black/60 dark:text-white/60 text-[clamp(0.7rem,0.95vw,0.825rem)] font-light truncate">
-                  @{{ authStore.user?.ciyuanxi_id || authStore.user?.username || '未设置弦予号' }}
+                  @{{ authStore.user?.ciyuanxi_id || authStore.user?.username || '未设置 XY 号' }}
                   <template v-if="authStore.user?.email"> · {{ authStore.user.email }}</template>
                 </p>
                 <button
@@ -1384,6 +1385,9 @@ onUnmounted(() => {
             </button>
           </div>
         </header>
+
+        <!-- 账号云同步：个人中心首屏可直接看到并操作 -->
+        <AccountCloudSyncPanel />
 
         <!-- 头像操作弹窗（定位在头像附近） -->
         <Teleport to="body">
@@ -1816,7 +1820,7 @@ onUnmounted(() => {
           <div class="terms-card">
             <div class="terms-header">
               <div>
-                <p>弦予音乐账号系统</p>
+                <p>XY Music 账号系统</p>
                 <h3>{{ agreementTitle }}</h3>
               </div>
               <button type="button" class="terms-close" aria-label="关闭" @click="closeTermsModal">×</button>

@@ -14,6 +14,7 @@ import {
   fetchLeaderboard,
   type LeaderboardEntry,
   type LeaderboardPeriod,
+  type ListenDurations,
 } from '../../services/leaderboardService';
 import { normalizePath } from '../../utils/path';
 import { formatFileSize, formatListenDuration } from '../../utils/format';
@@ -82,9 +83,16 @@ async function loadLeaderboard(silent = false) {
     leaderboardError.value = null;
   }
   try {
-    // 传递本地统计的听歌时长，先上报到后端再获取排行榜
+    // 与手机版一致，同时传递日/周/总累计时长。若只传总时长，服务端会
+    // 为兼容旧客户端推算每日增量，重复刷新时可能把总时长重复计入日榜。
     const localDuration = behaviorStats.value?.total_duration ?? 0;
-    const data = await fetchLeaderboard(15, localDuration, currentPeriod.value);
+    const recentActivity = behaviorStats.value?.recent_activity ?? [];
+    const durations: ListenDurations = {
+      daily: recentActivity[recentActivity.length - 1] ?? 0,
+      weekly: recentActivity.reduce((sum, value) => sum + value, 0),
+      total: localDuration,
+    };
+    const data = await fetchLeaderboard(15, durations, currentPeriod.value);
     if (requestId !== leaderboardRequestId) return;
     leaderboard.value = data.leaderboard;
     if (data.resetApplied) await statisticsStore.refreshBehaviorOnly('All');

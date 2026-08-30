@@ -42,6 +42,9 @@ export interface SyncSongPayload extends Song {
   song_hash?: string;
 }
 
+/** 收藏同步既兼容新版完整歌曲对象，也兼容旧版只保存路径的格式。 */
+export type SyncFavoritePayload = SyncSongPayload | string;
+
 /** 同步结果摘要 */
 export interface SyncResult {
   uploadedPlaylists: number;
@@ -53,10 +56,10 @@ export interface SyncResult {
 
 // ==================== 工具函数 ====================
 
-/** 获取当前登录用户的弦予号 */
+/** 获取当前登录用户的 XY 号 */
 export function getCiyuanxiId(): string | null {
   const auth = getStoredAuth();
-  return auth?.user?.ciyuanxi_id ?? null;
+  return auth?.user?.ciyuanxi_id ?? auth?.user?.xymusic_id ?? null;
 }
 
 /** 判断是否为在线歌曲（非本地文件） */
@@ -115,19 +118,31 @@ export function songToSyncPayload(song: Song): SyncSongPayload {
 
 /** 将同步歌曲恢复成 Song */
 export function syncPayloadToSong(song: SyncSongPayload): Song {
-  const payload = song as SyncSongPayload;
+  const payload = song as SyncSongPayload & Record<string, any>;
+  // 移动端使用 coverUrl/pluginId/lyricsRaw 等驼峰字段，桌面端内部使用
+  // cover_thumb_path/plugin_id/lyrics_raw。同步时在这里统一成桌面端格式。
   const title = payload.title || payload.name || '';
   const artist = payload.artist || '未知歌手';
   const album = payload.album || '未知专辑';
   const artistNames = payload.artist_names?.length
     ? payload.artist_names
     : artist.split(/[、,/&]|\sft\.?\s/i).map(s => s.trim()).filter(Boolean);
+  const durationMs = Number(payload.durationMs);
+  const duration = Number.isFinite(durationMs) && durationMs > 0
+    ? Math.round(durationMs / 1000)
+    : Number(payload.duration) || 0;
+  const cover = payload.cover_thumb_path || payload.coverThumbPath || payload.coverUrl || payload.cover_url || '';
+  const pluginId = payload.plugin_id || payload.pluginId;
+  const sourceType = payload.source_type || payload.sourceType
+    || (pluginId ? 'plugin' : payload.syncType === 'online' ? 'remote' : 'local');
+  const rawData = payload.rawData || payload.pluginData;
+  const lyricsRaw = payload.lyrics_raw || payload.lyricsRaw;
 
   return {
     ...payload,
     name: payload.name || title,
     title,
-    path: payload.path,
+    path: String(payload.path || ''),
     artist,
     artist_names: artistNames.length > 0 ? artistNames : [artist],
     effective_artist_names: payload.effective_artist_names?.length
@@ -138,8 +153,12 @@ export function syncPayloadToSong(song: SyncSongPayload): Song {
     album_key: payload.album_key || `${album}-${artist}`,
     is_various_artists_album: payload.is_various_artists_album ?? false,
     collapse_artist_credits: payload.collapse_artist_credits ?? false,
-    duration: payload.duration || 0,
-    source_type: payload.source_type ?? (payload.syncType === 'online' ? 'remote' : 'local'),
+    duration,
+    cover_thumb_path: cover,
+    plugin_id: pluginId,
+    rawData,
+    lyrics_raw: lyricsRaw,
+    source_type: sourceType,
   };
 }
 
@@ -192,6 +211,7 @@ export interface FileSyncDownloadData {
     createdAt?: string;
     songs: SyncSongPayload[];
   }>;
+  favorites?: SyncFavoritePayload[];
 }
 
 /** 每块最多包含的歌曲数（~450KB/块，远低于宝塔 WAF 缓冲区限制，减少请求次数） */
@@ -296,8 +316,9 @@ async function signedRequestWithRetry<T>(
 export async function fileSyncUpload(
   ciyuanxiId: string,
   playlists: FileSyncPlaylistData[],
+  favorites: SyncFavoritePayload[] = [],
 ): Promise<{ playlist_count: number; song_total: number }> {
-  logSync(`fileSyncUpload → user_id=${ciyuanxiId}, playlists=${playlists.length}`);
+  logSync(`fileSyncUpload → user_id=${ciyuanxiId}, playlists=${playlists.length}, favorites=${favorites.length}`);
   const totalSongs = playlists.reduce((sum, pl) => sum + pl.songs.length, 0);
   logSync(`fileSyncUpload: 总歌曲数=${totalSongs}`);
 
@@ -318,6 +339,9 @@ export async function fileSyncUpload(
 
   // 2. 按歌曲数拆分块
   const chunks = splitPlaylistsIntoChunks(playlists, MAX_SONGS_PER_CHUNK);
+  // 与手机版保持一致：即使本地暂时没有歌单，也要发送一个空块，
+  // 这样服务器才能正确保存“空歌单 + 收藏”状态。
+  if (chunks.length === 0) chunks.push([]);
   logSync(`fileSyncUpload: 分为 ${chunks.length} 块, 每块最多 ${MAX_SONGS_PER_CHUNK} 首歌`);
 
   const chunkTimeoutOptions: SignedRequestOptions = {
@@ -364,7 +388,7 @@ export async function fileSyncUpload(
   logSync(`fileSyncUpload: 所有分块上传完成, 发送 upload_finish`);
   const finishData = await signedRequestWithRetry<{ playlist_count: number; song_total: number }>(
     'file_sync_upload_finish',
-    { user_id: ciyuanxiId },
+    { user_id: ciyuanxiId, favorites },
     startFinishTimeoutOptions,
     FILE_SYNC_MAX_RETRIES,
     'upload_finish',

@@ -3,7 +3,7 @@ import { applyAccentTheme } from './accentTheme';
 const SETTINGS_KEY = 'player_settings';
 const DARK_STARTUP_COLOR = '#262626';
 const LIGHT_STARTUP_COLOR = '#fafafa';
-const STARTUP_PAINT_ATTRIBUTE = 'data-xianyu-startup-paint';
+const STARTUP_PAINT_ATTRIBUTE = 'data-xy-startup-paint';
 const MAIN_WINDOW_LABEL = 'main';
 
 type PersistedSettings = {

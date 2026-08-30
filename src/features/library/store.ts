@@ -131,6 +131,8 @@ export const useLibraryStore = defineStore('library', () => {
     'sample_rate',
     'bit_depth',
     'format',
+    // 在线歌曲重新导入时也要同步封面，避免首次导入无封面后永久保留空值。
+    'cover_thumb_path',
     'added_at',
     'file_modified_at',
   ];

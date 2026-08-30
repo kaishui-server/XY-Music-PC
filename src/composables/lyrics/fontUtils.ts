@@ -88,7 +88,7 @@ export async function registerImportedLyricsFonts(fonts: ImportedLyricsFont[]) {
 
   if (!importedLyricsFontStyleEl) {
     importedLyricsFontStyleEl = document.createElement('style');
-    importedLyricsFontStyleEl.setAttribute('data-xianyu-imported-lyrics-fonts', 'true');
+    importedLyricsFontStyleEl.setAttribute('data-xy-imported-lyrics-fonts', 'true');
     document.head.appendChild(importedLyricsFontStyleEl);
   }
 

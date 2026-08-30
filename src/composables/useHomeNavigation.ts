@@ -11,7 +11,9 @@ type AppNavigationTarget =
   | { section: 'artists' }
   | { section: 'albums' }
   | { section: 'favorites' }
+  | { section: 'playlists' }
   | { section: 'recent' }
+  | { section: 'explore' }
   | { section: 'plugins' }
   | { section: 'settings' }
   | { section: 'auth' };
@@ -70,8 +72,12 @@ export const buildAppLocation = (target: AppNavigationTarget): RouteLocationRaw 
       return { path: '/albums' };
     case 'favorites':
       return { path: '/favorites' };
+    case 'playlists':
+      return { path: '/playlists' };
     case 'recent':
       return { path: '/recent' };
+    case 'explore':
+      return { path: '/explore' };
     case 'plugins':
       return { path: '/plugins' };
     case 'settings':
@@ -124,8 +130,14 @@ export function useHomeNavigation(router: Router) {
   const openFavorites = (options?: { replace?: boolean }) =>
     openApp({ section: 'favorites' }, options);
 
+  const openPlaylists = (options?: { replace?: boolean }) =>
+    openApp({ section: 'playlists' }, options);
+
   const openRecent = (options?: { replace?: boolean }) =>
     openApp({ section: 'recent' }, options);
+
+  const openExplore = (options?: { replace?: boolean }) =>
+    openApp({ section: 'explore' }, options);
 
   const openPlugins = (options?: { replace?: boolean }) =>
     openApp({ section: 'plugins' }, options);
@@ -148,7 +160,9 @@ export function useHomeNavigation(router: Router) {
     openArtists,
     openAlbums,
     openFavorites,
+    openPlaylists,
     openRecent,
+    openExplore,
     openPlugins,
     openSettings,
     openAuth,

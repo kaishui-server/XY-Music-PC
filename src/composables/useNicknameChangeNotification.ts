@@ -12,7 +12,7 @@ const isFetchingNickname = ref(false);
 
 interface NicknameNoticeRaw {
   id: number;
-  ciyuanxi_id: string;
+  xymusic_id: string;
   old_nickname: string;
   new_nickname: string;
   reason: string;
@@ -42,7 +42,7 @@ async function fetchNicknameNotices(): Promise<NicknameNoticeRaw[]> {
   try {
     const data = await signedRequest<{ list: NicknameNoticeRaw[] }>(
       'get_nickname_change_notices',
-      { ciyuanxi_id: auth.user.ciyuanxi_id ?? auth.user.id ?? '' },
+      { xymusic_id: auth.user.ciyuanxi_id ?? auth.user.xymusic_id ?? auth.user.id ?? '' },
       { fetchTimeoutMs: 15_000, timeoutMs: 18_000 },
     );
     return data?.list ?? [];
@@ -85,7 +85,7 @@ export function useNicknameChangeNotification() {
           'confirm_nickname_change_notice',
           {
             id: noticeId,
-            ciyuanxi_id: auth?.user?.ciyuanxi_id ?? auth?.user?.id ?? '',
+            xymusic_id: auth?.user?.ciyuanxi_id ?? auth?.user?.xymusic_id ?? auth?.user?.id ?? '',
           },
           { fetchTimeoutMs: 15_000, timeoutMs: 18_000 },
         );

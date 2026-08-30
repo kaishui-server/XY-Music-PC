@@ -58,7 +58,8 @@ const createInputRef = ref<HTMLInputElement | null>(null);
 const importInput = ref('');
 const importInputRef = ref<HTMLInputElement | null>(null);
 const importSources = ref<PlaylistSource[]>(getImportSourcesFromPlugins());
-const selectedSource = ref<string>('auto');
+// 与手机版一致，默认使用第一个内置平台；分享链接仍会自动识别平台。
+const selectedSource = ref<string>('wy');
 const sourceDropdownOpen = ref(false);
 const importRename = ref('');
 const importRenameRef = ref<HTMLInputElement | null>(null);
@@ -203,7 +204,7 @@ watch(
       backupImportError.value = '';
       backupPluginResult.value = null;
       importing.value = false;
-      selectedSource.value = 'auto';
+      selectedSource.value = 'wy';
       sourceDropdownOpen.value = false;
       await setupDragListeners();
       await nextTick();
@@ -674,7 +675,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
                     ? '歌单名称或关键词'
                     : currentSourceType === 'favorites'
                       ? '收藏夹链接或 ID'
-                      : '歌单链接或 ID' }}
+                      : '歌单 ID' }}
                 </label>
                 <input
                   ref="importInputRef"
@@ -685,7 +686,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
                     ? '输入歌单名称搜索并导入'
                     : currentSourceType === 'favorites'
                       ? '粘贴收藏夹分享链接或输入收藏夹 ID'
-                      : '粘贴歌单分享链接或输入歌单 ID'"
+                      : '输入歌单 ID，也支持粘贴分享链接'"
                   class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all text-gray-900 dark:text-white placeholder-gray-400 text-sm disabled:opacity-50"
                 />
               </div>
@@ -709,7 +710,9 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
               <div class="text-xs text-gray-400 dark:text-white/40 leading-relaxed">
                 {{ currentSourceType === 'favorites'
                   ? '打开哔哩哔哩，找到想导入的收藏夹，复制链接粘贴到上方即可一键导入。'
-                  : '打开对应平台 App，找到想导入的歌单，点击分享并复制链接，粘贴到上方输入框即可一键导入。仅支持公开歌单。' }}
+                  : currentSourceType === 'musicfree'
+                    ? '输入歌单名称、ID 或分享链接搜索并导入。'
+                    : '内置支持网易云、QQ音乐、酷我、酷狗，仅可导入公开歌单。输入歌单 ID，也支持粘贴分享链接。' }}
               </div>
 
               <!-- 错误提示 -->

@@ -2,7 +2,8 @@ import type { PluginSource, PluginSubscription } from '../types';
 import { pluginApi } from './tauri/pluginApi';
 import { fetchWithTimeout } from './pluginFetch';
 
-const PLUGIN_SUBSCRIPTIONS_KEY = 'xianyu_plugin_subscriptions';
+const PLUGIN_SUBSCRIPTIONS_KEY = 'xy_plugin_subscriptions';
+const LEGACY_PLUGIN_SUBSCRIPTIONS_KEY = 'xianyu_plugin_subscriptions';
 
 export interface SubscriptionInstallResult {
   successCount: number;
@@ -26,9 +27,17 @@ export const createPluginSubscriptionService = ({
 }: PluginSubscriptionServiceDeps) => {
   const getSubscriptions = (): PluginSubscription[] => {
     try {
-      const raw = localStorage.getItem(PLUGIN_SUBSCRIPTIONS_KEY);
+      const currentRaw = localStorage.getItem(PLUGIN_SUBSCRIPTIONS_KEY);
+      const legacyRaw = currentRaw === null
+        ? localStorage.getItem(LEGACY_PLUGIN_SUBSCRIPTIONS_KEY)
+        : null;
+      const raw = currentRaw ?? legacyRaw;
       if (!raw) return [];
       const list = JSON.parse(raw);
+      if (currentRaw === null && legacyRaw !== null) {
+        localStorage.setItem(PLUGIN_SUBSCRIPTIONS_KEY, legacyRaw);
+        localStorage.removeItem(LEGACY_PLUGIN_SUBSCRIPTIONS_KEY);
+      }
       return Array.isArray(list) ? list : [];
     } catch {
       return [];
@@ -38,6 +47,7 @@ export const createPluginSubscriptionService = ({
   const saveSubscriptions = (list: PluginSubscription[]): void => {
     try {
       localStorage.setItem(PLUGIN_SUBSCRIPTIONS_KEY, JSON.stringify(list));
+      localStorage.removeItem(LEGACY_PLUGIN_SUBSCRIPTIONS_KEY);
     } catch { /* ignore */ }
   };
 

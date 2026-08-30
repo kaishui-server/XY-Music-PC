@@ -1,6 +1,6 @@
 /*
  * Derived from AMLL (Apple Music-like Lyrics) integration work and adapted
- * for XianYu Player on 2026-04-04.
+ * for XY Music Player on 2026-04-04.
  * SPDX-License-Identifier: AGPL-3.0-only
  * Upstream project: https://github.com/amll-dev/applemusic-like-lyrics
  */

@@ -186,9 +186,15 @@ export const useCollectionsStore = defineStore('collections', () => {
       return [];
     }
 
-    // 优先使用完整歌曲对象缓存（插件导入等非本地来源）
+    // 优先使用完整歌曲对象缓存（插件导入等非本地来源），但要用
+    // libraryStore 中最新的元数据覆盖缓存副本。在线歌曲重新导入后，
+    // 封面等字段可能已经更新，不能继续返回旧的空字段。
     if (playlist.songs && playlist.songs.length > 0) {
-      return [...playlist.songs];
+      const lookup = libraryStore.songLookup;
+      return playlist.songs.map((song) => {
+        const latest = lookup.get(song.path);
+        return latest ? { ...song, ...latest } : { ...song };
+      });
     }
 
     // 回退到按 path 从 libraryStore 查找

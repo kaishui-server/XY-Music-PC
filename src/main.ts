@@ -41,7 +41,7 @@ const formatError = (error: unknown) => {
   }
 }
 
-const DYNAMIC_IMPORT_RELOAD_KEY = 'xianyu_dynamic_import_reload'
+const DYNAMIC_IMPORT_RELOAD_KEY = 'xy_dynamic_import_reload'
 
 /**
  * 开发服务器热更新或应用升级后，旧分包地址可能瞬时失效。
@@ -74,7 +74,7 @@ const showFatalError = (title: string, error: unknown) => {
   console.error(title, error)
 
   try {
-    localStorage.setItem('xianyu_last_fatal_error', `${title}\n\n${message}`)
+    localStorage.setItem('xy_last_fatal_error', `${title}\n\n${message}`)
   } catch {
     // Ignore storage failures. The visible fallback is the important part.
   }

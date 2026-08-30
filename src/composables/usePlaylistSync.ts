@@ -4,7 +4,7 @@
  * 提供本地歌单与云端歌单之间的双向同步能力：
  * - `uploadPlaylists()`：将本地歌单上传到云端
  * - `downloadPlaylists()`：从云端拉取歌单到本地
- * - `syncPlaylists()`：双向同步（先上传后下载）
+ * - `syncPlaylists()`：双向同步（先下载合并后上传）
  *
  * 同步策略：
  * - 上传：按应用备份同款格式打包本地歌单，自动标记 local / online / mixed。
@@ -27,6 +27,7 @@ import {
   songToSyncPayload,
   syncPayloadToSong,
   type FileSyncPlaylistData,
+  type SyncFavoritePayload,
   type SyncResult,
 } from '../services/playlistSync';
 import {
@@ -47,7 +48,7 @@ import {
 import {
   getAutoSyncScheduler,
 } from '../services/autoSync';
-import { playerStorage } from '../services/storage/playerStorage';
+import { playerStorage, playerStorageKeys } from '../services/storage/playerStorage';
 import { mergeAppSettings, createDefaultAppSettings } from '../features/settings/store';
 import type { AutoSyncConfig, Playlist, Song } from '../types';
 
@@ -62,6 +63,14 @@ function logSync(msg: string, ...args: unknown[]) {
 
 function logSyncError(msg: string, ...args: unknown[]) {
   console.error(`${LOG} ${msg}`, ...args);
+}
+
+/** 给用户展示可读的错误原因，避免只显示“有几个错误”而无法排查。 */
+function summarizeSyncErrors(errors: string[]): string {
+  const visible = errors.filter(Boolean).slice(0, 2);
+  if (visible.length === 0) return '未知错误';
+  const suffix = errors.length > visible.length ? `；另有 ${errors.length - visible.length} 个问题` : '';
+  return `${visible.join('；')}${suffix}`;
 }
 
 export function usePlaylistSync() {
@@ -139,6 +148,55 @@ export function usePlaylistSync() {
     return songs;
   }
 
+  /** 为只保存路径的旧收藏生成可跨设备恢复的最小歌曲快照。 */
+  function createFallbackSong(path: string): Song {
+    const fileName = path.split(/[\\/]/).pop() || path;
+    const title = fileName.replace(/\.[^.]+$/, '');
+    return {
+      name: title,
+      title,
+      path,
+      artist: '',
+      artist_names: [],
+      effective_artist_names: [],
+      album: '',
+      album_artist: '',
+      album_key: '',
+      is_various_artists_album: false,
+      collapse_artist_credits: false,
+      duration: 0,
+      format: '本地',
+      source_type: 'local',
+    };
+  }
+
+  /** 收集收藏的完整歌曲对象，协议与手机版 file_sync_upload_finish 对齐。 */
+  function collectFavoriteSongs(): SyncFavoritePayload[] {
+    return collectionsStore.favoritePaths
+      .filter(Boolean)
+      .map((path) => {
+        const song = libraryStore.getSongByPath(path)
+          || collectionsStore.favoriteSongMeta[path]
+          || createFallbackSong(path);
+        return songToSyncPayload(song);
+      });
+  }
+
+  async function persistSyncedCollections(): Promise<void> {
+    // 歌单主数据使用文件存储，收藏路径和在线歌曲快照使用 localStorage。
+    await playerStorage.writePlaylistsAsync(
+      JSON.parse(JSON.stringify(collectionsStore.playlists)),
+    );
+    playerStorage.setString(
+      playerStorageKeys.favorites,
+      JSON.stringify(collectionsStore.favoritePaths),
+    );
+    playerStorage.setString(
+      playerStorageKeys.favoriteSongMeta,
+      JSON.stringify(collectionsStore.favoriteSongMeta),
+    );
+  }
+
   /**
    * 上传所有本地歌单到云端（文件存储模式）
    * 一次性将所有歌单+歌曲打包分块上传到服务器文件存储，不经过数据库
@@ -154,8 +212,8 @@ export function usePlaylistSync() {
 
     const ciyuanxiId = getCiyuanxiId();
     if (!ciyuanxiId) {
-      logSyncError('uploadPlaylists: 未获取到弦予号，取消上传');
-      result.errors.push('未登录或未获取到弦予号');
+      logSyncError('uploadPlaylists: 未获取到 XY 号，取消上传');
+      result.errors.push('未登录或未获取到 XY 号');
       return result;
     }
 
@@ -164,11 +222,6 @@ export function usePlaylistSync() {
     playlists.forEach((pl, idx) => {
       logSync(`  本地歌单[${idx}]: name="${pl.name}", id=${pl.id}, cloudId=${pl.cloudId ?? 'none'}, songPaths=${pl.songPaths.length}, songs.meta=${pl.songs?.length ?? 0}`);
     });
-    if (playlists.length === 0) {
-      logSync('uploadPlaylists: 无歌单，直接返回');
-      return result;
-    }
-
     syncProgress.value = '正在上传歌单到云端...';
 
     try {
@@ -191,7 +244,8 @@ export function usePlaylistSync() {
       logSync(`uploadPlaylists: 收集完成, 歌单=${playlistData.length}, 总歌曲=${totalSongs}`);
 
       // 文件存储上传：分块发送，服务器合并为 JSON 文件
-      const uploadResult = await fileSyncUpload(ciyuanxiId, playlistData);
+      const favoritePayload = collectFavoriteSongs();
+      const uploadResult = await fileSyncUpload(ciyuanxiId, playlistData, favoritePayload);
       result.uploadedPlaylists = uploadResult.playlist_count;
       result.uploadedSongs = uploadResult.song_total;
       logSync(`uploadPlaylists 完成: uploadedPlaylists=${result.uploadedPlaylists}, uploadedSongs=${result.uploadedSongs}`);
@@ -219,8 +273,8 @@ export function usePlaylistSync() {
 
     const ciyuanxiId = getCiyuanxiId();
     if (!ciyuanxiId) {
-      logSyncError('downloadPlaylists: 未获取到弦予号，取消下载');
-      result.errors.push('未登录或未获取到弦予号');
+      logSyncError('downloadPlaylists: 未获取到 XY 号，取消下载');
+      result.errors.push('未登录或未获取到 XY 号');
       return result;
     }
 
@@ -228,20 +282,27 @@ export function usePlaylistSync() {
 
     try {
       const downloadData = await fileSyncDownload(ciyuanxiId);
-      if (!downloadData || !downloadData.playlists || downloadData.playlists.length === 0) {
-        logSync('downloadPlaylists: 云端无歌单数据');
+      if (!downloadData) {
+        logSync('downloadPlaylists: 云端无同步数据');
         return result;
       }
 
-      logSync(`downloadPlaylists: 云端共 ${downloadData.playlists.length} 个歌单, ${downloadData.stats?.song_total ?? 0} 首歌曲`);
+      logSync(`downloadPlaylists: 云端共 ${downloadData.playlists?.length ?? 0} 个歌单, ${downloadData.stats?.song_total ?? 0} 首歌曲, ${downloadData.favorites?.length ?? 0} 个收藏`);
+      const legacyFavorites: SyncFavoritePayload[] = [];
 
-      for (let i = 0; i < downloadData.playlists.length; i++) {
+      for (let i = 0; i < (downloadData.playlists ?? []).length; i++) {
         const cloudPl = downloadData.playlists[i];
         logSync(`downloadPlaylists: [${i + 1}/${downloadData.playlists.length}] 处理歌单 "${cloudPl.name}" (songs=${cloudPl.songs?.length ?? 0})`);
         syncProgress.value = `正在下载歌单 (${i + 1}/${downloadData.playlists.length})：${cloudPl.name}`;
 
         const cloudSongs = cloudPl.songs ?? [];
         const localSongs = cloudSongs.map(syncPayloadToSong);
+        const isLegacyFavoritePlaylist = cloudPl.isFavorite === true
+          || cloudPl.name === '我喜欢的音乐'
+          || cloudPl.name === '我喜欢';
+        if (isLegacyFavoritePlaylist) {
+          legacyFavorites.push(...cloudSongs);
+        }
 
         // 尝试匹配本地歌单（通过原 id）
         const existing = collectionsStore.playlists.find(p => p.id === cloudPl.id);
@@ -302,6 +363,21 @@ export function usePlaylistSync() {
         }
       }
 
+      // 收藏是独立于歌单的同步数据。采用合并策略，与手机版一致，
+      // 避免新设备本地收藏为空时误删云端收藏。
+      const favoritePaths = new Set(collectionsStore.favoritePaths);
+      for (const rawFavorite of [...legacyFavorites, ...(downloadData.favorites ?? [])]) {
+        const song = typeof rawFavorite === 'string'
+          ? createFallbackSong(rawFavorite)
+          : syncPayloadToSong(rawFavorite);
+        if (!song.path) continue;
+        favoritePaths.add(song.path);
+        collectionsStore.setFavoriteSongMeta(song.path, song);
+        libraryStore.setExtraSong(song);
+      }
+      collectionsStore.setFavoritePaths([...favoritePaths]);
+      await persistSyncedCollections();
+
       logSync(`downloadPlaylists 完成: downloadedPlaylists=${result.downloadedPlaylists}, downloadedSongs=${result.downloadedSongs}`);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -313,12 +389,13 @@ export function usePlaylistSync() {
   }
 
   /**
-   * 双向同步歌单：先上传本地歌单，再下载云端歌单
+   * 双向同步歌单：先下载并合并云端歌单，再上传完整快照。
+   * 这样新设备本地为空时不会先上传空数据覆盖云端内容。
    */
   async function syncPlaylists(): Promise<SyncResult> {
     logSync('========== syncPlaylists 开始 ==========');
     if (!canSync()) {
-      logSyncError('syncPlaylists: 未登录或无弦予号，取消同步');
+      logSyncError('syncPlaylists: 未登录或无 XY 号，取消同步');
       showToast('请先登录后再同步', 'error');
       return {
         uploadedPlaylists: 0,
@@ -334,7 +411,7 @@ export function usePlaylistSync() {
     lastSyncResult.value = null;
 
     try {
-      // 第一步：上传
+      // 第一步：下载并合并
       let uploadResult: SyncResult = {
         uploadedPlaylists: 0,
         downloadedPlaylists: 0,
@@ -343,20 +420,24 @@ export function usePlaylistSync() {
         errors: [],
       };
 
-      if (isUploadEnabled()) {
-        logSync('syncPlaylists: 步骤 1/2 - 开始上传');
-        syncProgress.value = '正在上传本地歌单到云端...';
-        uploadResult = await uploadPlaylists();
-        logSync('syncPlaylists: 步骤 1/2 - 上传完成', uploadResult);
-      } else {
-        logSync('syncPlaylists: 步骤 1/2 - 上传未开启，跳过');
-      }
-
-      // 第二步：下载
-      logSync('syncPlaylists: 步骤 2/2 - 开始下载');
+      logSync('syncPlaylists: 步骤 1/2 - 开始下载并合并');
       syncProgress.value = '正在从云端拉取歌单...';
       const downloadResult = await downloadPlaylists();
-      logSync('syncPlaylists: 步骤 2/2 - 下载完成', downloadResult);
+      logSync('syncPlaylists: 步骤 1/2 - 下载完成', downloadResult);
+
+      // 第二步：上传合并后的本地完整快照
+      if (downloadResult.errors.length > 0) {
+        // 下载失败时不能继续上传本地快照，否则网络抖动可能把云端数据覆盖掉。
+        logSync('syncPlaylists: 云端下载失败，跳过本次上传以保护云端数据');
+        uploadResult.errors.push('云端下载失败，本次跳过上传');
+      } else if (isUploadEnabled()) {
+        logSync('syncPlaylists: 步骤 2/2 - 开始上传');
+        syncProgress.value = '正在上传合并后的歌单到云端...';
+        uploadResult = await uploadPlaylists();
+        logSync('syncPlaylists: 步骤 2/2 - 上传完成', uploadResult);
+      } else {
+        logSync('syncPlaylists: 步骤 2/2 - 上传未开启，跳过');
+      }
 
       // 合并结果
       const combined: SyncResult = {
@@ -405,12 +486,12 @@ export function usePlaylistSync() {
   }
 
   /**
-   * 双向同步插件：先上传本地插件，再下载云端插件
+   * 双向同步插件：先恢复云端插件，再上传合并后的本地插件状态。
    */
   async function syncPlugins(): Promise<PluginSyncResult> {
     logSync('========== syncPlugins 开始 ==========');
     if (!canSync()) {
-      logSyncError('syncPlugins: 未登录或无弦予号，取消同步');
+      logSyncError('syncPlugins: 未登录或无 XY 号，取消同步');
       showToast('请先登录后再同步', 'error');
       return { uploadedPlugins: 0, downloadedPlugins: 0, errors: ['未登录'] };
     }
@@ -420,26 +501,29 @@ export function usePlaylistSync() {
     lastPluginSyncResult.value = null;
 
     try {
-      // 第一步：上传
+      // 第一步：下载并恢复
       let uploadResult: PluginSyncResult = {
         uploadedPlugins: 0,
         downloadedPlugins: 0,
         errors: [],
       };
-      if (isPluginUploadEnabled()) {
-        logSync('syncPlugins: 步骤 1/2 - 开始上传插件');
-        pluginSyncProgress.value = '正在上传插件到云端...';
-        uploadResult = await uploadPluginsToCloud();
-        logSync('syncPlugins: 步骤 1/2 - 上传插件完成', uploadResult);
-      } else {
-        logSync('syncPlugins: 步骤 1/2 - 插件上传未开启，跳过');
-      }
-
-      // 第二步：下载
-      logSync('syncPlugins: 步骤 2/2 - 开始下载插件');
+      logSync('syncPlugins: 步骤 1/2 - 开始下载插件');
       pluginSyncProgress.value = '正在从云端恢复插件...';
       const downloadResult = await downloadPluginsFromCloud();
-      logSync('syncPlugins: 步骤 2/2 - 下载插件完成', downloadResult);
+      logSync('syncPlugins: 步骤 1/2 - 下载插件完成', downloadResult);
+
+      // 第二步：上传合并后的插件状态
+      if (downloadResult.errors.length > 0) {
+        logSync('syncPlugins: 云端下载失败，跳过本次上传以保护云端插件数据');
+        uploadResult.errors.push('云端插件下载失败，本次跳过上传');
+      } else if (isPluginUploadEnabled()) {
+        logSync('syncPlugins: 步骤 2/2 - 开始上传插件');
+        pluginSyncProgress.value = '正在上传合并后的插件到云端...';
+        uploadResult = await uploadPluginsToCloud();
+        logSync('syncPlugins: 步骤 2/2 - 上传插件完成', uploadResult);
+      } else {
+        logSync('syncPlugins: 步骤 2/2 - 插件上传未开启，跳过');
+      }
 
       // 合并结果
       const combined: PluginSyncResult = {
@@ -457,7 +541,7 @@ export function usePlaylistSync() {
       }
 
       if (combined.errors.length > 0) {
-        showToast(`插件同步完成（${combined.errors.length} 个错误）`, 'error');
+        showToast(`插件同步完成：${summarizeSyncErrors(combined.errors)}`, 'error');
       } else {
         const parts: string[] = [];
         if (combined.uploadedPlugins > 0) parts.push(`上传 ${combined.uploadedPlugins} 个插件`);
@@ -484,7 +568,7 @@ export function usePlaylistSync() {
   async function uploadOnly(): Promise<void> {
     logSync('========== uploadOnly 开始 ==========');
     if (!canSync()) {
-      logSyncError('uploadOnly: 未登录或无弦予号');
+      logSyncError('uploadOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
       return;
     }
@@ -528,7 +612,7 @@ export function usePlaylistSync() {
   async function downloadOnly(): Promise<void> {
     logSync('========== downloadOnly 开始 ==========');
     if (!canSync()) {
-      logSyncError('downloadOnly: 未登录或无弦予号');
+      logSyncError('downloadOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
       return;
     }
@@ -594,7 +678,7 @@ export function usePlaylistSync() {
   async function uploadSettingsOnly(): Promise<void> {
     logSync('========== uploadSettingsOnly 开始 ==========');
     if (!canSync()) {
-      logSyncError('uploadSettingsOnly: 未登录或无弦予号');
+      logSyncError('uploadSettingsOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
       return;
     }
@@ -637,7 +721,7 @@ export function usePlaylistSync() {
   async function downloadSettingsOnly(): Promise<void> {
     logSync('========== downloadSettingsOnly 开始 ==========');
     if (!canSync()) {
-      logSyncError('downloadSettingsOnly: 未登录或无弦予号');
+      logSyncError('downloadSettingsOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
       return;
     }
@@ -682,12 +766,31 @@ export function usePlaylistSync() {
   }
 
   /**
+   * 按手机版的顺序执行一次账号全量同步：插件先下载恢复，
+   * 再下载并合并歌单/收藏，最后把合并后的数据上传回云端。
+   */
+  async function syncAll(): Promise<void> {
+    if (!canSync()) {
+      showToast('请先登录后再同步', 'error');
+      return;
+    }
+
+    logSync('========== syncAll 开始 ==========');
+    await syncPlugins();
+    await syncPlaylists();
+    if (isSettingsUploadEnabled()) {
+      await syncSettings();
+    }
+    logSync('========== syncAll 结束 ==========');
+  }
+
+  /**
    * 双向同步设置：先比较本地与云端，一致则跳过，不一致则弹窗让用户选择
    */
   async function syncSettings(): Promise<SettingsSyncResult> {
     logSync('========== syncSettings 开始 ==========');
     if (!canSync()) {
-      logSyncError('syncSettings: 未登录或无弦予号，取消同步');
+      logSyncError('syncSettings: 未登录或无 XY 号，取消同步');
       showToast('请先登录后再同步', 'error');
       return { uploaded: false, downloaded: false, errors: ['未登录'] };
     }
@@ -857,7 +960,7 @@ export function usePlaylistSync() {
   async function uploadPluginsOnly(): Promise<void> {
     logSync('========== uploadPluginsOnly 开始 ==========');
     if (!canSync()) {
-      logSyncError('uploadPluginsOnly: 未登录或无弦予号');
+      logSyncError('uploadPluginsOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
       return;
     }
@@ -878,7 +981,7 @@ export function usePlaylistSync() {
       logSync(`uploadPluginsOnly 完成: uploadedPlugins=${result.uploadedPlugins}, errors=${result.errors.length}`);
 
       if (result.errors.length > 0) {
-        showToast(`插件上传完成（${result.errors.length} 个错误）`, 'error');
+        showToast(`插件上传完成：${summarizeSyncErrors(result.errors)}`, 'error');
       } else if (result.uploadedPlugins > 0) {
         showToast(`已上传 ${result.uploadedPlugins} 个插件`, 'success');
       } else {
@@ -900,7 +1003,7 @@ export function usePlaylistSync() {
   async function downloadPluginsOnly(): Promise<void> {
     logSync('========== downloadPluginsOnly 开始 ==========');
     if (!canSync()) {
-      logSyncError('downloadPluginsOnly: 未登录或无弦予号');
+      logSyncError('downloadPluginsOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
       return;
     }
@@ -915,7 +1018,7 @@ export function usePlaylistSync() {
       logSync(`downloadPluginsOnly 完成: downloadedPlugins=${result.downloadedPlugins}, errors=${result.errors.length}`);
 
       if (result.errors.length > 0) {
-        showToast(`插件下载完成（${result.errors.length} 个错误）`, 'error');
+        showToast(`插件下载完成：${summarizeSyncErrors(result.errors)}`, 'error');
       } else if (result.downloadedPlugins > 0) {
         showToast(`已恢复 ${result.downloadedPlugins} 个插件`, 'success');
       } else {
@@ -940,22 +1043,24 @@ export function usePlaylistSync() {
     const upload = settingsStore.settings.upload;
     let hasError = false;
 
-    if (upload.playlists) {
-      try {
-        logSync('performAutoSync: 同步歌单');
-        await syncPlaylists();
-      } catch (e) {
-        logSyncError('performAutoSync: 同步歌单失败', e);
-        hasError = true;
-      }
-    }
-
+    // 与手机版 AccountCloudSync.syncAll 保持一致：先恢复插件，再处理歌单，
+    // 避免歌单中的 plugin:// 歌曲在插件尚未安装时无法正常恢复。
     if (upload.plugins) {
       try {
         logSync('performAutoSync: 同步插件');
         await syncPlugins();
       } catch (e) {
         logSyncError('performAutoSync: 同步插件失败', e);
+        hasError = true;
+      }
+    }
+
+    if (upload.playlists) {
+      try {
+        logSync('performAutoSync: 同步歌单');
+        await syncPlaylists();
+      } catch (e) {
+        logSyncError('performAutoSync: 同步歌单失败', e);
         hasError = true;
       }
     }
@@ -1069,6 +1174,7 @@ export function usePlaylistSync() {
     downloadPluginsOnly,
     uploadSettingsOnly,
     downloadSettingsOnly,
+    syncAll,
     uploadPlaylists,
     downloadPlaylists,
     deleteCloudPlaylistLocal,

@@ -10,6 +10,7 @@ import { installOnboardingRouteGate } from './onboardingRouteGate';
 // 使用路由懒加载优化首屏加载速度
 const Home = () => import('../views/Home.vue');
 const Favorites = () => import('../views/Favorites.vue');
+const Playlists = () => import('../views/Playlists.vue');
 const Recent = () => import('../views/Recent.vue');
 const Artists = () => import('../views/Artists.vue');
 const Albums = () => import('../views/Albums.vue');
@@ -18,6 +19,8 @@ const Settings = () => import('../views/Settings.vue');
 const Auth = () => import('../views/Auth.vue');
 const Search = () => import('../views/Search.vue');
 const OnlineDetail = () => import('../views/OnlineDetailView.vue');
+const Explore = () => import('../views/Explore.vue');
+const ExploreRecommendations = () => import('../views/ExploreRecommendations.vue');
 const InitializationView = defineComponent({
   name: 'InitializationView',
   render: () => null,
@@ -26,7 +29,10 @@ const InitializationView = defineComponent({
 const routes: Array<RouteRecordRaw> = [
   { path: '/initialization', name: INITIALIZATION_ROUTE_NAME, component: InitializationView },
   { path: '/', name: 'Home', component: Home },
+  { path: '/explore/recommendations', name: 'ExploreRecommendations', component: ExploreRecommendations },
+  { path: '/explore', name: 'Explore', component: Explore },
   { path: '/favorites', name: 'Favorites', component: Favorites },
+  { path: '/playlists', name: 'Playlists', component: Playlists },
   { path: '/recent', name: 'Recent', component: Recent },
   { path: '/artists', name: 'Artists', component: Artists },
   { path: '/albums', name: 'Albums', component: Albums },

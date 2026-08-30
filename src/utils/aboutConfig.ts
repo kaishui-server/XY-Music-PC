@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { signedRequest } from '../services/auth/authService';
+import { normalizeBrandText } from './brand';
 
 export interface AboutConfig {
   officialSiteUrl: string;
@@ -30,7 +31,7 @@ export const DEFAULT_ABOUT_CONFIG: AboutConfig = {
 export const aboutConfig = ref<AboutConfig>({ ...DEFAULT_ABOUT_CONFIG });
 
 function asText(value: unknown, fallback: string): string {
-  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+  return typeof value === 'string' && value.trim() ? normalizeBrandText(value.trim()) : fallback;
 }
 
 export async function fetchAboutConfig(): Promise<AboutConfig> {

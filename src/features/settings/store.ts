@@ -158,6 +158,7 @@ export const defaultThemeSettings: ThemeSettings = {
 };
 
 export const defaultSidebarSettings: SidebarSettings = {
+  showExplore: true,
   showLocalMusic: true,
   showArtists: false,
   showAlbums: false,

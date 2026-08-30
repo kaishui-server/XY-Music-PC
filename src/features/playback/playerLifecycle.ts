@@ -528,7 +528,8 @@ export const createPlayerLifecycle = ({
       });
     });
 
-    const remoteAutoSyncKey = 'xianyu_remote_auto_sync_at';
+    const remoteAutoSyncKey = 'xy_remote_auto_sync_at';
+    const legacyRemoteAutoSyncKey = 'xianyu_remote_auto_sync_at';
     const remoteAutoSyncIntervalMs = 24 * 60 * 60 * 1000;
     let remoteAutoSyncTimer: ReturnType<typeof setInterval> | null = null;
     let remoteAutoSyncStartupTimer: number | null = null;
@@ -541,7 +542,14 @@ export const createPlayerLifecycle = ({
         for (const source of sources) {
           if (!source.enabled) continue;
           const key = `${remoteAutoSyncKey}:${source.id}`;
-          const lastSyncAt = Number(localStorage.getItem(key) || '0');
+          const legacyKey = `${legacyRemoteAutoSyncKey}:${source.id}`;
+          const currentRaw = localStorage.getItem(key);
+          const legacyRaw = currentRaw === null ? localStorage.getItem(legacyKey) : null;
+          const lastSyncAt = Number(currentRaw ?? legacyRaw ?? '0');
+          if (currentRaw === null && legacyRaw !== null) {
+            localStorage.setItem(key, legacyRaw);
+            localStorage.removeItem(legacyKey);
+          }
           if (Date.now() - lastSyncAt < remoteAutoSyncIntervalMs) continue;
           await remoteLibraryApi.syncRemoteSource(source.id);
           localStorage.setItem(key, String(Date.now()));

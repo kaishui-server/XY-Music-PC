@@ -13,6 +13,8 @@ import { useNicknameChangeNotification } from '../../composables/useNicknameChan
 import { useUpdateCheck } from '../../composables/useUpdateCheck';
 import { useBanCheck } from '../../composables/useBanCheck';
 import { useOnboarding } from '../../composables/useOnboarding';
+import { usePlaylistSync } from '../../composables/usePlaylistSync';
+import { useAuthStore } from '../../features/auth/store';
 import { useSettingsStore } from '../../features/settings/store';
 import Sidebar from './Sidebar.vue';
 import TitleBar from './TitleBar.vue';
@@ -110,6 +112,8 @@ const navigationStore = useNavigationStore();
 let viewModeBeforeOnboardingPreview: NavigationViewMode | null = null;
 useBanCheck();
 const settingsStore = useSettingsStore();
+const authStore = useAuthStore();
+const accountSync = usePlaylistSync();
 
 const handleOnboardingComplete = () => {
   onboardingLayoutPreviewActive.value = false;
@@ -140,6 +144,9 @@ watch(onboardingLayoutPreviewActive, active => {
 });
 
 onMounted(() => {
+  // 云同步调度器属于应用级能力，不能只在打开“设置-账号”时启动。
+  accountSync.initAutoSync();
+  accountSync.checkAutoSync();
   if (!showOnboarding.value) {
     // 初始化流程拥有首次启动的最高展示优先级，完成后再检查其他启动弹窗。
     checkAnnouncement();
@@ -155,12 +162,20 @@ onMounted(() => {
   }, 60_000);
 });
 
+watch(
+  () => authStore.isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) accountSync.checkAutoSync();
+  },
+);
+
 onUnmounted(() => { if (feedbackPollTimer) clearInterval(feedbackPollTimer); });
 </script>
 
 <template>
   <div
     class="flex flex-col h-screen w-full text-gray-800 dark:text-gray-200 relative overflow-hidden font-sans"
+    :class="{ 'player-footer-enabled': !isMiniMode && isFooterVisible }"
   >
     <template v-if="!sleep">
     <template v-if="showOnboarding">
@@ -279,7 +294,8 @@ onUnmounted(() => { if (feedbackPollTimer) clearInterval(feedbackPollTimer); });
         <main class="flex-1 overflow-hidden relative min-h-0">
           <Home v-if="onboardingLayoutPreviewActive" />
           <router-view v-else v-slot="{ Component, route }">
-            <transition :name="skipNextPageTransition ? '' : 'page-fade'" mode="out-in">
+            <!-- 同时执行离场和入场，避免任一页面清理异常时阻塞下一个路由挂载。 -->
+            <transition :name="skipNextPageTransition ? '' : 'page-fade'">
               <component
                 :is="Component"
                 :key="String(route.name ?? route.path)"
@@ -292,7 +308,7 @@ onUnmounted(() => { if (feedbackPollTimer) clearInterval(feedbackPollTimer); });
 
     <div
       v-if="!isMiniMode && isFooterVisible"
-      class="relative z-[60] transition-colors duration-500"
+      class="player-footer-host fixed inset-x-0 bottom-0 z-[60] pointer-events-none transition-colors duration-500"
       :class="[footerContainerClass, onboardingLayoutPreviewActive ? 'pointer-events-none' : '']"
       :style="{ backdropFilter: footerBlurStyle }"
     >
@@ -384,6 +400,19 @@ onUnmounted(() => { if (feedbackPollTimer) clearInterval(feedbackPollTimer); });
 </template>
 
 <style>
+.player-footer-host {
+  /* 底栏脱离主布局流，透明区域不遮挡页面点击。 */
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.player-footer-enabled main {
+  /* 给固定悬浮底栏留出滚动余量，避免列表最后一行被卡片盖住。 */
+  padding-bottom: 96px;
+  box-sizing: border-box;
+}
+
 .page-fade-enter-active,
 .page-fade-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;

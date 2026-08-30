@@ -1,4 +1,5 @@
-export const ONBOARDING_STORAGE_KEY = 'xianyu_onboarding_completed';
+export const ONBOARDING_STORAGE_KEY = 'xy_onboarding_completed';
+export const LEGACY_BRANDED_ONBOARDING_STORAGE_KEY = 'xianyu_onboarding_completed';
 export const LEGACY_ONBOARDING_STORAGE_KEY = 'onboarding_completed';
 export const INITIALIZATION_ROUTE_NAME = 'Initialization';
 export const HOME_ROUTE_NAME = 'Home';
@@ -19,6 +20,7 @@ export const resolveInitialOnboardingVisibility = (
   }
 
   return storage.getItem(ONBOARDING_STORAGE_KEY) !== 'true'
+    && storage.getItem(LEGACY_BRANDED_ONBOARDING_STORAGE_KEY) !== 'true'
     && storage.getItem(LEGACY_ONBOARDING_STORAGE_KEY) !== 'true';
 };
 

@@ -16,7 +16,7 @@
  */
 
 const TRANSITION_CLASS = 'theme-transitioning';
-const STARTUP_PAINT_ATTRIBUTE = 'data-xianyu-startup-paint';
+const STARTUP_PAINT_ATTRIBUTE = 'data-xy-startup-paint';
 
 /** 与 style.css 中的 transition-duration 保持一致 */
 export const THEME_TRANSITION_DURATION = 320;

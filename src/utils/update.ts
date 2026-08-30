@@ -87,11 +87,13 @@ export interface ServerUpdateInfo {
 export async function fetchServerUpdate(): Promise<ServerUpdateInfo | null> {
   try {
     const data = await signedRequest<Record<string, unknown>>(
-      'get_latest_version',
+      // 桌面端只读取后台“桌面端在线更新”配置。
+      // 移动端 APP 继续使用 get_latest_version，两者不能混用。
+      'get_desktop_update',
       {},
       { fetchTimeoutMs: 15_000, timeoutMs: 18_000 },
     );
-    if (!data || !data.version) {
+    if (!data || data.enabled !== true || !data.version) {
       return null;
     }
 
@@ -99,7 +101,9 @@ export async function fetchServerUpdate(): Promise<ServerUpdateInfo | null> {
       version: String(data.version || ''),
       downloadUrl: String(data.downloadUrl ?? data.download_url ?? ''),
       updateContent: String(data.updateContent ?? data.content ?? data.update_content ?? ''),
-      updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : undefined,
+      updatedAt: typeof data.updatedAt === 'string'
+        ? data.updatedAt
+        : (typeof data.updated_at === 'string' ? data.updated_at : undefined),
     };
   } catch (error) {
     console.error('[Update] 获取版本信息失败:', error);

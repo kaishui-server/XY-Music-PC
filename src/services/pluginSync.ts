@@ -106,8 +106,8 @@ export async function uploadPlugins(): Promise<PluginSyncResult> {
 
   const ciyuanxiId = getCiyuanxiId();
   if (!ciyuanxiId) {
-    logSyncError('uploadPlugins: 未获取到弦予号');
-    result.errors.push('未登录或未获取到弦予号');
+    logSyncError('uploadPlugins: 未获取到 XY 号');
+    result.errors.push('未登录或未获取到 XY 号');
     return result;
   }
 
@@ -182,8 +182,8 @@ export async function downloadPlugins(): Promise<PluginSyncResult> {
 
   const ciyuanxiId = getCiyuanxiId();
   if (!ciyuanxiId) {
-    logSyncError('downloadPlugins: 未获取到弦予号');
-    result.errors.push('未登录或未获取到弦予号');
+    logSyncError('downloadPlugins: 未获取到 XY 号');
+    result.errors.push('未登录或未获取到 XY 号');
     return result;
   }
 
@@ -215,7 +215,10 @@ export async function downloadPlugins(): Promise<PluginSyncResult> {
         if (ok) {
           result.downloadedPlugins++;
         } else {
-          result.errors.push(`插件 "${item.name}" 恢复失败`);
+          const reason = !script || script.trim().length === 0
+            ? '云端脚本为空'
+            : '脚本格式无法解析或插件初始化失败';
+          result.errors.push(`插件 "${item.name}" 恢复失败：${reason}`);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

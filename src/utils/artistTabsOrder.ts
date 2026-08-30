@@ -5,7 +5,8 @@ export interface ArtistTabItem {
   name: string;
 }
 
-export const ARTIST_TABS_STORAGE_KEY = 'xianyu_artist_tabs_order';
+export const ARTIST_TABS_STORAGE_KEY = 'xy_artist_tabs_order';
+export const LEGACY_ARTIST_TABS_STORAGE_KEY = 'xianyu_artist_tabs_order';
 
 export const DEFAULT_ARTIST_TABS: ArtistTabId[] = ['songs', 'albums', 'details'];
 
@@ -40,9 +41,15 @@ export function sanitizeTabsOrder(rawOrder: unknown): ArtistTabId[] {
  */
 export function getSavedTabsOrder(): ArtistTabId[] {
   try {
-    const raw = localStorage.getItem(ARTIST_TABS_STORAGE_KEY);
+    const raw = localStorage.getItem(ARTIST_TABS_STORAGE_KEY)
+      ?? localStorage.getItem(LEGACY_ARTIST_TABS_STORAGE_KEY);
     if (!raw) return [...DEFAULT_ARTIST_TABS];
-    return sanitizeTabsOrder(JSON.parse(raw));
+    const sanitized = sanitizeTabsOrder(JSON.parse(raw));
+    if (!localStorage.getItem(ARTIST_TABS_STORAGE_KEY)) {
+      localStorage.setItem(ARTIST_TABS_STORAGE_KEY, JSON.stringify(sanitized));
+      localStorage.removeItem(LEGACY_ARTIST_TABS_STORAGE_KEY);
+    }
+    return sanitized;
   } catch {
     return [...DEFAULT_ARTIST_TABS];
   }
@@ -76,6 +83,7 @@ export function saveTabsOrder(order: ArtistTabId[]): void {
       ARTIST_TABS_STORAGE_KEY,
       JSON.stringify(sanitizeTabsOrder(order)),
     );
+    localStorage.removeItem(LEGACY_ARTIST_TABS_STORAGE_KEY);
   } catch {
     // 静默失败，避免本地写入故障中断主进程或阻塞 UI 响应
   }

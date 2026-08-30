@@ -19,7 +19,7 @@ const createClassList = () => {
 const createDoc = (options: { startupPaint?: boolean } = {}) => {
   const attributes = new Set<string>();
   if (options.startupPaint) {
-    attributes.add('data-xianyu-startup-paint');
+    attributes.add('data-xy-startup-paint');
   }
 
   return {

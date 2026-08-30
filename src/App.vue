@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getVersion } from '@tauri-apps/api/app';
+import { isTauri } from '@tauri-apps/api/core';
 import { appApi } from './services/tauri/appApi';
 import { defineAsyncComponent, nextTick, ref, watch, onBeforeUnmount, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
@@ -35,6 +36,7 @@ const currentWindowLabel = (() => {
     return 'main';
   }
 })();
+const runningInTauri = isTauri();
 
 const isDesktopLyricsWindow = currentWindowLabel === DESKTOP_LYRICS_WINDOW_LABEL;
 const isMiniPlayerWindow = currentWindowLabel === MINI_PLAYER_WINDOW_LABEL;
@@ -79,6 +81,17 @@ watch(isImmersiveFullscreen, (fs) => {
 }, { immediate: true });
 
 onMounted(() => {
+  // Windows 任务栏可能继续使用旧版本 EXE 的缓存图标；在每个 Tauri 窗口
+  // 创建后显式设置当前发布资源，确保主窗口和任务栏播控窗口都使用新 logo。
+  if (runningInTauri) {
+    try {
+      void getCurrentWindow().setIcon('/logo.png').catch((error) => {
+        console.warn('[App] 设置窗口图标失败:', error);
+      });
+    } catch (error) {
+      console.warn('[App] 获取当前窗口失败:', error);
+    }
+  }
   accentThemeObserver = new MutationObserver(() => {
     applyAccentTheme(
       settings.value.theme.accentTheme,
@@ -107,6 +120,21 @@ if (currentWindowLabel === 'main') {
   let unlistenCloseRequested: (() => void) | null = null;
   let unlistenFocusChanged: (() => void) | null = null;
   let isUnmounted = false;
+
+  const disposeTauriListener = (
+    unlisten: (() => void) | null,
+    label: string,
+  ) => {
+    if (!unlisten) return;
+    // Tauri 的 UnlistenFn 类型标注为 void，但运行时会返回 Promise。
+    // HMR 或窗口销毁时监听可能已由后端移除，必须同时捕获同步和异步错误，
+    // 否则 unhandledrejection 会触发全局致命错误页并清空主内容区。
+    void Promise.resolve()
+      .then(() => unlisten())
+      .catch((error) => {
+        console.warn(`[App] 清理 ${label} 监听失败:`, error);
+      });
+  };
 
   const releaseHiddenMainWindowResources = () => {
     clearPreblurredBackgroundCache();
@@ -174,28 +202,38 @@ if (currentWindowLabel === 'main') {
       console.error('Failed to get version for welcome toast:', error);
     }
 
-    const closeRequestedUnlisten = await getCurrentWindow().onCloseRequested(async (event) => {
-      if (settings.value.closeToTray) {
-        event.preventDefault();
-        await enterTraySleep();
-        await getCurrentWindow().hide();
+    if (runningInTauri) {
+      try {
+        const closeRequestedUnlisten = await getCurrentWindow().onCloseRequested(async (event) => {
+          if (settings.value.closeToTray) {
+            event.preventDefault();
+            await enterTraySleep();
+            await getCurrentWindow().hide();
+          }
+        });
+        if (isUnmounted) {
+          disposeTauriListener(closeRequestedUnlisten, 'close-requested');
+        } else {
+          unlistenCloseRequested = closeRequestedUnlisten;
+        }
+      } catch (error) {
+        console.warn('[App] 注册 close-requested 监听失败:', error);
       }
-    });
-    if (isUnmounted) {
-      closeRequestedUnlisten();
-    } else {
-      unlistenCloseRequested = closeRequestedUnlisten;
-    }
 
-    const focusChangedUnlisten = await getCurrentWindow().onFocusChanged(({ payload }) => {
-      if (payload) {
-        leaveTraySleep();
+      try {
+        const focusChangedUnlisten = await getCurrentWindow().onFocusChanged(({ payload }) => {
+          if (payload) {
+            leaveTraySleep();
+          }
+        });
+        if (isUnmounted) {
+          disposeTauriListener(focusChangedUnlisten, 'focus-changed');
+        } else {
+          unlistenFocusChanged = focusChangedUnlisten;
+        }
+      } catch (error) {
+        console.warn('[App] 注册 focus-changed 监听失败:', error);
       }
-    });
-    if (isUnmounted) {
-      focusChangedUnlisten();
-    } else {
-      unlistenFocusChanged = focusChangedUnlisten;
     }
 
     // 启动时加载插件（尊重懒加载设置）
@@ -244,9 +282,9 @@ if (currentWindowLabel === 'main') {
       handleDevtoolsKeyDown = null;
     }
 
-    unlistenCloseRequested?.();
+    disposeTauriListener(unlistenCloseRequested, 'close-requested');
     unlistenCloseRequested = null;
-    unlistenFocusChanged?.();
+    disposeTauriListener(unlistenFocusChanged, 'focus-changed');
     unlistenFocusChanged = null;
     window.removeEventListener('focus', leaveTraySleep);
     document.removeEventListener('visibilitychange', handleDocumentVisibilityChange);

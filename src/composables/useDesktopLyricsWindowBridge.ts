@@ -140,13 +140,19 @@ function readDesktopLyricsBounds(): DesktopLyricsWindowBounds | null {
       return null;
     }
 
+    // 兼容升级前自动保存的旧默认尺寸。只有恰好是旧默认值时才迁移，
+    // 用户手动调整过的窗口尺寸仍然保持不变。
+    const isLegacyDefaultSize = parsed.width === 900 && parsed.height === 280;
+
     return {
       x: Math.round(parsed.x as number),
       y: Math.round(parsed.y as number),
       width: Math.max(
         DESKTOP_LYRICS_WINDOW_MIN_WIDTH,
         Math.round(
-          Number.isFinite(parsed.width)
+          isLegacyDefaultSize
+            ? DESKTOP_LYRICS_WINDOW_DEFAULT_WIDTH
+            : Number.isFinite(parsed.width)
             ? (parsed.width as number)
             : DESKTOP_LYRICS_WINDOW_DEFAULT_WIDTH,
         ),
@@ -154,7 +160,9 @@ function readDesktopLyricsBounds(): DesktopLyricsWindowBounds | null {
       height: Math.max(
         DESKTOP_LYRICS_WINDOW_MIN_HEIGHT,
         Math.round(
-          Number.isFinite(parsed.height)
+          isLegacyDefaultSize
+            ? DESKTOP_LYRICS_WINDOW_DEFAULT_HEIGHT
+            : Number.isFinite(parsed.height)
             ? (parsed.height as number)
             : DESKTOP_LYRICS_WINDOW_DEFAULT_HEIGHT,
         ),

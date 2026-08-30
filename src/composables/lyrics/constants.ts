@@ -125,19 +125,20 @@ export const defaultLyricsSettings: LyricsSettings = {
 };
 
 export const defaultDesktopLyricsSettings: DesktopLyricsSettings = {
-  isAlwaysOnTop: false,
+  isAlwaysOnTop: true,
   alwaysShowShadowBackground: false,
   autoHideWhenFullscreen: true,
   autoHideWhenPaused: false,
   showDoubleLine: false,
-  enableWordEffect: true,
+  // 默认使用整行纯色显示；需要逐字渐变时可在设置中手动开启。
+  enableWordEffect: false,
   enableTextOutline: false,
   textOutlineWidth: DEFAULT_DESKTOP_TEXT_OUTLINE_WIDTH,
   textOutlineColor: DEFAULT_DESKTOP_TEXT_OUTLINE_COLOR,
   isLocked: false,
   persistLock: false,
   centerHorizontally: false,
-  colorScheme: 'auto',
+  colorScheme: 'default',
   customPlayedColor: DEFAULT_DESKTOP_CUSTOM_PLAYED_COLOR,
   customUnplayedColor: DEFAULT_DESKTOP_CUSTOM_UNPLAYED_COLOR,
   customRomajiPlayedColor: DEFAULT_DESKTOP_CUSTOM_ROMAJI_PLAYED_COLOR,
@@ -245,7 +246,7 @@ export function normalizeLyricsColorScheme(value: unknown): LyricsColorScheme {
     || value === 'white'
     || value === 'custom'
     ? value
-    : 'auto';
+    : 'default';
 }
 
 export function normalizeHexColor(value: unknown, fallback: string): string {

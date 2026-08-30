@@ -34,6 +34,7 @@ const emit = defineEmits<{
   (event: 'playlistClick', nativeEvent: MouseEvent, id: string): void;
   (event: 'playlistContextMenu', nativeEvent: MouseEvent, playlist: Playlist): void;
   (event: 'deletePlaylist', id: string, name: string): void;
+  (event: 'openAll'): void;
 }>();
 
 const isOpenModel = computed({
@@ -50,14 +51,16 @@ const getPlaylistCover = (playlistId: string) => {
 <template>
   <div class="mt-6">
     <div class="px-4 pr-3 py-2 flex items-center justify-between group">
-      <div class="flex items-center gap-1 cursor-pointer text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors" @click.stop="isOpenModel = !isOpenModel">
-        <svg xmlns="http://www.w3.org/2000/svg" :class="['h-3 w-3 transition-transform duration-200', isOpen ? 'rotate-90' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-        <span class="text-xs font-bold tracking-wide">我的歌单</span>
-        <span class="text-xs text-gray-500 dark:text-gray-400 font-normal ml-0.5">{{ playlists.length }}</span>
+      <div class="flex items-center gap-1 text-gray-700 dark:text-gray-300 transition-colors">
+        <button type="button" class="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors" title="展开或收起歌单预览" @click.stop="isOpenModel = !isOpenModel">
+          <svg xmlns="http://www.w3.org/2000/svg" :class="['h-3 w-3 transition-transform duration-200', isOpen ? 'rotate-90' : '']" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        </button>
+        <button type="button" class="text-xs font-bold tracking-wide hover:text-gray-900 dark:hover:text-white transition-colors" title="查看全部歌单" @click.stop="$emit('openAll')">我的歌单</button>
       </div>
       <div class="flex items-center gap-2">
         <button @click.stop="$emit('createPlaylist', $event)" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded p-0.5 transition-colors" title="新建歌单"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg></button>
         <button @click.stop="$emit('importPlaylist', $event)" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded p-0.5 transition-colors" title="导入歌单"><Download class="h-4 w-4" :stroke-width="2" /></button>
+        <button @click.stop="$emit('openAll')" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded p-0.5 transition-colors" title="查看全部歌单"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
       </div>
     </div>
 

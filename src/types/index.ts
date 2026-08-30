@@ -295,6 +295,7 @@ export interface HomeSettings {
 
 /** 可排序的侧边栏项标识（"首页"固定置顶，不参与排序） */
 export type SidebarItemKey =
+  | 'explore'
   | 'localMusic'
   | 'artists'
   | 'albums'
@@ -305,6 +306,7 @@ export type SidebarItemKey =
   | 'account';
 
 export interface SidebarSettings {
+  showExplore: boolean;
   showLocalMusic: boolean;
   showArtists: boolean;
   showAlbums: boolean;

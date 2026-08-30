@@ -953,6 +953,7 @@ watch(artistActiveTab, () => {
             :readOnly="true"
             :coverUrlOverride="coverUrl"
             :scrollContainerRef="scrollContainerRef"
+            headerAddToPlaylistLabel="添加到歌单"
             @playAll="handlePlayAll"
             @openAddToPlaylist="handleAddToPlaylist"
             @selectAll="handleSelectAll"

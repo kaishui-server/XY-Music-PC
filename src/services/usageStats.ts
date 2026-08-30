@@ -241,8 +241,7 @@ export interface UserBehaviorReport {
   action: 'play' | 'switch' | 'complete' | 'next';
   listen_duration: number;
   play_count: number;
-  ciyuanxi_id?: string;
-  user_id?: number;
+  xymusic_id?: string;
 }
 
 /**
@@ -311,13 +310,13 @@ export async function submitFeedback(
 ): Promise<number> {
   const auth = getStoredAuth();
   const user = auth?.user;
-  const ciyuanxiId = user?.ciyuanxi_id?.trim();
+  const ciyuanxiId = (user?.ciyuanxi_id ?? user?.xymusic_id)?.trim();
   if (!ciyuanxiId) {
     throw new Error('请先登录后再提交反馈');
   }
 
   const payload: Record<string, unknown> = {
-    ciyuanxi_id: ciyuanxiId,
+    xymusic_id: ciyuanxiId,
     nickname: user?.nickname?.trim() || '',
     title: title.trim(),
     content: content.trim(),
@@ -351,15 +350,15 @@ export interface MyFeedbackItem {
 
 export async function getMyFeedback(): Promise<MyFeedbackItem[]> {
   const auth = getStoredAuth();
-  const ciyuanxiId = auth?.user?.ciyuanxi_id?.trim();
+  const ciyuanxiId = (auth?.user?.ciyuanxi_id ?? auth?.user?.xymusic_id)?.trim();
   if (!ciyuanxiId) throw new Error('请先登录后再查看反馈');
-  const data = await signedRequest<{ list: MyFeedbackItem[] }>('list_my_feedback', { ciyuanxi_id: ciyuanxiId });
+  const data = await signedRequest<{ list: MyFeedbackItem[] }>('list_my_feedback', { xymusic_id: ciyuanxiId });
   return data?.list ?? [];
 }
 
 export async function submitAppeal(ciyuanxiId: string, nickname: string, content: string): Promise<number> {
   const data = await signedRequest<{ id: string | number }>('submit_appeal', {
-    ciyuanxi_id: ciyuanxiId,
+    xymusic_id: ciyuanxiId,
     nickname: nickname.trim(),
     content: content.trim(),
   });

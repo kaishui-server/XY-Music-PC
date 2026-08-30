@@ -16,7 +16,7 @@ export function useFeedbackNotification() {
     if (!auth?.user) return;
     isFetchingFeedback.value = true;
     try {
-      const data = await signedRequest<{ list: FeedbackNotificationRaw[] }>('get_my_feedback_notifications', { ciyuanxi_id: auth.user.ciyuanxi_id ?? auth.user.id ?? '' }, { fetchTimeoutMs: 15_000, timeoutMs: 18_000 });
+      const data = await signedRequest<{ list: FeedbackNotificationRaw[] }>('get_my_feedback_notifications', { xymusic_id: auth.user.ciyuanxi_id ?? auth.user.xymusic_id ?? auth.user.id ?? '' }, { fetchTimeoutMs: 15_000, timeoutMs: 18_000 });
       const item = data?.list?.[0];
       if (!item) return;
       currentNotificationId.value = item.id;
@@ -28,7 +28,7 @@ export function useFeedbackNotification() {
   const closeFeedbackNotification = async () => {
     const auth = getStoredAuth();
     if (currentNotificationId.value > 0) {
-      try { await signedRequest('confirm_feedback_notification', { id: currentNotificationId.value, ciyuanxi_id: auth?.user?.ciyuanxi_id ?? auth?.user?.id ?? '' }); } catch (error) { console.error('[FeedbackNotification] 确认通知失败', error); }
+      try { await signedRequest('confirm_feedback_notification', { id: currentNotificationId.value, xymusic_id: auth?.user?.ciyuanxi_id ?? auth?.user?.xymusic_id ?? auth?.user?.id ?? '' }); } catch (error) { console.error('[FeedbackNotification] 确认通知失败', error); }
     }
     feedbackVisible.value = false; currentFeedbackNotification.value = null; currentNotificationId.value = 0;
   };

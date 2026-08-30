@@ -2,6 +2,8 @@
 import { computed, defineAsyncComponent } from 'vue';
 
 import type { FolderNode, Song } from '../../types';
+import { useAddToPlaylistDialog } from '../../features/collections/addToPlaylistDialog';
+import { useToast } from '../../composables/toast';
 
 const DetailHeader = defineAsyncComponent(() => import('../headers/DetailHeader.vue'));
 const FoldersHeader = defineAsyncComponent(() => import('../headers/FoldersHeader.vue'));
@@ -23,11 +25,15 @@ interface Props {
   playlistDetail: PlaylistDetail | null;
   localSongList: Song[];
   localSongPaths?: string[];
+  playlistId?: string;
+  resolveSongByPath?: (path: string) => Song | null;
   /** 整页滚动容器引用，透传给 DetailHeader 用于驱动封面收缩效果 */
   scrollContainerRef?: HTMLElement | null;
 }
 
 const props = defineProps<Props>();
+const { openAddToPlaylistDialog } = useAddToPlaylistDialog();
+const { showToast } = useToast();
 
 const emit = defineEmits<{
   (event: 'update:isBatchMode', value: boolean): void;
@@ -61,6 +67,23 @@ const isManagementModeModel = computed({
   get: () => props.isManagementMode,
   set: (value: boolean) => emit('update:isManagementMode', value),
 });
+
+const handleMergeToPlaylist = () => {
+  const songPaths = props.localSongPaths ?? props.localSongList.map(song => song.path);
+  const songs = songPaths
+    .map(path => props.resolveSongByPath?.(path) ?? props.localSongList.find(song => song.path === path))
+    .filter((song): song is Song => Boolean(song));
+
+  if (songPaths.length === 0) {
+    showToast('当前歌单暂无可合并的歌曲', 'info');
+    return;
+  }
+
+  openAddToPlaylistDialog(songPaths, {
+    songs,
+    excludedPlaylistId: props.playlistId ?? null,
+  });
+};
 </script>
 
 <template>
@@ -89,11 +112,12 @@ const isManagementModeModel = computed({
     :totalSongCount="localSongPaths?.length ?? localSongList.length"
     :showRename="true"
     :showAddToPlaylist="true"
-    :showHeaderAddToPlaylist="false"
+    :showHeaderAddToPlaylist="true"
+    headerAddToPlaylistLabel="合并到歌单"
     :scrollContainerRef="scrollContainerRef"
     @playAll="$emit('playAll')"
     @batchPlay="$emit('batchPlay')"
-    @openAddToPlaylist="$emit('showAddToPlaylist')"
+    @openAddToPlaylist="handleMergeToPlaylist"
     @batchDelete="$emit('batchDelete')"
     @batchAddToFavorites="$emit('batchAddToFavorites')"
     @batchDownload="$emit('batchDownload')"

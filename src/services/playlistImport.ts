@@ -47,11 +47,14 @@ const SOURCE_PLATFORM_NAMES: Record<string, string> = {
  * - LX 插件多平台时拆分为独立条目，使用平台名显示
  * - LX 插件单平台时以插件名显示
  * - MusicFree 插件（如 BakaMusic）直接以插件名显示，key 带 mf_ 前缀
- * - 始终在首位包含"自动识别"
+ * - 始终提供手机版同样的四个内置平台，不依赖本地是否安装 LX 插件
  */
 export function getImportSourcesFromPlugins(): PlaylistSource[] {
   const sources: PlaylistSource[] = [
-    { key: 'auto', name: '自动识别', platform: '', type: 'lx' },
+    { key: 'wy', name: '网易云音乐', platform: SOURCE_PLATFORM_NAMES.wy, type: 'lx' },
+    { key: 'tx', name: 'QQ音乐', platform: SOURCE_PLATFORM_NAMES.tx, type: 'lx' },
+    { key: 'kw', name: '酷我音乐', platform: SOURCE_PLATFORM_NAMES.kw, type: 'lx' },
+    { key: 'kg', name: '酷狗音乐', platform: SOURCE_PLATFORM_NAMES.kg, type: 'lx' },
   ];
 
   const raw = getStoredPlugins();
@@ -66,7 +69,9 @@ export function getImportSourcesFromPlugins(): PlaylistSource[] {
     })
     .map(({ p }) => p);
 
-  const seenKeys = new Set<string>();
+  // 内置源优先，插件只补充额外的 MusicFree/收藏夹入口；避免同一平台出现多个
+  // 入口，也避免桌面端因未安装 LX 插件而无法导入公开歌单。
+  const seenKeys = new Set<string>(['wy', 'tx', 'kw', 'kg']);
 
   for (const p of plugins) {
     if (p.format === 'lx' && p.sources.length > 0) {
@@ -166,40 +171,6 @@ function formatPlayTime(seconds: number): string {
 /** MD5 哈希（32 位小写 hex，与 LxSdk.md5 一致） */
 function md5(str: string): string {
   return CryptoJs.MD5(str).toString();
-}
-
-/**
- * AES-ECB 加密（与 LxSdk.aesEncrypt ECB_128_NoPadding 一致）
- * 注意：原版 "AES" 在 Java 中默认是 PKCS5Padding，等价于 PKCS7Padding（16 字节块）
- * @param data 明文字符串
- * @param key 密钥字符串（UTF-8）
- * @returns base64 编码的密文
- */
-function aesEcbEncrypt(data: string, key: string): string {
-  const keyBytes = CryptoJs.enc.Utf8.parse(key);
-  const encrypted = CryptoJs.AES.encrypt(data, keyBytes, {
-    mode: CryptoJs.mode.ECB,
-    padding: CryptoJs.pad.Pkcs7,
-  });
-  return encrypted.toString(); // base64
-}
-
-/** base64 → hex 大写 */
-function b64ToHexUpper(b64: string): string {
-  const words = CryptoJs.enc.Base64.parse(b64);
-  return words.toString(CryptoJs.enc.Hex).toUpperCase();
-}
-
-// ---- 网易云加密 ----
-
-/**
- * 网易云 linuxapi 加密（与 LxSdkSongList.linuxapiEncrypt 一致）
- * AES-ECB-128 (PKCS5Padding) + hex 大写
- */
-function linuxapiEncrypt(obj: object): string {
-  const text = JSON.stringify(obj);
-  const encrypted = aesEcbEncrypt(text, 'rFgB&h#%2?^eDg:Q');
-  return b64ToHexUpper(encrypted);
 }
 
 // ---- 酷狗签名 ----
@@ -321,24 +292,25 @@ export function parseLink(input: string): ParsedLink | null {
 }
 
 function matchPlatform(text: string): ParsedLink | null {
-  if (text.includes('music.163.com') || text.includes('163cn.tv') || text.includes('y.music.163.com')) {
-    return matchWy(text);
+  const lower = text.toLowerCase();
+  if (lower.includes('music.163.com') || lower.includes('163cn.tv') || lower.includes('y.music.163.com')) {
+    return matchWy(text) || { source: 'wy', playlistId: text };
   }
-  if (text.includes('y.qq.com') || text.includes('i.y.qq.com') || text.includes('c.y.qq.com')) {
-    return matchTx(text);
+  if (lower.includes('y.qq.com') || lower.includes('i.y.qq.com') || lower.includes('c.y.qq.com')) {
+    return matchTx(text) || { source: 'tx', playlistId: text };
   }
-  if (text.includes('kuwo.cn')) {
-    return matchKw(text);
+  if (lower.includes('kuwo.cn')) {
+    return matchKw(text) || { source: 'kw', playlistId: text };
   }
-  if (text.includes('kugou.com')) {
-    return matchKg(text);
+  if (lower.includes('kugou.com')) {
+    return matchKg(text) || { source: 'kg', playlistId: text };
   }
   return null;
 }
 
 // 网易云正则
-const wyRegex1 = /^.+[?&]id=(\d+)(?:&.*$|#.*$|$)/;
-const wyRegex2 = /^.+\/playlist\/(\d+)\/\d+\/.+$/;
+const wyRegex1 = /[?&]id=(\d+)/i;
+const wyRegex2 = /\/playlist\/(\d+)/i;
 
 function matchWy(text: string): ParsedLink | null {
   let m = text.match(wyRegex1);
@@ -349,9 +321,9 @@ function matchWy(text: string): ParsedLink | null {
 }
 
 // QQ音乐正则
-const txRegex1 = /\/playlist\/(\d+)/;
-const txRegex2 = /id=(\d+)/;
-const txRegex3 = /\/playsquare\/(\d+)/;
+const txRegex1 = /\/playlist\/(\d+)/i;
+const txRegex2 = /[?&](?:id|disstid)=(\d+)/i;
+const txRegex3 = /\/playsquare\/(\d+)/i;
 
 function matchTx(text: string): ParsedLink | null {
   let m = text.match(txRegex1);
@@ -364,8 +336,8 @@ function matchTx(text: string): ParsedLink | null {
 }
 
 // 酷我正则
-const kwRegex1 = /\/playlists?(?:_detail)?\/(\d+)/;
-const kwRegex2 = /playlistId=(\d+)/;
+const kwRegex1 = /\/playlists?(?:_detail)?\/(\d+)/i;
+const kwRegex2 = /[?&]playlistId=(\d+)/i;
 
 function matchKw(text: string): ParsedLink | null {
   let m = text.match(kwRegex1);
@@ -376,8 +348,8 @@ function matchKw(text: string): ParsedLink | null {
 }
 
 // 酷狗正则
-const kgRegex1 = /\/(\d+)\.html(?:\?.*|&.*$|#.*$|$)/;
-const kgRegex2 = /\/special\/(?:single\/)?(\d+)/;
+const kgRegex1 = /\/(\d+)\.html/i;
+const kgRegex2 = /\/special\/(?:single\/)?(\d+)/i;
 
 // 酷狗 gcid_ 分享链接正则
 const kgGcidRegex = /gcid_(\w+)/;
@@ -496,23 +468,14 @@ async function getListDetailWy(rawId: string): Promise<PlaylistImportResult> {
   const id = getWyListId(rawId);
   if (!id) return { source: 'wy', songs: [], total: 0, info: { name: '', img: '', desc: '', author: '', playCount: '' } };
 
-  // linuxapi 加密 POST /api/linux/forward
-  const params = {
-    method: 'POST',
-    url: 'https://music.163.com/api/v3/playlist/detail',
-    params: { id, n: 100000, s: 8 },
-  };
-  const eparams = linuxapiEncrypt(params);
-
+  // 与手机版保持一致：使用公开的 v6 详情接口，不再依赖旧 linuxapi 转发接口。
   const resp = await httpFetch(
-    'https://music.163.com/api/linux/forward',
-    'POST',
+    `https://music.163.com/api/v6/playlist/detail?id=${encodeURIComponent(id)}&n=100000&s=8`,
+    'GET',
     {
-      'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
-      'Cookie': 'MUSIC_U=',
+      'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36',
+      'Referer': 'https://music.163.com/',
     },
-    undefined,
-    { eparams },
   );
 
   const body = resp.body;
@@ -552,9 +515,9 @@ async function getListDetailWy(rawId: string): Promise<PlaylistImportResult> {
 
   log(`getListDetailWy: already fetched=${fetchedIds.size}, remaining=${remainingIds.length}`);
 
-  // 3. 分批获取剩余歌曲详情（每批最多 1000 首）
+  // 3. 分批获取剩余歌曲详情（与手机版一致，每批最多 200 首）
   if (remainingIds.length > 0) {
-    const batchSize = 1000;
+    const batchSize = 200;
     let processed = 0;
     while (processed < remainingIds.length) {
       const end = Math.min(processed + batchSize, remainingIds.length);
@@ -577,64 +540,9 @@ async function getListDetailWy(rawId: string): Promise<PlaylistImportResult> {
 }
 
 /**
- * weapi 加密（移植自 YinDongMusic wyCrypto.ts，与 lx-music-desktop 一致）
- * AES-CBC 双重加密 + RSA 加密随机密钥
- */
-const WEAPI_PRESET_KEY = CryptoJs.enc.Utf8.parse('0CoJUm6Qyw8W8jud');
-const WEAPI_IV = CryptoJs.enc.Utf8.parse('0102030405060708');
-const BASE62 = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-const RSA_MODULUS_HEX = '00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7';
-
-function uint8ArrayToWordArray(u8arr: Uint8Array): CryptoJs.lib.WordArray {
-  const words: number[] = [];
-  for (let i = 0; i < u8arr.length; i++) {
-    words[i >>> 2] |= u8arr[i] << (24 - (i % 4) * 8);
-  }
-  return CryptoJs.lib.WordArray.create(words, u8arr.length);
-}
-
-function rsaEncrypt(data: Uint8Array): string {
-  const padded = new Uint8Array(128);
-  padded.set(data, 128 - data.length);
-  let m = 0n;
-  for (const b of padded) m = (m << 8n) | BigInt(b);
-  const n = BigInt('0x' + RSA_MODULUS_HEX);
-  let result = 1n;
-  let base = m % n;
-  let exp = 65537n;
-  while (exp > 0n) {
-    if (exp & 1n) result = (result * base) % n;
-    base = (base * base) % n;
-    exp >>= 1n;
-  }
-  return result.toString(16).padStart(256, '0');
-}
-
-function weapiEncrypt(object: Record<string, any>): { params: string; encSecKey: string } {
-  const text = JSON.stringify(object);
-  const keyBytes = new Uint8Array(16);
-  crypto.getRandomValues(keyBytes);
-  for (let i = 0; i < 16; i++) keyBytes[i] = BASE62.charCodeAt(keyBytes[i] % 62);
-  const secretKey = uint8ArrayToWordArray(keyBytes);
-
-  const firstEncrypted = CryptoJs.AES.encrypt(CryptoJs.enc.Utf8.parse(text), WEAPI_PRESET_KEY, {
-    iv: WEAPI_IV, mode: CryptoJs.mode.CBC, padding: CryptoJs.pad.Pkcs7,
-  }).toString();
-  const params = CryptoJs.AES.encrypt(CryptoJs.enc.Utf8.parse(firstEncrypted), secretKey, {
-    iv: WEAPI_IV, mode: CryptoJs.mode.CBC, padding: CryptoJs.pad.Pkcs7,
-  }).toString();
-
-  const reversedKey = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) reversedKey[i] = keyBytes[15 - i];
-  const encSecKey = rsaEncrypt(reversedKey);
-
-  return { params, encSecKey };
-}
-
-/**
  * 网易云批量获取歌曲详情（完全对齐 YinDongMusic 的实现）
- * 使用 weapi POST 到 /weapi/v3/song/detail，避免 GET URL 过长导致 400 错误
- * 每批最多 1000 首，失败自动重试 2 次
+ * 使用手机版同样的公开 GET /api/song/detail/ 接口，每批最多 200 首。
+ * 歌单详情接口有时只返回 trackIds，这里专门补齐缺失的歌曲详情。
  */
 async function fetchWyMusicDetailList(ids: string[]): Promise<PluginSearchResult[]> {
   if (ids.length === 0) return [];
@@ -644,21 +552,13 @@ async function fetchWyMusicDetailList(ids: string[]): Promise<PluginSearchResult
 
   for (let attempt = 0; attempt <= MAX_RETRY; attempt++) {
     try {
-      const encrypted = weapiEncrypt({
-        c: '[' + ids.map(id => `{"id":${id}}`).join(',') + ']',
-        ids: '[' + ids.join(',') + ']',
-      });
-
       const resp = await httpFetch(
-        'https://music.163.com/weapi/v3/song/detail',
-        'POST',
+        `https://music.163.com/api/song/detail/?ids=${encodeURIComponent(JSON.stringify(ids.map(Number)))}`,
+        'GET',
         {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
-          'Origin': 'https://music.163.com',
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36',
           'Referer': 'https://music.163.com/',
         },
-        `params=${encodeURIComponent(encrypted.params)}&encSecKey=${encodeURIComponent(encrypted.encSecKey)}`,
       );
 
       const body = resp.body;
@@ -712,8 +612,8 @@ export async function fetchWyTrackMetaByIds(
   if (validIds.length === 0) return patches;
 
   try {
-    // 每批最多 1000 首，与 fetchWyMusicDetailList 的上游限制一致
-    const BATCH_SIZE = 1000;
+    // 与手机版一致，每批最多 200 首
+    const BATCH_SIZE = 200;
     for (let offset = 0; offset < validIds.length; offset += BATCH_SIZE) {
       const batch = validIds.slice(offset, offset + BATCH_SIZE);
       const details = await fetchWyMusicDetailList(batch);
@@ -748,6 +648,8 @@ function parseWyTrack(track: any): PluginSearchResult | null {
     name,
     singer: singerName,
     source: 'wy',
+    albumName: decodeName(al.name || ''),
+    albumId: al.id,
     interval: formatPlayTime(Math.floor(duration / 1000)),
   };
 
@@ -920,7 +822,7 @@ async function getListDetailKw(rawId: string): Promise<PlaylistImportResult> {
 
   const info: PlaylistInfo = {
     name: decodeName(body.title || ''),
-    img: body.pic || '',
+    img: normalizeKuwoCover(body.pic || ''),
     desc: decodeName(body.info || ''),
     author: decodeName(body.uname || ''),
     playCount: String(body.playnum || 0),
@@ -937,6 +839,9 @@ function parseKwSong(item: any): PluginSearchResult | null {
   const artist = decodeName(item.artist || '');
   const album = decodeName(item.album || '');
   const durationSec = parseInt(item.duration || '0', 10) || 0;
+  const coverUrl = normalizeKuwoCover(
+    item.pic || item.web_albumpic_short || item.albumpic_short || '',
+  );
 
   const rawData = {
     songmid: idStr,
@@ -951,7 +856,7 @@ function parseKwSong(item: any): PluginSearchResult | null {
     title: name,
     artist,
     album,
-    coverUrl: '',
+    coverUrl,
     duration: durationSec * 1000,
     platform: '酷我',
     sourceKey: 'kw',
@@ -959,9 +864,30 @@ function parseKwSong(item: any): PluginSearchResult | null {
   });
 }
 
+/** 酷我接口返回的封面可能是短路径，也可能是完整地址。 */
+function normalizeKuwoCover(value: string, size = 480): string {
+  const url = String(value || '').trim();
+  if (!url) return '';
+  if (url.startsWith('//')) return `https:${url}`;
+  if (/^https?:\/\//i.test(url)) {
+    return url.replace(/^http:\/\//i, 'https://');
+  }
+  let short = url.startsWith('/') ? url.slice(1) : url;
+  short = short.replace(/^\d+\//, `${size}/`);
+  return `https://img3.kuwo.cn/star/albumcover/${short}`;
+}
+
 // ==================== 酷狗歌单详情 =====================
 
 async function getListDetailKg(rawId: string): Promise<PlaylistImportResult> {
+  // 手机版支持直接粘贴“酷狗码：123456”，桌面端也走同一分享码接口。
+  const codeMatch = rawId.match(/酷狗码[：:\s]*(\d{4,10})/i);
+  if (codeMatch) {
+    const specialId = await resolveKugouShareCode(codeMatch[1]);
+    if (!specialId) throw new Error('酷狗码无效或已过期（酷狗码 24 小时内有效）');
+    return getListDetailKgBySpecialId(specialId);
+  }
+
   // 分支 1：gcid_ 分享链接
   if (rawId.includes('gcid_')) {
     return getKgListDetailByGcid(rawId);
@@ -981,21 +907,34 @@ async function getListDetailKg(rawId: string): Promise<PlaylistImportResult> {
   }
   if (!id) return { source: 'kg', songs: [], total: 0, info: { name: '', img: '', desc: '', author: '', playCount: '' } };
 
-  // 通过 specialid 获取歌单详情（HTML 解析）
-  const url = `https://www2.kugou.kugou.com/yueku/v9/special/single/${id}-5-9999.html`;
-  const resp = await httpFetch(url, 'GET');
-  const body = typeof resp.body === 'string' ? resp.body : '';
+  try {
+    return await getListDetailKgBySpecialId(id);
+  } catch (error) {
+    // 手机版对纯数字输入会在歌单 ID 失败时再按酷狗码重试。
+    if (/^\d{4,10}$/.test(rawId)) {
+      const specialId = await resolveKugouShareCode(rawId);
+      if (specialId && specialId !== id) return getListDetailKgBySpecialId(specialId);
+    }
+    throw error;
+  }
+}
+
+/** 通过 specialid 获取歌单详情（HTML 解析）。 */
+async function getListDetailKgBySpecialId(id: string): Promise<PlaylistImportResult> {
+  // 手机版使用 HTTP；该酷狗旧歌单页面在部分 Windows/Tauri 环境下的 HTTPS
+  // 握手会直接失败，因此先按手机版请求，HTTPS 只作为备用地址。
+  const body = await fetchKugouSpecialPage(id);
 
   const listDataMatch = body.match(/global\.data\s*=\s*(\[.+]);/s);
   if (!listDataMatch) {
-    return { source: 'kg', songs: [], total: 0, info: { name: '', img: '', desc: '', author: '', playCount: '' } };
+    throw new Error('酷狗歌单为空，或歌单不是公开歌单');
   }
 
   let listArr: any[];
   try {
     listArr = JSON.parse(listDataMatch[1]);
   } catch {
-    return { source: 'kg', songs: [], total: 0, info: { name: '', img: '', desc: '', author: '', playCount: '' } };
+    throw new Error('酷狗歌单为空，或歌单不是公开歌单');
   }
 
   const songs: PluginSearchResult[] = [];
@@ -1013,7 +952,29 @@ async function getListDetailKg(rawId: string): Promise<PlaylistImportResult> {
     playCount: '',
   };
 
+  if (songs.length === 0) throw new Error('酷狗歌单为空，或歌单不是公开歌单');
   return { source: 'kg', songs, total: songs.length, info };
+}
+
+async function fetchKugouSpecialPage(id: string): Promise<string> {
+  const path = `/yueku/v9/special/single/${id}-5-9999.html`;
+  let lastError: unknown;
+
+  for (const url of [`http://www2.kugou.kugou.com${path}`, `https://www2.kugou.kugou.com${path}`]) {
+    try {
+      const resp = await httpFetch(url, 'GET');
+      const body = typeof resp.body === 'string' ? resp.body : '';
+      if (body.includes('global.data')) return body;
+      lastError = new Error(`HTTP ${resp.status}`);
+    } catch (error) {
+      lastError = error;
+      log(`fetchKugouSpecialPage failed for ${url}: ${(error as any)?.message || error}`);
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('酷狗歌单页面请求失败');
 }
 
 function parseKgSong(item: any): PluginSearchResult | null {
@@ -1025,6 +986,19 @@ function parseKgSong(item: any): PluginSearchResult | null {
   const songname = decodeName(item.songname || '');
   const albumName = decodeName(item.album_name || '');
   const durationMs = item.duration || 0;
+  const coverUrl = normalizeKugouCover(
+    item.trans_param?.union_cover
+      || item.trans_param?.union_cover_url
+      || item.album_sizable_cover
+      || item.albumSizableCover
+      || item.Image
+      || item.imgurl
+      || item.album_img
+      || item.album_pic
+      || item.pic
+      || item.cover
+      || '',
+  );
 
   const songIdStr = audioId || hash;
   const rawData: any = {
@@ -1032,6 +1006,7 @@ function parseKgSong(item: any): PluginSearchResult | null {
     name: songname,
     singer: singerName,
     source: 'kg',
+    img: coverUrl,
     interval: formatPlayTime(Math.floor(durationMs / 1000)),
   };
   if (hash) rawData.hash = hash;
@@ -1041,12 +1016,53 @@ function parseKgSong(item: any): PluginSearchResult | null {
     title: songname,
     artist: singerName,
     album: albumName,
-    coverUrl: '',
+    coverUrl,
     duration: durationMs,
     platform: '酷狗',
     sourceKey: 'kg',
     rawData,
   });
+}
+
+/** 统一酷狗歌曲封面地址，兼容 {size} 占位符和 http/相对地址。 */
+function normalizeKugouCover(value: unknown, size = 480): string {
+  let url = String(value || '').trim();
+  if (!url) return '';
+  url = url.replace(/\{size\}/gi, String(size));
+  if (url.startsWith('//')) return `https:${url}`;
+  if (/^http:\/\//i.test(url)) return url.replace(/^http:\/\//i, 'https://');
+  if (/^https:\/\//i.test(url)) return url;
+  if (url.startsWith('/')) return `https://imge.kugou.com${url}`;
+  return url;
+}
+
+/** 解析酷狗 App/PC 分享出的数字酷狗码，返回 specialid。 */
+async function resolveKugouShareCode(code: string): Promise<string | null> {
+  try {
+    const resp = await httpFetch(
+      'http://t.kugou.com/command/',
+      'POST',
+      {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36',
+        'Content-Type': 'application/json',
+      },
+      JSON.stringify({
+        appid: 1001,
+        clientver: 9020,
+        mid: '21511157a05844bd085308bc76ef3343',
+        clienttime: 640612895,
+        key: '36164c4015e704673c588ee202b9ecb8',
+        data: code,
+      }),
+    );
+    const body = resp.body;
+    if (typeof body !== 'object' || body === null || body.status !== 1) return null;
+    const id = body.data?.info?.id;
+    return /^\d+$/.test(String(id || '')) ? String(id) : null;
+  } catch (e: any) {
+    log(`resolveKugouShareCode failed: ${e?.message || e}`);
+    return null;
+  }
 }
 
 /** 处理 gcid_ 分享链接 */
@@ -1310,6 +1326,24 @@ function parseKgSongDetailV2(item: any): PluginSearchResult | null {
   const songname = decodeName(item.songname || '');
   const albumName = decodeName(albumInfo.album_name || '');
   const durationMs = audioInfo.timelength || 0;
+  const coverUrl = normalizeKugouCover(
+    audioInfo.union_cover
+      || audioInfo.union_cover_url
+      || audioInfo.album_sizable_cover
+      || audioInfo.sizable_cover
+      || audioInfo.album_pic
+      || albumInfo.sizable_cover
+      || albumInfo.album_sizable_cover
+      || albumInfo.album_pic
+      || albumInfo.imgurl
+      || item.album_sizable_cover
+      || item.albumSizableCover
+      || item.Image
+      || item.imgurl
+      || item.album_img
+      || item.cover
+      || '',
+  );
 
   const songIdStr = audioId || hash;
   const rawData: any = {
@@ -1317,6 +1351,7 @@ function parseKgSongDetailV2(item: any): PluginSearchResult | null {
     name: songname,
     singer: singerName,
     source: 'kg',
+    img: coverUrl,
     interval: formatPlayTime(Math.floor(durationMs / 1000)),
   };
   if (hash) rawData.hash = hash;
@@ -1326,7 +1361,7 @@ function parseKgSongDetailV2(item: any): PluginSearchResult | null {
     title: songname,
     artist: singerName,
     album: albumName,
-    coverUrl: '',
+    coverUrl,
     duration: durationMs,
     platform: '酷狗',
     sourceKey: 'kg',
@@ -1457,20 +1492,18 @@ export async function importPlaylist(
     throw new Error('请输入歌单链接或 ID');
   }
 
-  // 当输入是 URL 时，自动从 URL 识别平台（忽略用户选择的源，避免选错）
-  // 当输入是纯 ID 时，使用用户选择的源
+  // 只要文本中包含平台分享链接就自动识别平台，和手机版一样忽略手动选择的源。
+  // 纯 ID、酷狗码等非 URL 输入则使用用户选择的源。
   let actualSource = source;
   let actualId = input;
 
-  if (input.startsWith('https://') || input.startsWith('https://')) {
-    const parsed = parseLink(input);
-    if (parsed) {
-      actualSource = parsed.source;
-      actualId = parsed.playlistId;
-      log(`importPlaylist: auto-detected source=${actualSource} from URL (user selected=${source})`);
-    } else {
-      throw new Error('无法识别歌单链接，请确认链接来自网易云/QQ音乐/酷我/酷狗');
-    }
+  const parsed = parseLink(input);
+  if (parsed) {
+    actualSource = parsed.source;
+    actualId = parsed.playlistId;
+    log(`importPlaylist: auto-detected source=${actualSource} from URL (user selected=${source})`);
+  } else if (/^https?:\/\//i.test(input)) {
+    throw new Error('无法识别歌单链接，请确认链接来自网易云/QQ音乐/酷我/酷狗');
   } else if (source === 'auto') {
     throw new Error('请选择对应音源后重试，或直接粘贴歌单链接');
   }

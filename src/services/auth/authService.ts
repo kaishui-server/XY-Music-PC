@@ -1,8 +1,8 @@
 /**
  * 账号认证服务
  *
- * 适配「弦予音乐 APP」邮箱注册登录 API（见 邮箱注册登录API调用文档.md）。
- * - 基地址：https://back.xymusic.cc/api
+ * 适配「XY Music APP」邮箱注册登录 API（见 邮箱注册登录API调用文档.md）。
+ * - 基地址：https://cosn.xymusic.cc:8081/api
  * - 端点风格：POST /api/?action=<接口名>
  * - 所有接口需 MD5 签名：sign = md5(timestamp + nonce + body + api_secret)
  *   （签名在 Rust 侧完成，密钥不暴露给前端）
@@ -18,6 +18,7 @@
 
 import { authApi } from '../tauri/authApi';
 import { getDeviceId, getDeviceInfo } from '../usageStats';
+import { normalizeBrandText } from '../../utils/brand';
 
 export type AuthUser = {
   id: string;
@@ -25,8 +26,10 @@ export type AuthUser = {
   nickname: string;
   email: string;
   avatar?: string | null;
-  /** 弦予号（12 位数字），用于修改密码等接口 */
+  /** XY 号（12 位数字），用于修改密码等接口 */
   ciyuanxi_id?: string;
+  /** 移动端/新版服务端使用的字段名；桌面端内部保留旧字段兼容历史凭证 */
+  xymusic_id?: string;
   /** 角色：空字符串=普通用户，admin/super_admin=管理员 */
   role?: string;
 };
@@ -87,8 +90,21 @@ export type ProfileChangeLimitStatus = {
 };
 
 /** 默认后端地址：自建服务器 */
-export const DEFAULT_AUTH_BASE_URL = 'http://156.233.228.213:8081/api';
+export const DEFAULT_AUTH_BASE_URL = 'https://cosn.xymusic.cc:8081/api';
 export const DEFAULT_AUTH_API_SECRET = '53dab6e42c380c4502f73b40fc2e9af9c2ee523ecb92b6884ad17156c9c762af';
+
+const LEGACY_OFFICIAL_AUTH_BASE_URLS = new Set([
+  'http://156.233.228.213:8081/api',
+  'http://back.xymusic.cc/api',
+  'https://back.xymusic.cc/api',
+]);
+
+function normalizeAuthBaseUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, '');
+  return LEGACY_OFFICIAL_AUTH_BASE_URLS.has(trimmed)
+    ? DEFAULT_AUTH_BASE_URL
+    : (trimmed || DEFAULT_AUTH_BASE_URL);
+}
 
 // ─── localStorage 兼容键（仅用于迁移） ──────────────────
 const LEGACY_STORAGE_TOKEN_KEY = 'xy.auth.token';
@@ -120,12 +136,12 @@ export function getAuthBaseUrl(): string {
 
 export async function setAuthBaseUrl(baseUrl: string): Promise<void> {
   const trimmed = (baseUrl || '').trim();
-  cachedBaseUrl = trimmed || DEFAULT_AUTH_BASE_URL;
+  cachedBaseUrl = normalizeAuthBaseUrl(trimmed);
   // 持久化到 Rust（文件），确保后续签名请求读取到最新配置
   await authApi.setAuthBaseUrl(cachedBaseUrl);
   // 清理旧 localStorage
   if (typeof localStorage !== 'undefined') {
-    if (trimmed && trimmed !== DEFAULT_AUTH_BASE_URL) {
+    if (cachedBaseUrl !== DEFAULT_AUTH_BASE_URL) {
       localStorage.setItem(LEGACY_STORAGE_BASE_URL_KEY, cachedBaseUrl);
     } else {
       localStorage.removeItem(LEGACY_STORAGE_BASE_URL_KEY);
@@ -142,7 +158,7 @@ export async function setAuthApiSecret(apiSecret: string): Promise<void> {
   cachedApiSecret = trimmed || DEFAULT_AUTH_API_SECRET;
   await authApi.setAuthApiSecret(cachedApiSecret);
   if (typeof localStorage !== 'undefined') {
-    if (trimmed && trimmed !== DEFAULT_AUTH_API_SECRET) {
+    if (cachedApiSecret !== DEFAULT_AUTH_API_SECRET) {
       localStorage.setItem(LEGACY_STORAGE_API_SECRET_KEY, cachedApiSecret);
     } else {
       localStorage.removeItem(LEGACY_STORAGE_API_SECRET_KEY);
@@ -175,13 +191,17 @@ export async function initAuthFromKeyring(): Promise<void> {
 
   // 加载 base_url
   try {
-    cachedBaseUrl = await authApi.getAuthBaseUrl();
+    const savedBaseUrl = await authApi.getAuthBaseUrl();
+    cachedBaseUrl = normalizeAuthBaseUrl(savedBaseUrl);
+    if (cachedBaseUrl !== savedBaseUrl.trim()) {
+      await authApi.setAuthBaseUrl(cachedBaseUrl);
+    }
   } catch {
     // 回退到 localStorage
     if (typeof localStorage !== 'undefined') {
       const saved = localStorage.getItem(LEGACY_STORAGE_BASE_URL_KEY) || DEFAULT_AUTH_BASE_URL;
       // 官方服务已启用 HTTPS；旧 HTTP 地址经过 Nginx 重定向时可能丢失 POST 请求体。
-      cachedBaseUrl = saved.replace('http://back.xymusic.cc', 'https://back.xymusic.cc');
+      cachedBaseUrl = normalizeAuthBaseUrl(saved);
     }
   }
 
@@ -403,8 +423,8 @@ export async function getHumanCaptchaConfig(): Promise<HumanCaptchaConfig> {
 export async function getUserAgreement(): Promise<UserAgreement> {
   const data = await requestAction<Record<string, unknown>>('get_user_agreement', {});
   return {
-    title: String(data.title || '弦予音乐用户协议'),
-    content: String(data.content || ''),
+    title: normalizeBrandText(String(data.title || 'XY Music 用户协议')),
+    content: normalizeBrandText(String(data.content || '')),
   };
 }
 
@@ -447,6 +467,7 @@ function mapUser(data: Record<string, unknown>): AuthUser {
     avatar_url: string | null;
     avatar: string | null;
     ciyuanxi_id: string | number;
+    xymusic_id: string | number;
     role: string;
   }>;
   return {
@@ -455,7 +476,16 @@ function mapUser(data: Record<string, unknown>): AuthUser {
     nickname: raw.nickname || raw.username || '',
     email: raw.email ?? '',
     avatar: raw.avatar_url ?? raw.avatar ?? '',
-    ciyuanxi_id: raw.ciyuanxi_id != null ? String(raw.ciyuanxi_id) : undefined,
+    ciyuanxi_id: raw.xymusic_id != null
+      ? String(raw.xymusic_id)
+      : raw.ciyuanxi_id != null
+        ? String(raw.ciyuanxi_id)
+        : undefined,
+    xymusic_id: raw.xymusic_id != null
+      ? String(raw.xymusic_id)
+      : raw.ciyuanxi_id != null
+        ? String(raw.ciyuanxi_id)
+        : undefined,
     role: raw.role ?? '',
   };
 }
@@ -477,7 +507,7 @@ function getAuthErrorMessage(error: unknown, fallback = '请求失败'): string 
 }
 
 /**
- * 弦予号或邮箱登录。
+ * XY 号或邮箱登录。
  * POST /api/?action=user_login
  */
 export async function login(
@@ -487,7 +517,7 @@ export async function login(
 ): Promise<AuthPayload> {
   try {
     const data = await requestAction<Record<string, unknown>>('user_login', withCaptcha({
-      ciyuanxi_id: ciyuanxiId,
+      xymusic_id: ciyuanxiId,
       password,
       ...getDeviceInfo(),
     }, captcha));
@@ -514,7 +544,7 @@ export async function register(
 ): Promise<AuthPayload> {
   try {
     const data = await requestAction<Record<string, unknown>>('register', withCaptcha({
-      ciyuanxi_id: ciyuanxiId.trim(),
+      xymusic_id: ciyuanxiId.trim(),
       nickname,
       password,
       email,
@@ -530,28 +560,28 @@ export async function register(
   }
 }
 
-/** 修改弦予号。弦予号是唯一登录标识，每月可修改一次。 */
+/** 修改 XY 号。XY 号是唯一登录标识，每月可修改一次。 */
 export async function updateCiyuanxiId(
   oldCiyuanxiId: string,
   newCiyuanxiId: string,
   password: string,
 ): Promise<{ message: string; ciyuanxi_id: string }> {
   try {
-    const data = await requestAction<{ ciyuanxi_id?: string }>('update_ciyuanxi_id', {
-      ciyuanxi_id: oldCiyuanxiId,
-      new_ciyuanxi_id: newCiyuanxiId,
+    const data = await requestAction<{ xymusic_id?: string }>('update_xymusic_id', {
+      xymusic_id: oldCiyuanxiId,
+      new_xymusic_id: newCiyuanxiId,
       password,
     });
     return {
-      message: '弦予号修改成功',
-      ciyuanxi_id: String(data.ciyuanxi_id ?? newCiyuanxiId),
+      message: 'XY 号修改成功',
+      ciyuanxi_id: String(data.xymusic_id ?? newCiyuanxiId),
     };
   } catch (error) {
-    throw new Error(getAuthErrorMessage(error, '弦予号修改失败'), { cause: error });
+    throw new Error(getAuthErrorMessage(error, 'XY 号修改失败'), { cause: error });
   }
 }
 
-/** 使用 bind 场景的邮箱验证码为当前弦予号绑定邮箱。 */
+/** 使用 bind 场景的邮箱验证码为当前 XY 号绑定邮箱。 */
 export async function bindEmail(
   ciyuanxiId: string,
   email: string,
@@ -559,7 +589,7 @@ export async function bindEmail(
 ): Promise<{ message: string; email: string }> {
   try {
     const data = await requestAction<{ email?: string }>('bind_email', {
-      ciyuanxi_id: ciyuanxiId,
+      xymusic_id: ciyuanxiId,
       email,
       verify_code: verifyCode,
     });
@@ -583,7 +613,7 @@ export async function checkBanStatus(): Promise<{
   if (!current) return { banned: false, type: 'account', reason: '', ciyuanxiId: '', nickname: '' };
   try {
     const data = await requestAction<{ banned: boolean; type?: string; reason?: string }>('check_ban_status', {
-      ciyuanxi_id: current.ciyuanxi_id ?? current.id,
+      xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? current.id,
       device_id: getDeviceId(),
     }, 15_000);
     return {
@@ -612,7 +642,7 @@ export async function sendEmailCode(
     const payload = await requestEnvelope<Record<string, unknown>>('send_verify_code', withCaptcha({
       email,
       type,
-      ...(ciyuanxiId ? { ciyuanxi_id: ciyuanxiId } : {}),
+      ...(ciyuanxiId ? { xymusic_id: ciyuanxiId } : {}),
     }, captcha));
     if (Number(payload.code) !== 200) {
       throw new Error(payload.msg || '验证码发送失败');
@@ -657,7 +687,7 @@ export async function preVerifyDeleteAccount(
   password: string,
 ): Promise<{ message: string }> {
   const current = getStoredUser();
-  if (!current?.ciyuanxi_id || !current.email) {
+  if (!(current?.ciyuanxi_id || current?.xymusic_id) || !current.email) {
     throw new Error('未获取到当前账号信息，请重新登录');
   }
   if (!password) throw new Error('请输入登录密码');
@@ -665,7 +695,7 @@ export async function preVerifyDeleteAccount(
 
   try {
     const payload = await requestEnvelope<Record<string, unknown>>('preverify_delete_account', {
-      ciyuanxi_id: current.ciyuanxi_id,
+      xymusic_id: current.ciyuanxi_id ?? current.xymusic_id,
       email: current.email,
       verify_code: verifyCode,
       password,
@@ -682,14 +712,14 @@ export async function deleteAccount(
   password: string,
 ): Promise<{ message: string }> {
   const current = getStoredUser();
-  if (!current?.ciyuanxi_id || !current.email) {
+  if (!(current?.ciyuanxi_id || current?.xymusic_id) || !current.email) {
     throw new Error('未获取到当前账号信息，请重新登录');
   }
   if (!password) throw new Error('请输入登录密码');
 
   try {
     const payload = await requestEnvelope<Record<string, unknown>>('delete_account', {
-      ciyuanxi_id: current.ciyuanxi_id,
+      xymusic_id: current.ciyuanxi_id ?? current.xymusic_id,
       email: current.email,
       verify_code: verifyCode,
       password,
@@ -705,7 +735,7 @@ export async function deleteAccount(
 }
 
 /**
- * 修改密码（需登录，使用弦予号 + 旧密码验证）
+ * 修改密码（需登录，使用 XY 号 + 旧密码验证）
  * POST /api/?action=change_password
  */
 export async function changePassword(
@@ -713,12 +743,12 @@ export async function changePassword(
   newPassword: string,
 ): Promise<{ message: string }> {
   const user = getStoredUser();
-  const ciyuanxiId = user?.ciyuanxi_id;
-  if (!ciyuanxiId) throw new Error('未获取到弦予号，无法修改密码，请重新登录');
+  const ciyuanxiId = user?.ciyuanxi_id ?? user?.xymusic_id;
+  if (!ciyuanxiId) throw new Error('未获取到 XY 号，无法修改密码，请重新登录');
 
   try {
     const payload = await requestEnvelope<Record<string, unknown>>('change_password', {
-      ciyuanxi_id: ciyuanxiId,
+      xymusic_id: ciyuanxiId,
       old_password: oldPassword,
       new_password: newPassword,
     });
@@ -748,7 +778,7 @@ export async function getProfile(): Promise<{
     const data = await requestAction<Record<string, unknown>>(
       'get_user_info',
       {
-        ciyuanxi_id: current.ciyuanxi_id ?? current.id,
+        xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? current.id,
       },
       15_000,
     );
@@ -783,7 +813,7 @@ export async function updateProfile(
   try {
     const data = await requestAction<{ user?: AuthUser; avatar?: string; nickname_pending?: boolean; status?: string }>('update_profile', {
       token,
-      ciyuanxi_id: current.ciyuanxi_id || '',
+      xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? '',
       username: nickname,
       nickname,
       avatar: avatar || '',
@@ -816,7 +846,7 @@ export async function getNicknameStatus(): Promise<'pending' | 'rejected' | 'non
     const data = await requestAction<{ status: string }>(
       'get_nickname_status',
       {
-        ciyuanxi_id: current.ciyuanxi_id ?? current.id,
+        xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? current.id,
       },
       15_000,
     );
@@ -835,7 +865,7 @@ export async function getNicknameChangeLimitStatus(): Promise<ProfileChangeLimit
   try {
     const data = await requestAction<{ status: string; today_blocked?: boolean; block_message?: string }>(
       'get_nickname_status',
-      { ciyuanxi_id: current.ciyuanxi_id ?? current.id },
+      { xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? current.id },
       15_000,
     );
     const status: ProfileAuditStatus = data.status === 'pending' || data.status === 'rejected' ? data.status : 'none';
@@ -934,7 +964,7 @@ export async function uploadAvatar(
       requestAction<{ status?: string }>(
         'upload_avatar',
         {
-          ciyuanxi_id: current.ciyuanxi_id ?? current.id,
+          xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? current.id,
           avatar_data: avatarData,
         },
         55_000, // fetch 超时 55s，留 5s 给外层
@@ -966,7 +996,7 @@ export async function getAvatarStatus(): Promise<'pending' | 'rejected' | 'none'
     const data = await requestAction<{ status: string }>(
       'get_avatar_status',
       {
-        ciyuanxi_id: current.ciyuanxi_id ?? current.id,
+        xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? current.id,
       },
       15_000,
     );
@@ -985,7 +1015,7 @@ export async function getAvatarChangeLimitStatus(): Promise<ProfileChangeLimitSt
   try {
     const data = await requestAction<{ status: string; today_blocked?: boolean; block_message?: string }>(
       'get_avatar_status',
-      { ciyuanxi_id: current.ciyuanxi_id ?? current.id },
+      { xymusic_id: current.ciyuanxi_id ?? current.xymusic_id ?? current.id },
       15_000,
     );
     const status: ProfileAuditStatus = data.status === 'pending' || data.status === 'rejected' ? data.status : 'none';

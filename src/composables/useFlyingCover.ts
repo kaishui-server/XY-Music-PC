@@ -63,6 +63,24 @@ const findTargetEl = (): HTMLElement | null =>
   document.querySelector<HTMLElement>('[data-footer-cover]');
 
 /**
+ * 首次播放时 PlayerFooter 还没有挂载，按悬浮卡片的布局计算封面目标位置。
+ * 这里必须与 PlayerFooter 的宽度、边距和响应式内边距保持一致，不能再使用旧版左下角坐标。
+ */
+const getFloatingFooterCoverRect = () => {
+  const viewportWidth = window.innerWidth;
+  const footerWidth = Math.min(1180, Math.max(0, viewportWidth - 32));
+  const footerLeft = (viewportWidth - footerWidth) / 2;
+  const footerSidePadding = viewportWidth <= 560 ? 10 : viewportWidth <= 720 ? 12 : 16;
+
+  return {
+    left: footerLeft + footerSidePadding,
+    top: window.innerHeight - 76,
+    width: 48,
+    height: 48,
+  };
+};
+
+/**
  * 触发飞入封面动画。在歌曲列表「点击播放」时调用。
  *
  * 返回 Promise<void>：在飞行动画（封面从列表飞抵底栏位置）结束后 resolve。
@@ -85,17 +103,12 @@ export function launchFlyingCover(songPath: string, coverUrl: string): Promise<v
 
     // 第一首歌播放时，launchFlyingCover 在 emit('play') 之前调用，
     // 此时 currentSong 仍为 null → PlayerFooter 尚未挂载 → [data-footer-cover] 找不到。
-    // 轻量兜底：用底栏封面的固定坐标（左下角，48px 封面 + 16px 边距）作为飞行终点，
-    // 不等待目标元素挂载，避免轮询延迟影响体感。
+    // 轻量兜底：按悬浮底栏卡片的实际布局计算目标坐标，不等待目标元素挂载，
+    // 避免首次播放时飞入封面仍落在旧版左下角。
     const fromRect = sourceEl.getBoundingClientRect();
     const toRect = targetEl
       ? targetEl.getBoundingClientRect()
-      : {
-          left: 16,
-          top: window.innerHeight - 64,
-          width: 48,
-          height: 48,
-        };
+      : getFloatingFooterCoverRect();
     if (fromRect.width === 0 || fromRect.height === 0 || toRect.width === 0 || toRect.height === 0) {
       resolve();
       return;

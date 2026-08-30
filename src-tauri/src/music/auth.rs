@@ -25,14 +25,22 @@ use tauri::{AppHandle, Manager};
 /// 默认 API 签名密钥。自建后端可在客户端账号设置页覆盖。
 const DEFAULT_API_SECRET: &str = "53dab6e42c380c4502f73b40fc2e9af9c2ee523ecb92b6884ad17156c9c762af";
 
-/// 自建后端地址
-const OFFICIAL_AUTH_BASE_URL: &str = "http://156.233.228.213:8081/api";
+/// 官方后端地址（与移动端保持一致）
+const OFFICIAL_AUTH_BASE_URL: &str = "https://cosn.xymusic.cc:8081/api";
+
+/// 旧版桌面端曾使用过的官方地址，仅用于启动时迁移已保存的配置。
+const LEGACY_OFFICIAL_AUTH_BASE_URLS: [&str; 3] = [
+    "http://156.233.228.213:8081/api",
+    "http://back.xymusic.cc/api",
+    "https://back.xymusic.cc/api",
+];
 
 /// 默认后端地址：指向自建服务器
 const DEFAULT_AUTH_BASE_URL: &str = OFFICIAL_AUTH_BASE_URL;
 
 /// keyring 服务名 / 账户名
-const KEYRING_SERVICE: &str = "xianyu-music-concept";
+const KEYRING_SERVICE: &str = "xy-music-concept";
+const LEGACY_KEYRING_SERVICE: &str = "xianyu-music-concept";
 const KEYRING_ACCOUNT: &str = "auth-token";
 
 /// 默认 fetch 超时（与原前端 FETCH_TIMEOUT_MS 一致）
@@ -113,7 +121,7 @@ fn api_secret_file_path(app: &AppHandle) -> Result<PathBuf, String> {
 }
 
 /// 从文件读取 base_url，不存在时返回默认值。
-/// 自动将旧版 http://back.xymusic.cc 升级为 HTTPS，避免 Nginx 重定向丢失 POST 请求体。
+/// 旧版桌面端的官方地址自动迁移到与移动端相同的 HTTPS 地址。
 fn read_base_url(app: &AppHandle) -> String {
     match base_url_file_path(app) {
         Ok(path) => {
@@ -125,7 +133,14 @@ fn read_base_url(app: &AppHandle) -> String {
                 if saved.is_empty() {
                     return DEFAULT_AUTH_BASE_URL.to_string();
                 }
-                let upgraded = saved.replace("http://back.xymusic.cc", "https://back.xymusic.cc");
+                let upgraded = if LEGACY_OFFICIAL_AUTH_BASE_URLS
+                    .iter()
+                    .any(|legacy| saved.trim_end_matches('/') == *legacy)
+                {
+                    DEFAULT_AUTH_BASE_URL.to_string()
+                } else {
+                    saved.clone()
+                };
                 if upgraded != saved {
                     let _ = fs::write(&path, &upgraded);
                 }
@@ -162,10 +177,20 @@ fn read_api_secret(app: &AppHandle) -> String {
 
 /// 从 keyring 读取 token
 fn read_token_from_keyring() -> Option<String> {
-    match Entry::new(KEYRING_SERVICE, KEYRING_ACCOUNT) {
-        Ok(entry) => entry.get_password().ok(),
-        Err(_) => None,
+    if let Ok(entry) = Entry::new(KEYRING_SERVICE, KEYRING_ACCOUNT) {
+        if let Ok(token) = entry.get_password() {
+            return Some(token);
+        }
     }
+
+    let legacy_token = Entry::new(LEGACY_KEYRING_SERVICE, KEYRING_ACCOUNT)
+        .ok()
+        .and_then(|entry| entry.get_password().ok());
+    if let Some(token) = legacy_token.as_deref() {
+        // 首次读取旧凭证时迁移到新服务名，旧条目保留到退出登录再清理。
+        let _ = save_token_to_keyring(token);
+    }
+    legacy_token
 }
 
 /// 将 token 存入 keyring
@@ -179,16 +204,19 @@ fn save_token_to_keyring(token: &str) -> Result<(), String> {
 
 /// 从 keyring 删除 token
 fn delete_token_from_keyring() -> Result<(), String> {
-    match Entry::new(KEYRING_SERVICE, KEYRING_ACCOUNT) {
-        Ok(entry) => {
-            // delete_credential 在条目不存在时返回 Err，这是正常情况
-            match entry.delete_credential() {
-                Ok(()) => Ok(()),
-                Err(_) => Ok(()), // 忽略"条目不存在"错误
+    for service in [KEYRING_SERVICE, LEGACY_KEYRING_SERVICE] {
+        match Entry::new(service, KEYRING_ACCOUNT) {
+            Ok(entry) => {
+                // delete_credential 在条目不存在时返回 Err，这是正常情况
+                let _ = entry.delete_credential();
             }
+            Err(e) if service == KEYRING_SERVICE => {
+                return Err(format!("keyring 创建失败: {e}"));
+            }
+            Err(_) => {}
         }
-        Err(e) => Err(format!("keyring 创建失败: {e}")),
     }
+    Ok(())
 }
 
 // ─── Tauri 命令 ────────────────────────────────────────

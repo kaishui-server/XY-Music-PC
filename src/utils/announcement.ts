@@ -24,7 +24,7 @@ export async function fetchAnnouncement(): Promise<Announcement | null> {
     const data = await signedRequest<Record<string, unknown>>(
       'get_announcement',
       {
-        ciyuanxi_id: auth?.user?.ciyuanxi_id ?? auth?.user?.id ?? '',
+        xymusic_id: auth?.user?.ciyuanxi_id ?? auth?.user?.xymusic_id ?? auth?.user?.id ?? '',
         device_id: getDeviceId(),
       },
       { fetchTimeoutMs: 15_000, timeoutMs: 18_000 },
@@ -56,7 +56,7 @@ export async function confirmAnnouncement(ann: Announcement): Promise<void> {
     {
       announcement_id: ann.id,
       announcement_updated_at: ann.updatedAt ?? '',
-      ciyuanxi_id: auth?.user?.ciyuanxi_id ?? auth?.user?.id ?? '',
+      xymusic_id: auth?.user?.ciyuanxi_id ?? auth?.user?.xymusic_id ?? auth?.user?.id ?? '',
       device_id: getDeviceId(),
     },
     { fetchTimeoutMs: 15_000, timeoutMs: 18_000 },
