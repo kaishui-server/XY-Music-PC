@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isLxPluginScript } from './lxPluginEngine';
+import { isLxPluginScript, normalizeLxMusicUrlResponse } from './lxPluginEngine';
 
 describe('isLxPluginScript', () => {
   it('识别明文调用 lx.on / lx.send 的标准落雪插件', () => {
@@ -98,5 +98,33 @@ globalThis['SERVER_SCRIPT_CONFIG'] = {"apiUrl":"https://88.lxmusic.xn--fiqs8s","
       console.log(config);
     `;
     expect(isLxPluginScript(script)).toBe(false);
+  });
+});
+
+describe('normalizeLxMusicUrlResponse', () => {
+  it('兼容样例插件返回的 Promise 字符串 URL，并清洗包装字符', () => {
+    expect(normalizeLxMusicUrlResponse('  `https://music.haitangw.cc/kgqq/kg.php?type=mp3&id=abc&level=exhigh,`  '))
+      .toMatchObject({
+        url: 'https://music.haitangw.cc/kgqq/kg.php?type=mp3&id=abc&level=exhigh',
+      });
+  });
+
+  it('兼容部分 LX 插件返回的对象及嵌套 data 格式', () => {
+    expect(normalizeLxMusicUrlResponse({
+      data: {
+        url: 'https://cdn.example.com/song.mp3',
+        type: '320k',
+      },
+      headers: { Referer: 'https://example.com/' },
+    })).toEqual({
+      url: 'https://cdn.example.com/song.mp3',
+      type: '320k',
+      headers: { Referer: 'https://example.com/' },
+    });
+  });
+
+  it('拒绝非 HTTP 播放地址', () => {
+    expect(normalizeLxMusicUrlResponse('lx://kg/abc')).toBeNull();
+    expect(normalizeLxMusicUrlResponse({ url: '' })).toBeNull();
   });
 });

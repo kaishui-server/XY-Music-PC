@@ -217,13 +217,13 @@ async function resolveLxAudioForQuality(
     q,
   );
   if (!resolved) return null;
-  const { url, quality: reportedQuality } = resolved;
+  const { url, quality: reportedQuality, headers } = resolved;
 
   if (isDegradedLossless(q, url)) {
     console.warn(`[Download] ${q} 请求被音源降级为 ${extFromUrl(url)}，跳过该档位`);
     return null;
   }
-  return { quality: resolveActualQuality(reportedQuality, url), url };
+  return { quality: resolveActualQuality(reportedQuality, url), url, headers };
 }
 
 async function resolveUrlForQuality(

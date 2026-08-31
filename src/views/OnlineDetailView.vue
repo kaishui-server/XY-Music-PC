@@ -46,6 +46,7 @@ import ArtistDetailHeader from '../components/headers/ArtistDetailHeader.vue';
 import AlbumDetailHeader from '../components/headers/AlbumDetailHeader.vue';
 import DetailHeader from '../components/headers/DetailHeader.vue';
 import OnlineSongList from '../components/song-list/OnlineSongList.vue';
+import SongTable from '../components/song-list/SongTable.vue';
 import SongContextMenu from '../components/overlays/SongContextMenu.vue';
 import AppCoverImage from '../components/common/AppCoverImage.vue';
 import { type ArtistTabId } from '../utils/artistTabsOrder';
@@ -953,16 +954,23 @@ watch(artistActiveTab, () => {
             :readOnly="true"
             :coverUrlOverride="coverUrl"
             :scrollContainerRef="scrollContainerRef"
-            headerAddToPlaylistLabel="添加到歌单"
+            headerAddToPlaylistLabel="合并到歌单"
             @playAll="handlePlayAll"
             @openAddToPlaylist="handleAddToPlaylist"
             @selectAll="handleSelectAll"
           />
-          <OnlineSongList
+          <!-- 在线歌单与“我的歌单”共用同一套歌曲列表界面；歌曲仍保留在线播放能力。 -->
+          <div class="flex min-h-[420px] flex-col">
+          <SongTable
             :songs="songList"
+            :isBatchMode="isBatchMode"
+            :selectedPaths="selectedPaths"
+            :memoryScopeKey="`online-playlist-${ctx.pluginSource.id}-${ctx.rawData?.id || title}`"
             @play="handlePlaySong"
             @contextmenu="handleContextMenu"
+            @update:selectedPaths="selectedPaths = $event"
           />
+          </div>
         </div>
       </Transition>
     </div>

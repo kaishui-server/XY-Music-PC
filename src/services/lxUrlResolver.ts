@@ -29,6 +29,7 @@ import { ensureLxPluginInstance, lxPluginGetMusicUrl } from './lxPluginEngine';
 import { isSongLevelError } from './lxPluginEngine';
 import { getStoredPlugins } from './pluginEngine';
 import { pluginApi } from './tauri/pluginApi';
+import { sanitizeMediaUrl } from '../utils/mediaUrl';
 
 // ==================== 协议解析 ====================
 
@@ -179,6 +180,8 @@ export interface LxUrlResolveResult {
   quality: QualityKey;
   /** 来源：插件或 Rust 后端 */
   source: 'plugin' | 'rust';
+  /** 插件明确返回的请求头；未提供时保持 null，让播放器使用默认请求配置。 */
+  headers?: Record<string, string> | null;
 }
 
 /**
@@ -244,10 +247,15 @@ export async function resolveLxUrlViaPlugin(
         songInfo,
         pluginQuality,
       );
-      const musicUrl = urlResult?.url;
-      if (musicUrl && /^https?:/.test(musicUrl)) {
+      const musicUrl = sanitizeMediaUrl(urlResult?.url);
+      if (musicUrl && /^https?:\/\//i.test(musicUrl)) {
         const reportedQuality = normalizeQualityKey(urlResult?.type);
-        return { url: musicUrl, quality: reportedQuality ?? quality, source: 'plugin' };
+        return {
+          url: musicUrl,
+          quality: reportedQuality ?? quality,
+          source: 'plugin',
+          headers: urlResult?.headers ?? null,
+        };
       }
     } catch (urlErr) {
       // LxSongLevelError 表示歌曲本身不可用（无版权/已下架等），换音质无法解决
@@ -280,6 +288,7 @@ export async function resolveLxUrlViaPlugin(
 export interface LxSingleQualityResolveResult {
   url: string;
   quality: QualityKey;
+  headers?: Record<string, string> | null;
 }
 
 export async function resolveLxUrlForSingleQuality(
@@ -294,10 +303,10 @@ export async function resolveLxUrlForSingleQuality(
     songInfo,
     qualityKeyToBakaPluginQuality(quality),
   );
-  const url = urlResult?.url;
-  if (!url || !/^https?:/.test(url)) return null;
+  const url = sanitizeMediaUrl(urlResult?.url);
+  if (!url || !/^https?:\/\//i.test(url)) return null;
   const reportedQuality = normalizeQualityKey(urlResult?.type);
-  return { url, quality: reportedQuality ?? quality };
+  return { url, quality: reportedQuality ?? quality, headers: urlResult?.headers ?? null };
 }
 
 /**

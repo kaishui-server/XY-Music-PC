@@ -35,6 +35,7 @@ import {
   destroySandbox,
   linkSandboxAlias,
 } from './pluginSandboxManager';
+import { sanitizeMediaUrl } from '../utils/mediaUrl';
 
 // ==================== 常量 ====================
 
@@ -214,6 +215,67 @@ export interface LxPluginState {
     reject: (err: Error) => void;
     timer: ReturnType<typeof setTimeout>;
   }>;
+}
+
+/**
+ * LX 插件 musicUrl 的返回值在不同版本的落雪客户端中并不完全一致：
+ * 大多数插件直接返回 URL 字符串，也有插件返回 { url } 或把结果包在
+ * data/musicUrl/audioUrl/link 中。移动端会先把结果转成字符串再清洗，
+ * 桌面端如果只做 typeof response === 'string' 校验，会把这些可播放结果
+ * 误判为无效，造成“封面、时长正常但无法播放”。
+ */
+export interface NormalizedLxMusicUrl {
+  url: string;
+  type?: string;
+  headers?: Record<string, string> | null;
+}
+
+const LX_URL_KEYS = ['url', 'musicUrl', 'audioUrl', 'playUrl', 'link', 'src', 'path', 'data'];
+
+function findLxUrlValue(value: unknown, depth = 0): { url: unknown; type?: unknown; headers?: unknown } | null {
+  if (depth > 4 || value == null) return null;
+  if (typeof value === 'string') return { url: value };
+  if (typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const record = value as Record<string, unknown>;
+  for (const key of LX_URL_KEYS) {
+    if (record[key] === undefined || record[key] === null) continue;
+    const nested = typeof record[key] === 'object'
+      ? findLxUrlValue(record[key], depth + 1)
+      : { url: record[key] };
+    if (nested) {
+      return {
+        url: nested.url,
+        type: record.type ?? record.quality ?? nested.type,
+        headers: record.headers ?? nested.headers,
+      };
+    }
+  }
+
+  return null;
+}
+
+/** 将 LX musicUrl 返回值标准化为可交给播放器的 HTTP URL。 */
+export function normalizeLxMusicUrlResponse(response: unknown): NormalizedLxMusicUrl | null {
+  const found = findLxUrlValue(response);
+  if (!found) return null;
+
+  const url = sanitizeMediaUrl(found.url);
+  if (!url || url.length > 2048 || !/^https?:\/\//i.test(url)) return null;
+
+  const headers = found.headers && typeof found.headers === 'object' && !Array.isArray(found.headers)
+    ? Object.fromEntries(
+      Object.entries(found.headers as Record<string, unknown>)
+        .filter(([key, value]) => key.trim() && value != null && String(value).trim())
+        .map(([key, value]) => [key, String(value)]),
+    )
+    : null;
+
+  return {
+    url,
+    type: typeof found.type === 'string' ? found.type : undefined,
+    headers: headers && Object.keys(headers).length > 0 ? headers : null,
+  };
 }
 
 // ==================== 插件实例缓存 ====================
@@ -893,11 +955,20 @@ export async function lxPluginRequest(
       // 响应格式验证（与直接调用路径一致）
       switch (action) {
         case 'musicUrl':
-          if (typeof response !== 'string' || response.length > 2048 || !/^https?:/.test(response)) {
-            throw new Error('Invalid musicUrl response');
+          {
+            const normalized = normalizeLxMusicUrlResponse(response);
+            if (!normalized) throw new Error('Invalid musicUrl response');
+            log(`[lxPluginRequest] 沙箱 ${source.name} musicUrl 成功: ${normalized.url.substring(0, 80)}...`);
+            return {
+              source: data.source,
+              action,
+              data: {
+                type: normalized.type || data.type,
+                url: normalized.url,
+                headers: normalized.headers,
+              },
+            };
           }
-          log(`[lxPluginRequest] 沙箱 ${source.name} musicUrl 成功: ${response.substring(0, 80)}...`);
-          return { source: data.source, action, data: { type: data.type, url: response } };
         case 'lyric':
           return {
             source: data.source, action,
@@ -971,15 +1042,20 @@ export async function lxPluginRequest(
       // 构造与 lx-music-desktop handleRequest 一致的返回格式
       switch (action) {
         case 'musicUrl':
-          if (typeof response !== 'string' || response.length > 2048 || !/^https?:/.test(response)) {
-            throw new Error('Invalid musicUrl response');
+          {
+            const normalized = normalizeLxMusicUrlResponse(response);
+            if (!normalized) throw new Error('Invalid musicUrl response');
+            log(`[lxPluginRequest] ${source.name} musicUrl 成功: ${normalized.url.substring(0, 80)}...`);
+            return {
+              source: data.source,
+              action,
+              data: {
+                type: normalized.type || data.type,
+                url: normalized.url,
+                headers: normalized.headers,
+              },
+            };
           }
-          log(`[lxPluginRequest] ${source.name} musicUrl 成功: ${response.substring(0, 80)}...`);
-          return {
-            source: data.source,
-            action,
-            data: { type: data.type, url: response },
-          };
         case 'lyric':
           return {
             source: data.source,
@@ -1031,10 +1107,17 @@ export async function lxPluginRequest(
 
 export async function lxPluginGetMusicUrl(
   source: PluginSource, sourceKey: string, songInfo: any, quality: string = '320k',
-): Promise<{ type: string; url: string } | null> {
+): Promise<{ type: string; url: string; headers?: Record<string, string> | null } | null> {
   const result = await lxPluginRequest(source, 'musicUrl', { source: sourceKey, type: quality, musicInfo: songInfo });
   // [修复防御]: lxPluginRequest 返回 iframe 原始格式 { source, action, data: {...} }，需解包 data
-  return result?.data ?? result ?? null;
+  const payload = result?.data ?? result ?? null;
+  const normalized = normalizeLxMusicUrlResponse(payload);
+  if (!normalized) return null;
+  return {
+    type: normalized.type || quality,
+    url: normalized.url,
+    headers: normalized.headers,
+  };
 }
 
 export async function lxPluginGetLyric(

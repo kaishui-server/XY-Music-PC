@@ -4,6 +4,7 @@ import mainShellSource from '../components/layout/MainShell.vue?raw';
 import routerSource from '../router/index.ts?raw';
 import exploreSource from './Explore.vue?raw';
 import exploreRecommendationsSource from './ExploreRecommendations.vue?raw';
+import onlineDetailSource from './OnlineDetailView.vue?raw';
 
 describe('Explore page lifecycle', () => {
   it('keeps a single element root and uses a non-blocking route transition', () => {
@@ -33,6 +34,19 @@ describe('Explore page lifecycle', () => {
       expect(source).toContain("path: '/online-detail'");
       expect(source).toContain("type: 'playlist'");
     }
+  });
+
+  it('renders chart entries with the shared playlist interface and opens them as playlists', () => {
+    expect(exploreSource).toContain('<div class="explore-playlist-list">');
+    expect(exploreSource).toContain('class="explore-playlist-row" @click="openPlaylist(item)"');
+    expect(exploreSource).toContain('{{ item.result.trackCount ? `${item.result.trackCount} 首歌曲` : \'榜单歌单\' }}');
+    expect(exploreSource).not.toContain('class="explore-chart-row"');
+  });
+
+  it('uses the library playlist detail layout for online playlist entries', () => {
+    expect(onlineDetailSource).toContain("import SongTable from '../components/song-list/SongTable.vue';");
+    expect(onlineDetailSource).toContain('<SongTable');
+    expect(onlineDetailSource).toContain('headerAddToPlaylistLabel="合并到歌单"');
   });
 
   it('waits for search submission before opening the search page', () => {

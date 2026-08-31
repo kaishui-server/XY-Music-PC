@@ -1011,6 +1011,7 @@ export interface TauriCommandMap {
   set_gpu_acceleration: { payload: { enabled: boolean }; response: void };
   // ============ 壁纸下载 ============
   download_wallpaper: { payload: { url: string; filename: string }; response: string };
+  import_wallpaper_file: { payload: { sourcePath: string }; response: string };
   import_player_detail_fallback_cover: { payload: { sourcePath: string }; response: string };
   clear_player_detail_fallback_cover: { payload: undefined; response: void };
   delete_wallpaper_file: { payload: { localPath: string }; response: void };

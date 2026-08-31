@@ -108,7 +108,11 @@ export const resolveOnlineAudio = async ({
       if (resolved?.url) {
         return {
           audioFilePath: resolved.url,
-          pluginHeaders: normalizeMediaRequestHeaders(resolved.url, resolved.headers ?? null),
+          // LX 插件通常只返回 URL。移动端在没有插件自定义请求头时传 null，
+          // 不要在桌面端强行补 Referer/Origin，否则部分第三方网关会拒绝请求。
+          pluginHeaders: resolved.headers && Object.keys(resolved.headers).length > 0
+            ? normalizeMediaRequestHeaders(resolved.url, resolved.headers)
+            : null,
           currentPlayingQuality: resolveActualQuality(resolved.quality, resolved.url),
           currentPlayingAudioUrl: resolved.url,
           lyricsRaw: resolved.lyricsRaw,

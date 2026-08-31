@@ -302,17 +302,21 @@ onBeforeUnmount(() => {
             {{ group.name }}
           </button>
         </div>
-        <div class="mt-2 divide-y divide-black/5 dark:divide-white/8">
-          <button v-for="(item, index) in activeCharts" :key="`${item.plugin.id}-${item.result.id}-${index}`" type="button" class="explore-chart-row" @click="openPlaylist(item)">
-            <span class="w-7 text-center text-sm font-bold text-accent/75">{{ String(index + 1).padStart(2, '0') }}</span>
-            <AppCoverImage :src="coverUrl(item.result.coverUrl)" class="h-12 w-12 shrink-0 rounded-lg" loading="lazy" decoding="async">
+        <div class="explore-playlist-list">
+          <button v-for="(item, index) in activeCharts" :key="`${item.plugin.id}-${item.result.id}-${index}`" type="button" class="explore-playlist-row" @click="openPlaylist(item)">
+            <span class="explore-playlist-index">{{ String(index + 1).padStart(2, '0') }}</span>
+            <AppCoverImage :src="coverUrl(item.result.coverUrl)" class="explore-playlist-cover" loading="lazy" decoding="async">
               <span class="explore-cover-fallback text-base">{{ item.result.title.slice(0, 1) }}</span>
             </AppCoverImage>
-            <span class="min-w-0 flex-1 text-left">
-              <span class="block truncate text-sm font-semibold text-gray-900 dark:text-white">{{ item.result.title }}</span>
-              <span class="block truncate text-xs text-gray-500 dark:text-white/45">{{ item.result.artist || item.plugin.name }}<template v-if="item.result.trackCount"> · {{ item.result.trackCount }} 首</template></span>
+            <span class="explore-playlist-main">
+              <span class="explore-playlist-title">{{ item.result.title }}</span>
+              <span class="explore-playlist-subtitle">{{ item.result.artist || '热门榜单' }}</span>
             </span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 dark:text-white/35" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+            <span class="explore-playlist-source">{{ item.plugin.name }}</span>
+            <span class="explore-playlist-count">{{ item.result.trackCount ? `${item.result.trackCount} 首歌曲` : '榜单歌单' }}</span>
+            <span class="explore-playlist-arrow" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+            </span>
           </button>
         </div>
       </div>
@@ -476,9 +480,6 @@ onBeforeUnmount(() => {
 .explore-cover { display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 14px; background: rgba(0, 0, 0, 0.08); }
 .explore-cover-fallback { display: flex; height: 100%; width: 100%; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(236, 65, 65, 0.25), rgba(247, 178, 103, 0.24)); color: var(--accent-color); font-size: 2rem; font-weight: 900; }
 .explore-empty { display: flex; min-height: 130px; align-items: center; justify-content: center; padding: 24px; color: rgba(75, 85, 99, 0.65); font-size: 0.86rem; text-align: center; }
-.explore-chart-row { display: flex; width: 100%; align-items: center; gap: 12px; border-radius: 12px; padding: 9px 8px; transition: 160ms ease; }
-.explore-chart-row:hover { background: rgba(0, 0, 0, 0.05); }
-
 html.dark .explore-hero,
 html.dark .explore-panel { border-color: rgba(255, 255, 255, 0.10); background-color: rgba(10, 10, 14, 0.34); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16); }
 html.dark .explore-section-header h2 { color: white; }
@@ -488,7 +489,7 @@ html.dark .explore-search-button { border-color: rgba(255, 255, 255, 0.12); back
 html.dark .explore-search-button:hover { background: rgba(255, 255, 255, 0.13); }
 html.dark .explore-icon-button:hover,
 html.dark .explore-song-row:hover,
-html.dark .explore-chart-row:hover { background: rgba(255, 255, 255, 0.08); }
+html.dark .explore-playlist-row:hover { background: rgba(255, 255, 255, 0.08); }
 html.dark .explore-song-title { color: rgba(255, 255, 255, 0.92); }
 html.dark .explore-song-artist,
 html.dark .explore-song-album,

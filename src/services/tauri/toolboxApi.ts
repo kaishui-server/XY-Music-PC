@@ -10,6 +10,8 @@ export const toolboxApi = {
     tauriInvoke('set_gpu_acceleration', { enabled }),
   downloadWallpaper: (url: string, filename: string) =>
     tauriInvoke('download_wallpaper', { url, filename }),
+  importWallpaperFile: (sourcePath: string) =>
+    tauriInvoke('import_wallpaper_file', { sourcePath }),
   importPlayerDetailFallbackCover: (sourcePath: string) =>
     tauriInvoke('import_player_detail_fallback_cover', { sourcePath }),
   clearPlayerDetailFallbackCover: () =>

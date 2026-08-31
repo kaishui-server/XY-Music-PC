@@ -1572,6 +1572,56 @@ pub async fn download_wallpaper(
     Ok(dest_path.to_string_lossy().to_string())
 }
 
+/// 导入本地壁纸到 app_data_dir/wallpapers，返回应用数据目录中的稳定路径。
+/// 不直接持久化用户原始路径，避免原图被移动或删除后重启无法恢复。
+#[tauri::command]
+pub async fn import_wallpaper_file(
+    app_handle: tauri::AppHandle,
+    source_path: String,
+) -> Result<String, String> {
+    const MAX_WALLPAPER_BYTES: u64 = 30 * 1024 * 1024;
+
+    let source = PathBuf::from(&source_path);
+    let metadata = tokio::fs::metadata(&source)
+        .await
+        .map_err(|error| format!("读取壁纸文件失败: {error}"))?;
+    if !metadata.is_file() {
+        return Err("选择的壁纸不是有效文件".to_string());
+    }
+    if metadata.len() > MAX_WALLPAPER_BYTES {
+        return Err("壁纸图片不能超过 30 MB".to_string());
+    }
+
+    let bytes = tokio::fs::read(&source)
+        .await
+        .map_err(|error| format!("读取壁纸文件失败: {error}"))?;
+    image::load_from_memory(&bytes).map_err(|_| "无法识别所选壁纸".to_string())?;
+    let format = image::guess_format(&bytes).map_err(|_| "无法识别所选壁纸".to_string())?;
+    let extension = match format {
+        image::ImageFormat::Jpeg => "jpg",
+        image::ImageFormat::Png => "png",
+        image::ImageFormat::WebP => "webp",
+        image::ImageFormat::Gif => "gif",
+        _ => return Err("仅支持 JPG、PNG、WEBP 和 GIF 壁纸".to_string()),
+    };
+
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("获取应用数据目录失败: {error}"))?;
+    let wallpaper_dir = app_dir.join("wallpapers");
+    tokio::fs::create_dir_all(&wallpaper_dir)
+        .await
+        .map_err(|error| format!("创建壁纸目录失败: {error}"))?;
+
+    let destination = wallpaper_dir.join(format!("custom-{}.{}", uuid::Uuid::new_v4(), extension));
+    tokio::fs::write(&destination, bytes)
+        .await
+        .map_err(|error| format!("保存壁纸失败: {error}"))?;
+
+    Ok(destination.to_string_lossy().to_string())
+}
+
 /// 导入播放详情页的缺省封面到应用数据目录。
 /// 只接受可解码的 JPEG / PNG / WebP，避免持久化对用户原始文件位置的依赖。
 #[tauri::command]
