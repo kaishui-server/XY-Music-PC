@@ -135,15 +135,15 @@ export const createPluginUpdateService = ({
 
       if (instanceSrcUrl) {
         updateUrl = instanceSrcUrl;
-      } else if (source.filePath.startsWith('http')) {
-        updateUrl = source.filePath;
+      } else if (source.sourceUrl || source.filePath.startsWith('http')) {
+        updateUrl = source.sourceUrl || source.filePath;
       }
 
       if (!updateUrl) {
         let script = '';
         try {
-          if (source.filePath.startsWith('http')) {
-            script = await fetchPluginScript(source.filePath) || '';
+          if (source.sourceUrl || source.filePath.startsWith('http')) {
+            script = await fetchPluginScript(source.sourceUrl || source.filePath) || '';
           } else if (source.filePath) {
             script = await pluginApi.readPluginFile(source.filePath);
           }
@@ -155,8 +155,8 @@ export const createPluginUpdateService = ({
     } else if (source.format === 'lx') {
       let script = '';
       try {
-        if (source.filePath.startsWith('http')) {
-          script = await fetchPluginScript(source.filePath) || '';
+        if (source.sourceUrl || source.filePath.startsWith('http')) {
+          script = await fetchPluginScript(source.sourceUrl || source.filePath) || '';
         } else if (source.filePath) {
           script = await pluginApi.readPluginFile(source.filePath);
         }
@@ -169,8 +169,8 @@ export const createPluginUpdateService = ({
         }
       }
 
-      if (!updateUrl && source.filePath.startsWith('http')) {
-        updateUrl = source.filePath;
+      if (!updateUrl && (source.sourceUrl || source.filePath.startsWith('http'))) {
+        updateUrl = source.sourceUrl || source.filePath;
       }
     }
 

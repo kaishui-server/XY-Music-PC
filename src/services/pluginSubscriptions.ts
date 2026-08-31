@@ -14,6 +14,7 @@ export interface SubscriptionInstallResult {
 
 export interface PluginSubscriptionServiceDeps {
   loadPluginFromScript: (script: string, filePath: string) => Promise<PluginSource | null>;
+  persistPluginScriptToDataDir: (source: PluginSource, script: string) => Promise<string | null>;
   addPluginSource: (source: PluginSource) => void;
   getStoredPlugins: () => PluginSource[];
   compareVersions: (a: string, b: string) => number;
@@ -21,6 +22,7 @@ export interface PluginSubscriptionServiceDeps {
 
 export const createPluginSubscriptionService = ({
   loadPluginFromScript,
+  persistPluginScriptToDataDir,
   addPluginSource,
   getStoredPlugins,
   compareVersions,
@@ -135,6 +137,10 @@ export const createPluginSubscriptionService = ({
       }
     }
 
+    // 订阅地址可能随时失效；先将脚本保存到应用数据目录，
+    // 这样后续启动和账号云同步都不依赖远程地址。
+    const savedPath = await persistPluginScriptToDataDir(source, script);
+    if (savedPath) source.filePath = savedPath;
     addPluginSource(source);
     return { ok: true, name: source.name };
   };

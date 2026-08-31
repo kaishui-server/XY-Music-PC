@@ -896,6 +896,8 @@ export interface PluginSource {
   description: string;
   /** 文件路径或 URL */
   filePath: string;
+  /** 插件原始远程地址；脚本落盘后保留，用于检查插件更新 */
+  sourceUrl?: string;
   /** 导入时间 */
   importedAt: number;
   /** 是否启用 */

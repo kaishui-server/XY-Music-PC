@@ -457,6 +457,8 @@ async function importMultiplePlugins(pluginList: Array<{ name?: string; url: str
       if (source) {
         if (item.name) source.name = item.name;
         if (item.version) source.version = item.version;
+        const savedPath = await persistPluginScriptToDataDir(source, script);
+        if (savedPath) source.filePath = savedPath;
         addPluginSource(source);
         names.push(source.name);
         successCount++;

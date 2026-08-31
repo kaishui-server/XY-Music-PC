@@ -2750,6 +2750,11 @@ export async function getPluginScript(id: string): Promise<string | null> {
   // 1. 优先从内存缓存读取
   const instance = pluginInstances.get(id);
   if (instance?.script) {
+    const source = getStoredPlugins().find(p => p.id === id);
+    if (source) {
+      const savedPath = await persistPluginScriptToDataDir(source, instance.script);
+      if (savedPath) updatePluginSource(source.id, { filePath: savedPath, sourceUrl: source.sourceUrl });
+    }
     return instance.script;
   }
 
@@ -2757,10 +2762,23 @@ export async function getPluginScript(id: string): Promise<string | null> {
   const source = getStoredPlugins().find(p => p.id === id);
   if (!source) return null;
 
+  // 先按当前插件记录重新加载一次。这样懒加载、HMR 或 Worker 重建后，
+  // 仍能拿到实际脚本，而不是直接把一次读取失败当成“没有脚本”。
+  const loaded = await ensurePluginInstance(source);
+  if (loaded?.script) {
+    const savedPath = await persistPluginScriptToDataDir(source, loaded.script);
+    if (savedPath) updatePluginSource(source.id, { filePath: savedPath, sourceUrl: source.sourceUrl });
+    return loaded.script;
+  }
+
   // 3. LX 格式插件：从 lxPluginEngine 的脚本缓存获取（使用 Tauri 代理避免 CORS）
   if (source.format === 'lx') {
     const lxScript = await getLxPluginScript(id, source.filePath);
-    if (lxScript) return lxScript;
+    if (lxScript) {
+      const savedPath = await persistPluginScriptToDataDir(source, lxScript);
+      if (savedPath) updatePluginSource(source.id, { filePath: savedPath, sourceUrl: source.sourceUrl });
+      return lxScript;
+    }
   }
 
   try {
@@ -2768,9 +2786,21 @@ export async function getPluginScript(id: string): Promise<string | null> {
       return null; // 内置插件不需要同步
     } else if (source.filePath.startsWith('http')) {
       const resp = await fetchWithTimeout(source.filePath, 10000);
-      if (resp.ok) return await resp.text();
+      if (resp.ok) {
+        const script = await resp.text();
+        const savedPath = await persistPluginScriptToDataDir(source, script);
+        if (savedPath) updatePluginSource(source.id, { filePath: savedPath, sourceUrl: source.sourceUrl });
+        return script;
+      }
+      const script = await pluginApi.fetchPluginUrl(source.filePath);
+      const savedPath = await persistPluginScriptToDataDir(source, script);
+      if (savedPath) updatePluginSource(source.id, { filePath: savedPath, sourceUrl: source.sourceUrl });
+      return script;
     } else {
-      return await pluginApi.readPluginFile(source.filePath);
+      const script = await pluginApi.readPluginFile(source.filePath);
+      const savedPath = await persistPluginScriptToDataDir(source, script);
+      if (savedPath) updatePluginSource(source.id, { filePath: savedPath, sourceUrl: source.sourceUrl });
+      return script;
     }
   } catch {
     return null;
@@ -2779,16 +2809,24 @@ export async function getPluginScript(id: string): Promise<string | null> {
 }
 
 /**
- * 将本地插件脚本复制到应用数据目录。内置与远程插件不需要复制。
+ * 将插件脚本复制到应用数据目录。
+ *
+ * 远程插件同样需要落盘：插件同步不能依赖远程地址永久可用。
+ * 对远程插件保留 sourceUrl，供后续检查更新使用。
  */
 export async function persistPluginScriptToDataDir(
   source: PluginSource,
   script: string,
 ): Promise<string | null> {
-  const filePath = source.filePath;
-  if (!filePath || filePath.startsWith('builtin://') || filePath.startsWith('http')) return null;
+  const filePath = source.filePath || '';
+  if (!filePath || filePath.startsWith('builtin://')) return null;
   try {
-    return await pluginApi.savePluginScript(source.id, script);
+    const savedPath = await pluginApi.savePluginScript(source.id, script);
+    if (/^https?:\/\//i.test(filePath)) {
+      source.sourceUrl = source.sourceUrl || filePath;
+    }
+    source.filePath = savedPath;
+    return savedPath;
   } catch (error: any) {
     log(`保存插件脚本到数据目录失败 ${source.name}: ${error?.message || error}`);
     return null;
@@ -2877,6 +2915,7 @@ export async function restorePluginFromSync(
 
 const pluginSubscriptionService = createPluginSubscriptionService({
   loadPluginFromScript,
+  persistPluginScriptToDataDir,
   addPluginSource,
   getStoredPlugins,
   compareVersions,
