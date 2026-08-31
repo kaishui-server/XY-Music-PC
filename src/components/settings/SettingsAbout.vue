@@ -10,13 +10,13 @@ const aboutSections = [
   {
     id: 'concept',
     title: 'XY Music',
-    versionLabel: 'V1.0.0Beta',
+    versionLabel: 'V1.0.1',
     developerModeEntry: true,
   },
   {
     id: 'xy-music',
     title: 'XY Music',
-    versionLabel: 'V1.0.0Beta',
+    versionLabel: 'V1.0.1',
     developerModeEntry: false,
   },
 ] as const;

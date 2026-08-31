@@ -1,6 +1,6 @@
 [package]
 name = "xy_music"
-version = "1.0.0-beta"
+version = "1.0.1"
 description = "A beautiful local music player powered by Tauri."
 authors = ["lyc"]
 license = "AGPL-3.0-only"

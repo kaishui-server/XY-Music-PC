@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "XY Music",
   "mainBinaryName": "XY Music",
-  "version": "1.0.0-beta",
+  "version": "1.0.1",
   "identifier": "com.xymusic.concept",
   "build": {
     "beforeDevCommand": "npm run dev",
