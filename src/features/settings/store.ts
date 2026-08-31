@@ -235,7 +235,6 @@ export const defaultUploadSettings: UploadSettings = {
   history: true,
   favorites: true,
   plugins: true,
-  settings: true,
 };
 
 export const defaultPluginSettings: PluginSettings = {
@@ -362,7 +361,6 @@ export const mergeUploadSettings = (
   history: typeof patch.history === 'boolean' ? patch.history : base.history,
   favorites: typeof patch.favorites === 'boolean' ? patch.favorites : base.favorites,
   plugins: typeof patch.plugins === 'boolean' ? patch.plugins : base.plugins,
-  settings: typeof patch.settings === 'boolean' ? patch.settings : base.settings,
 });
 
 const VALID_DOWNLOAD_FORMATS: DownloadSettings['format'][] = ['flac', 'mp3', 'wav', 'aac'];

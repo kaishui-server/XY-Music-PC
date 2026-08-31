@@ -36,20 +36,12 @@ import {
   type PluginSyncResult,
 } from '../services/pluginSync';
 import {
-  uploadSettings as uploadSettingsToCloud,
-  downloadSettings as downloadSettingsFromCloud,
-  areSettingsEqual,
   type SettingsSyncResult,
 } from '../services/settingsSync';
-import {
-  showSettingsConflict,
-  type SyncCategoryChoices,
-} from './useSettingsConflict';
 import {
   getAutoSyncScheduler,
 } from '../services/autoSync';
 import { playerStorage, playerStorageKeys } from '../services/storage/playerStorage';
-import { mergeAppSettings, createDefaultAppSettings } from '../features/settings/store';
 import type { AutoSyncConfig, Playlist, Song } from '../types';
 
 export type SyncDirection = 'upload' | 'download' | 'sync';
@@ -120,7 +112,8 @@ export function usePlaylistSync() {
 
   /** 检查设置上传是否在设置中启用 */
   function isSettingsUploadEnabled(): boolean {
-    return settingsStore.settings.upload.settings;
+    // 兼容旧版调用方，但桌面端已不再同步本地设置。
+    return false;
   }
 
   /**
@@ -677,6 +670,10 @@ export function usePlaylistSync() {
    */
   async function uploadSettingsOnly(): Promise<void> {
     logSync('========== uploadSettingsOnly 开始 ==========');
+    showToast('本地设置不参与账号云同步', 'info');
+    return;
+  }
+  /* Legacy local-settings sync implementation intentionally removed.
     if (!canSync()) {
       logSyncError('uploadSettingsOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
@@ -715,11 +712,18 @@ export function usePlaylistSync() {
     }
   }
 
+  }
+  */
+
   /**
    * 仅从云端下载设置
    */
   async function downloadSettingsOnly(): Promise<void> {
     logSync('========== downloadSettingsOnly 开始 ==========');
+    showToast('本地设置不参与账号云同步', 'info');
+    return;
+  }
+  /* Legacy local-settings sync implementation intentionally removed.
     if (!canSync()) {
       logSyncError('downloadSettingsOnly: 未登录或无 XY 号');
       showToast('请先登录后再同步', 'error');
@@ -765,6 +769,9 @@ export function usePlaylistSync() {
     }
   }
 
+  }
+  */
+
   /**
    * 按手机版的顺序执行一次账号全量同步：插件先下载恢复，
    * 再下载并合并歌单/收藏，最后把合并后的数据上传回云端。
@@ -778,9 +785,6 @@ export function usePlaylistSync() {
     logSync('========== syncAll 开始 ==========');
     await syncPlugins();
     await syncPlaylists();
-    if (isSettingsUploadEnabled()) {
-      await syncSettings();
-    }
     logSync('========== syncAll 结束 ==========');
   }
 
@@ -789,6 +793,10 @@ export function usePlaylistSync() {
    */
   async function syncSettings(): Promise<SettingsSyncResult> {
     logSync('========== syncSettings 开始 ==========');
+    showToast('本地设置不参与账号云同步', 'info');
+    return { uploaded: false, downloaded: false, errors: [] };
+  }
+  /* Legacy local-settings sync implementation intentionally removed.
     if (!canSync()) {
       logSyncError('syncSettings: 未登录或无 XY 号，取消同步');
       showToast('请先登录后再同步', 'error');
@@ -954,6 +962,9 @@ export function usePlaylistSync() {
     }
   }
 
+  }
+  */
+
   /**
    * 仅上传插件到云端
    */
@@ -1061,16 +1072,6 @@ export function usePlaylistSync() {
         await syncPlaylists();
       } catch (e) {
         logSyncError('performAutoSync: 同步歌单失败', e);
-        hasError = true;
-      }
-    }
-
-    if (upload.settings) {
-      try {
-        logSync('performAutoSync: 同步设置');
-        await syncSettings();
-      } catch (e) {
-        logSyncError('performAutoSync: 同步设置失败', e);
         hasError = true;
       }
     }

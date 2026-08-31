@@ -2,7 +2,6 @@
 import { ref, onUnmounted } from 'vue';
 import type { ServerUpdateInfo } from '../../utils/update';
 import type { DownloadProgressData } from '../../composables/useUpdateCheck';
-import { APP_VERSION } from '../../../version';
 
 defineProps<{
   visible: boolean;
@@ -75,7 +74,7 @@ const formatSpeed = (speed: number) => {
                 发现新版本 v{{ update.version }}
               </h3>
               <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                当前版本 v{{ APP_VERSION }}
+                当前版本 V1.0.0Beta
               </p>
             </div>
           </div>

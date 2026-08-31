@@ -149,7 +149,6 @@ function confirmLogout() {
 const uploadItems: Array<{ key: keyof typeof settingsStore.settings.upload; label: string; desc: string }> = [
   { key: 'playlists', label: '歌单', desc: '同步本地创建与编辑的歌单（含收藏）' },
   { key: 'plugins', label: '插件', desc: '同步已安装的插件配置' },
-  { key: 'settings', label: '本地设置', desc: '同步播放设置、歌词设置、快捷键等偏好配置' },
 ];
 
 function toggleUpload(key: keyof typeof settingsStore.settings.upload) {
@@ -420,7 +419,7 @@ function updateAutoSyncMaxDelay(event: Event) {
           <span class="w-1 h-4 bg-accent rounded-full"></span>
           账号云同步
         </span>
-        <SettingHint text="在不同设备间同步歌单、收藏、插件和本地偏好设置。" />
+        <SettingHint text="在不同设备间同步歌单、收藏和插件配置。" />
       </h2>
       <div class="flex flex-col rounded-xl overflow-hidden bg-white/20 dark:bg-black/10 border border-gray-200/40 dark:border-gray-800/40">
         <div
@@ -676,7 +675,7 @@ function updateAutoSyncMaxDelay(event: Event) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>自动同步将按上方“账号云同步”中的项目执行（歌单、插件、本地设置）。</span>
+            <span>自动同步将按上方“账号云同步”中的项目执行（歌单、插件）。</span>
           </div>
 
           <!-- 自动同步状态 -->

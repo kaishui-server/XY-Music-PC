@@ -1,37 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { APP_VERSION } from '../../../version';
 import { useUpdateCheck } from '../../composables/useUpdateCheck';
 import { useToast } from '../../composables/toast';
 import { useDeveloperMode } from '../../features/settings/developerMode';
 import { aboutConfig, startAboutConfigPolling, stopAboutConfigPolling } from '../../utils/aboutConfig';
 
-const appVersion = APP_VERSION;
 const aboutSections = [
   {
     id: 'concept',
     title: 'XY Music',
-    versionLabel: `v${appVersion}`,
+    versionLabel: 'V1.0.0Beta',
     developerModeEntry: true,
-    developers: [
-      { label: '@ShenYichenCN', url: 'https://github.com/ShenYichenCN' },
-      { label: '@知难辞', url: 'https://github.com/88541' },
-      { label: '@绛狐', url: 'https://github.com/kaishui-server' },
-      { label: '@TaXiaoQi', url: 'https://github.com/TaXiaoQi' },
-    ],
   },
   {
     id: 'xy-music',
     title: 'XY Music',
-    versionLabel: '正式版',
+    versionLabel: 'V1.0.0Beta',
     developerModeEntry: false,
-    developers: [
-      { label: '@ShenYichenCN', url: 'https://github.com/ShenYichenCN' },
-      { label: '@知难辞', url: 'https://github.com/88541' },
-      { label: '@绛狐', url: 'https://github.com/kaishui-server' },
-      { label: '@TaXiaoQi', url: 'https://github.com/TaXiaoQi' },
-    ],
   },
 ] as const;
 
@@ -48,6 +34,7 @@ let lastDeveloperModeClickAt = 0;
 
 const { isDeveloperMode, enableDeveloperMode } = useDeveloperMode();
 const { showToast } = useToast();
+const showQqGroupDialog = ref(false);
 
 function handleDeveloperModeClick() {
   if (isDeveloperMode.value) return;
@@ -98,19 +85,11 @@ const handleUpdateClick = (sectionId: string) => {
   void checkUpdateManual();
 };
 
-const handleAboutLinkClick = (sectionId: string, url: string) => {
-  if (sectionId === 'concept') {
-    showConceptMaintenance();
-    return;
-  }
+const handleAboutLinkClick = (url: string) => {
   void openExternal(url);
 };
 
-// 概念版开源地址指向概念版仓库，正式版沿用远程配置
-const CONCEPT_PROJECT_URL = 'https://github.com/kaishui-server/XY-Music-Concept.git';
-const currentProjectUrl = computed(() =>
-  isConceptPage.value ? CONCEPT_PROJECT_URL : aboutConfig.value.projectUrl,
-);
+const currentProjectUrl = computed(() => aboutConfig.value.projectUrl);
 const handleProjectUrlClick = () => {
   void openExternal(currentProjectUrl.value);
 };
@@ -150,17 +129,6 @@ onUnmounted(stopAboutConfigPolling);
         将音乐给予你
       </p>
 
-      <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-white/50">
-        <span class="font-medium">开发者名单（排名不分先后）：</span>
-        <a
-          v-for="developer in currentSection.developers"
-          :key="developer.url"
-          :href="developer.url"
-          target="_blank"
-          rel="noreferrer"
-          class="cursor-pointer no-underline font-medium text-inherit transition-colors hover:text-accent dark:hover:text-white/80"
-        >{{ developer.label }}</a>
-      </div>
     </div>
 
     <div class="flex max-w-full flex-wrap items-center justify-center gap-2.5">
@@ -182,7 +150,7 @@ onUnmounted(stopAboutConfigPolling);
       <button
         v-if="aboutConfig.officialSiteUrl"
         type="button"
-        @click="handleAboutLinkClick(currentSection.id, aboutConfig.officialSiteUrl)"
+        @click="handleAboutLinkClick(aboutConfig.officialSiteUrl)"
         class="flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white no-underline shadow-lg shadow-accent/20 transition active:scale-95 hover:bg-accent-hover"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -206,7 +174,7 @@ onUnmounted(stopAboutConfigPolling);
       <button
         v-if="aboutConfig.referenceProjectUrl"
         type="button"
-        @click="handleAboutLinkClick(currentSection.id, aboutConfig.referenceProjectUrl)"
+        @click="handleAboutLinkClick(aboutConfig.referenceProjectUrl)"
         class="flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl bg-white/20 backdrop-blur-md border border-gray-200/40 px-5 py-2.5 text-sm font-medium text-gray-800 no-underline transition active:scale-95 shadow-sm hover:bg-white/30 hover:border-accent/35 dark:bg-black/10 dark:border-gray-800/40 dark:text-white dark:hover:bg-white/10"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.49 11.49 0 0 1 12 5.797c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.8 24 17.302 24 12c0-6.627-5.373-12-12-12Z" /></svg>
@@ -214,9 +182,9 @@ onUnmounted(stopAboutConfigPolling);
       </button>
 
       <button
-        v-if="aboutConfig.joinGroupUrl"
+        v-if="aboutConfig.joinGroupText"
         type="button"
-        @click="handleAboutLinkClick(currentSection.id, aboutConfig.joinGroupUrl)"
+        @click="showQqGroupDialog = true"
         class="flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl bg-white/20 backdrop-blur-md border border-gray-200/40 px-5 py-2.5 text-sm font-medium text-gray-800 transition active:scale-95 shadow-sm hover:bg-white/30 hover:border-accent/35 dark:bg-black/10 dark:border-gray-800/40 dark:text-white dark:hover:bg-white/10"
       >
         {{ aboutConfig.joinGroupText }}
@@ -229,6 +197,29 @@ onUnmounted(stopAboutConfigPolling);
     </div>
     </Transition>
     </section>
+
+    <Teleport to="body">
+      <Transition name="about-dialog">
+        <div
+          v-if="showQqGroupDialog"
+          class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          @click.self="showQqGroupDialog = false"
+        >
+          <div class="w-[min(360px,100%)] rounded-2xl bg-white p-6 text-center shadow-2xl dark:bg-[#262626]">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-white">加入QQ群</h2>
+            <p class="mt-2 text-sm text-gray-500 dark:text-white/60">QQ群号</p>
+            <p class="mt-3 select-text text-2xl font-bold tracking-[0.18em] text-accent">656117919</p>
+            <button
+              type="button"
+              class="mt-5 rounded-full bg-accent px-5 py-2 text-sm font-medium text-white transition hover:bg-accent-hover active:scale-95"
+              @click="showQqGroupDialog = false"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -246,5 +237,15 @@ onUnmounted(stopAboutConfigPolling);
 .about-slide-leave-to {
   opacity: 0;
   transform: translateX(-24px);
+}
+
+.about-dialog-enter-active,
+.about-dialog-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.about-dialog-enter-from,
+.about-dialog-leave-to {
+  opacity: 0;
 }
 </style>

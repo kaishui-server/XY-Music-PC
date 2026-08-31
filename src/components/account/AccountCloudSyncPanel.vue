@@ -8,24 +8,21 @@ const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
 const playlistSync = usePlaylistSync();
 const expanded = ref(false);
-type UploadKey = 'playlists' | 'plugins' | 'settings';
+type UploadKey = 'playlists' | 'plugins';
 const uploadItems: Array<{ key: UploadKey; label: string }> = [
   { key: 'playlists', label: '歌单与收藏' },
   { key: 'plugins', label: '插件配置' },
-  { key: 'settings', label: '本地设置' },
 ];
 
 const isSyncing = computed(() => (
   playlistSync.syncing.value
   || playlistSync.pluginSyncing.value
-  || playlistSync.settingsSyncing.value
 ));
 
 const lastSyncText = computed(() => {
   const timestamps = [
     playlistSync.lastSyncTime.value,
     playlistSync.lastPluginSyncTime.value,
-    playlistSync.lastSettingsSyncTime.value,
   ].filter((value): value is number => typeof value === 'number');
   if (timestamps.length === 0) return '尚未同步';
   return new Date(Math.max(...timestamps)).toLocaleString('zh-CN', {
@@ -40,7 +37,6 @@ const lastSyncText = computed(() => {
 const syncErrorDetails = computed(() => [
   ...(playlistSync.lastSyncResult.value?.errors ?? []).map(error => ({ category: '歌单', error })),
   ...(playlistSync.lastPluginSyncResult.value?.errors ?? []).map(error => ({ category: '插件', error })),
-  ...(playlistSync.lastSettingsSyncResult.value?.errors ?? []).map(error => ({ category: '设置', error })),
 ]);
 
 const syncErrorCount = computed(() => syncErrorDetails.value.length);
@@ -48,7 +44,6 @@ const syncErrorCount = computed(() => syncErrorDetails.value.length);
 const syncStatusText = computed(() => {
   if (playlistSync.syncing.value) return playlistSync.syncProgress.value || '正在同步歌单…';
   if (playlistSync.pluginSyncing.value) return playlistSync.pluginSyncProgress.value || '正在同步插件…';
-  if (playlistSync.settingsSyncing.value) return playlistSync.settingsSyncProgress.value || '正在同步设置…';
   if (syncErrorCount.value > 0) return `上次同步有 ${syncErrorCount.value} 个问题，展开查看详情`;
   return `上次同步：${lastSyncText.value}`;
 });
@@ -109,7 +104,7 @@ function updateInterval(event: Event) {
       <div v-if="expanded" class="px-3 pb-3 pt-2">
         <p class="mb-3 text-xs text-black/55 dark:text-white/55">
           当前账号：<span class="font-semibold text-black/80 dark:text-white/85">@{{ authStore.user?.ciyuanxi_id || authStore.user?.username }}</span>
-          · 在电脑、手机等设备间同步歌单、收藏、插件配置和本地设置。
+          · 在电脑、手机等设备间同步歌单、收藏和插件配置。
         </p>
 
         <button
@@ -128,7 +123,7 @@ function updateInterval(event: Event) {
           {{ isSyncing ? '同步中…' : '立即同步' }}
         </button>
 
-        <div class="grid gap-2 sm:grid-cols-3">
+        <div class="grid gap-2 sm:grid-cols-2">
           <button
             v-for="item in uploadItems"
             :key="item.key"

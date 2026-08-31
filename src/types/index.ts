@@ -835,7 +835,6 @@ export interface UploadSettings {
   history: boolean;
   favorites: boolean;
   plugins: boolean;
-  settings: boolean;
 }
 
 /** 自动同步配置 */
