@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:subview="using:WinUIMusicPlayer.View.SubView"
     xmlns:tools="using:WinUIMusicPlayer.Utils"
     Loaded="AccountPage_Loaded"
     mc:Ignorable="d">
@@ -15,7 +16,7 @@
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Padding" Value="0,8" />
+            <Setter Property="Padding" Value="0,9" />
             <Setter Property="CornerRadius" Value="7" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="Background" Value="Transparent" />
@@ -60,6 +61,35 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!--  表单字段标签  -->
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+
+        <!--  卡片  -->
+        <Style x:Key="AccountCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <!--  账号操作平铺按钮  -->
+        <Style x:Key="AccountTileButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="MinHeight" Value="52" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <!--  强调色渐变(品牌/横幅共用)  -->
+        <LinearGradientBrush x:Key="AccentDiagonalBrush" EndPoint="1,1" StartPoint="0,0">
+            <GradientStop Offset="0" Color="{ThemeResource SystemAccentColorLight1}" />
+            <GradientStop Offset="0.5" Color="{ThemeResource SystemAccentColor}" />
+            <GradientStop Offset="1" Color="{ThemeResource SystemAccentColorDark1}" />
+        </LinearGradientBrush>
     </Page.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -69,50 +99,57 @@
             Margin="16,10,0,10"
             FontSize="28" />
 
-        <ScrollViewer Grid.Row="1">
+        <ScrollViewer x:Name="MainContentScroll" Grid.Row="1">
             <StackPanel
-                MaxWidth="520"
-                Margin="16,8,16,8"
-                HorizontalAlignment="Left"
+                MaxWidth="680"
+                Margin="32,24,32,16"
+                HorizontalAlignment="Center"
                 Spacing="16">
+                <StackPanel.ChildrenTransitions>
+                    <RepositionThemeTransition IsStaggeringEnabled="True" />
+                </StackPanel.ChildrenTransitions>
 
                 <!-- ═══════════ 未登录: 登录/注册 ═══════════ -->
                 <StackPanel
                     x:Name="AuthPanel"
-                    Spacing="16"
+                    MaxWidth="420"
+                    HorizontalAlignment="Center"
+                    Spacing="20"
                     Visibility="{x:Bind tools:BindUtils.BoolToVisibilityReConverter(ViewModel.IsLoggedIn), Mode=OneWay}">
+
                     <!--  品牌头部  -->
-                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                    <StackPanel HorizontalAlignment="Center" Spacing="10">
                         <Border
-                            Width="64"
-                            Height="64"
-                            CornerRadius="18">
-                            <Border.Background>
-                                <LinearGradientBrush EndPoint="1,1" StartPoint="0,0">
-                                    <GradientStop Offset="0" Color="{ThemeResource SystemAccentColorLight1}" />
-                                    <GradientStop Offset="1" Color="{ThemeResource SystemAccentColorDark1}" />
-                                </LinearGradientBrush>
-                            </Border.Background>
+                            Width="56"
+                            Height="56"
+                            Background="{StaticResource AccentDiagonalBrush}"
+                            CornerRadius="16">
                             <FontIcon
                                 Margin="0,0,0,2"
-                                FontSize="32"
+                                FontFamily="{StaticResource MaterialDesignIconsFontFamily}"
+                                FontSize="30"
                                 Foreground="White"
-                                Glyph="&#xE8D6;" />
+                                Glyph="&#xF0412;" />
                         </Border>
                         <TextBlock
                             HorizontalAlignment="Center"
-                            FontSize="20"
-                            FontWeight="Bold"
+                            FontSize="21"
+                            FontWeight="SemiBold"
                             Text="XY Music" />
                         <TextBlock
                             x:Name="BrandSubtitleText"
                             HorizontalAlignment="Center"
                             FontSize="13"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
                     </StackPanel>
 
                     <!--  登录/注册分段 Tab  -->
-                    <Grid Background="{ThemeResource ControlFillColorDefaultBrush}" CornerRadius="10" Padding="4">
+                    <Grid
+                        Padding="4"
+                        Background="{ThemeResource ControlFillColorDefaultBrush}"
+                        CornerRadius="10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -134,242 +171,367 @@
                             Style="{StaticResource AccountSegmentButtonStyle}" />
                     </Grid>
 
-                    <!--  登录表单  -->
-                    <StackPanel x:Name="LoginForm" Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="LoginIdLabel" FontSize="13" />
-                            <TextBox
-                                x:Name="LoginIdBox"
-                                IsEnabled="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
-                                Text="{x:Bind ViewModel.LoginId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="LoginPasswordLabel" FontSize="13" />
-                            <PasswordBox
-                                x:Name="LoginPasswordBox"
-                                IsEnabled="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}" />
-                        </StackPanel>
-                        <TextBlock
-                            x:Name="LoginErrorText"
-                            FontSize="12"
-                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                            Text="{x:Bind ViewModel.LoginError, Mode=OneWay}"
-                            TextWrapping="Wrap" />
-                        <Button
-                            HorizontalAlignment="Stretch"
-                            Click="LoginButton_Click"
-                            IsEnabled="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
-                            Style="{StaticResource AccentButtonStyle}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <ProgressRing
-                                    Width="14"
-                                    Height="14"
-                                    IsActive="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay}"
-                                    Visibility="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay}" />
-                                <TextBlock x:Name="LoginButtonText" />
+                    <!--  表单卡片  -->
+                    <Border Padding="24,22" Style="{StaticResource AccountCardStyle}">
+                        <Grid>
+                            <!--  登录表单  -->
+                            <StackPanel x:Name="LoginForm" Spacing="14">
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="LoginIdLabel" Style="{StaticResource FieldLabelStyle}" />
+                                <TextBox
+                                    x:Name="LoginIdBox"
+                                    MinHeight="36"
+                                    IsEnabled="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
+                                    Text="{x:Bind ViewModel.LoginId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
-                        </Button>
-                        <HyperlinkButton
-                            HorizontalAlignment="Right"
-                            Click="ForgotPassword_Click"
-                            Content="?"
-                            x:Name="ForgotPasswordLink" />
-                    </StackPanel>
-
-                    <!--  注册表单  -->
-                    <StackPanel x:Name="RegisterForm" Spacing="12" Visibility="Collapsed">
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="RegIdLabel" FontSize="13" />
-                            <TextBox Text="{x:Bind ViewModel.RegId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="RegNicknameLabel" FontSize="13" />
-                            <TextBox Text="{x:Bind ViewModel.RegNickname, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="RegPasswordLabel" FontSize="13" />
-                            <PasswordBox x:Name="RegPasswordBox" />
-                        </StackPanel>
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="RegConfirmLabel" FontSize="13" />
-                            <PasswordBox x:Name="RegConfirmBox" />
-                        </StackPanel>
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="RegEmailLabel" FontSize="13" />
-                            <TextBox Text="{x:Bind ViewModel.RegEmail, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Spacing="4">
-                                <TextBlock x:Name="RegCodeLabel" FontSize="13" />
-                                <TextBox Text="{x:Bind ViewModel.RegCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="LoginPasswordLabel" Style="{StaticResource FieldLabelStyle}" />
+                                <PasswordBox
+                                    x:Name="LoginPasswordBox"
+                                    MinHeight="36"
+                                    IsEnabled="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}" />
                             </StackPanel>
+                            <TextBlock
+                                x:Name="LoginErrorText"
+                                FontSize="12"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                Text="{x:Bind ViewModel.LoginError, Mode=OneWay}"
+                                TextWrapping="Wrap" />
                             <Button
-                                Grid.Column="1"
-                                Margin="8,19,0,0"
-                                VerticalAlignment="Bottom"
-                                Click="SendCode_Click">
-                                <TextBlock x:Name="SendCodeButtonText" />
+                                MinHeight="40"
+                                HorizontalAlignment="Stretch"
+                                Click="LoginButton_Click"
+                                IsEnabled="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
+                                Style="{StaticResource AccentButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ProgressRing
+                                        Width="14"
+                                        Height="14"
+                                        IsActive="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.IsLoginBusy, Mode=OneWay}" />
+                                    <TextBlock x:Name="LoginButtonText" />
+                                </StackPanel>
                             </Button>
-                        </Grid>
-                        <TextBlock
-                            x:Name="RegisterErrorText"
-                            FontSize="12"
-                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                            Text="{x:Bind ViewModel.RegError, Mode=OneWay}"
-                            TextWrapping="Wrap" />
-                        <Button
-                            HorizontalAlignment="Stretch"
-                            Click="RegisterButton_Click"
-                            Style="{StaticResource AccentButtonStyle}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <ProgressRing
-                                    Width="14"
-                                    Height="14"
-                                    IsActive="{x:Bind ViewModel.IsRegisterBusy, Mode=OneWay}"
-                                    Visibility="{x:Bind ViewModel.IsRegisterBusy, Mode=OneWay}" />
-                                <TextBlock x:Name="RegisterButtonText" />
+                            <HyperlinkButton
+                                x:Name="ForgotPasswordLink"
+                                Margin="0,-4,0,0"
+                                HorizontalAlignment="Right"
+                                Click="ForgotPassword_Click"
+                                Content="?"
+                                FontSize="12" />
+                        </StackPanel>
+
+                        <!--  注册表单  -->
+                        <StackPanel
+                            x:Name="RegisterForm"
+                            Grid.Row="0"
+                            Spacing="12"
+                            Visibility="Collapsed">
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="RegIdLabel" Style="{StaticResource FieldLabelStyle}" />
+                                <TextBox MinHeight="36" Text="{x:Bind ViewModel.RegId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
-                        </Button>
-                    </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="RegNicknameLabel" Style="{StaticResource FieldLabelStyle}" />
+                                <TextBox MinHeight="36" Text="{x:Bind ViewModel.RegNickname, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="RegPasswordLabel" Style="{StaticResource FieldLabelStyle}" />
+                                <PasswordBox x:Name="RegPasswordBox" MinHeight="36" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="RegConfirmLabel" Style="{StaticResource FieldLabelStyle}" />
+                                <PasswordBox x:Name="RegConfirmBox" MinHeight="36" />
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="RegEmailLabel" Style="{StaticResource FieldLabelStyle}" />
+                                <TextBox MinHeight="36" Text="{x:Bind ViewModel.RegEmail, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock x:Name="RegCodeLabel" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox MinHeight="36" Text="{x:Bind ViewModel.RegCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <Button
+                                    Grid.Column="1"
+                                    MinHeight="36"
+                                    MinWidth="112"
+                                    VerticalAlignment="Bottom"
+                                    Click="SendCode_Click">
+                                    <TextBlock x:Name="SendCodeButtonText" />
+                                </Button>
+                            </Grid>
+                            <TextBlock
+                                x:Name="RegisterErrorText"
+                                FontSize="12"
+                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                Text="{x:Bind ViewModel.RegError, Mode=OneWay}"
+                                TextWrapping="Wrap" />
+                            <Button
+                                MinHeight="40"
+                                HorizontalAlignment="Stretch"
+                                Click="RegisterButton_Click"
+                                Style="{StaticResource AccentButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ProgressRing
+                                        Width="14"
+                                        Height="14"
+                                        IsActive="{x:Bind ViewModel.IsRegisterBusy, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.IsRegisterBusy, Mode=OneWay}" />
+                                    <TextBlock x:Name="RegisterButtonText" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <!-- ═══════════ 已登录: 个人资料 ═══════════ -->
                 <StackPanel
                     x:Name="ProfilePanel"
+                    MaxWidth="560"
+                    HorizontalAlignment="Center"
                     Spacing="16"
                     Visibility="{x:Bind tools:BindUtils.BoolToVisibilityConverter(ViewModel.IsLoggedIn), Mode=OneWay}">
 
-                    <!--  头像 + 昵称  -->
-                    <StackPanel HorizontalAlignment="Center" Spacing="10">
-                        <Grid>
-                            <Button
-                                Padding="0"
-                                HorizontalAlignment="Center"
-                                Click="Avatar_Click"
-                                CornerRadius="48">
-                                <Grid Width="96" Height="96" CornerRadius="48">
-                                    <!--  无头像时的人形占位  -->
-                                    <FontIcon
-                                        x:Name="AvatarPlaceholderIcon"
-                                        Width="96"
-                                        Height="96"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="40"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Glyph="&#xE77B;" />
-                                    <!--  头像  -->
-                                    <Ellipse x:Name="AvatarEllipse" Visibility="Collapsed">
-                                        <Ellipse.Fill>
-                                            <ImageBrush x:Name="AvatarBrush" Stretch="UniformToFill" />
-                                        </Ellipse.Fill>
-                                    </Ellipse>
-                                </Grid>
-                            </Button>
-                            <ProgressRing
-                                x:Name="AvatarUploadingRing"
-                                Width="28"
-                                Height="28"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Bottom"
-                                IsActive="{x:Bind ViewModel.IsAvatarUploading, Mode=OneWay}"
-                                Visibility="{x:Bind ViewModel.IsAvatarUploading, Mode=OneWay}" />
-                        </Grid>
-                        <TextBlock
-                            x:Name="AvatarHintText"
-                            HorizontalAlignment="Center"
-                            FontSize="11"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                    </StackPanel>
+                    <!--  资料主卡片: 渐变横幅 + 悬浮头像  -->
+                    <Border Style="{StaticResource AccountCardStyle}">
+                        <StackPanel>
+                            <!--  横幅: 强调色渐变 + 音符装饰  -->
+                            <Grid Height="96">
+                                <Grid CornerRadius="8,8,0,0" Background="{StaticResource AccentDiagonalBrush}" />
+                                <FontIcon
+                                    Margin="0,0,28,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource MaterialDesignIconsFontFamily}"
+                                    FontSize="72"
+                                    Foreground="White"
+                                    Glyph="&#xF0412;"
+                                    Opacity="0.16">
+                                    <FontIcon.RenderTransform>
+                                        <RotateTransform Angle="-12" />
+                                    </FontIcon.RenderTransform>
+                                </FontIcon>
+                                <FontIcon
+                                    Margin="30,0,0,10"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Bottom"
+                                    FontFamily="{StaticResource MaterialDesignIconsFontFamily}"
+                                    FontSize="34"
+                                    Foreground="White"
+                                    Glyph="&#xF0412;"
+                                    Opacity="0.12" />
+                            </Grid>
 
-                    <!--  资料卡片  -->
-                    <Border
-                        Padding="16,14"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="6">
-                            <TextBlock
-                                x:Name="NicknameText"
-                                FontSize="20"
-                                FontWeight="SemiBold"
+                            <!--  头像(与横幅叠压, 点击更换)  -->
+                            <Grid
+                                Width="104"
+                                Height="104"
+                                Margin="0,-56,0,0"
                                 HorizontalAlignment="Center"
-                                Text="{x:Bind ViewModel.User.Nickname, Mode=OneWay}" />
-                            <TextBlock
-                                x:Name="UserIdText"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                CornerRadius="52"
+                                Padding="4">
+                                <Button
+                                    Padding="0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Click="Avatar_Click"
+                                    CornerRadius="48">
+                                    <Grid Width="96" Height="96" CornerRadius="48">
+                                        <!--  无头像时的人形占位  -->
+                                        <FontIcon
+                                            x:Name="AvatarPlaceholderIcon"
+                                            Width="96"
+                                            Height="96"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="40"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Glyph="&#xE77B;" />
+                                        <!--  头像  -->
+                                        <Ellipse x:Name="AvatarEllipse" Visibility="Collapsed">
+                                            <Ellipse.Fill>
+                                                <ImageBrush x:Name="AvatarBrush" Stretch="UniformToFill" />
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                    </Grid>
+                                </Button>
+                                <!--  上传进度环  -->
+                                <Border
+                                    x:Name="AvatarUploadingRing"
+                                    Width="30"
+                                    Height="30"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Bottom"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="15"
+                                    Visibility="{x:Bind ViewModel.IsAvatarUploading, Mode=OneWay}">
+                                    <ProgressRing
+                                        Width="18"
+                                        Height="18"
+                                        IsActive="{x:Bind ViewModel.IsAvatarUploading, Mode=OneWay}" />
+                                </Border>
+                            </Grid>
+
+                            <!--  昵称 / ID / 邮箱  -->
+                            <StackPanel
+                                Margin="24,14,24,22"
                                 HorizontalAlignment="Center"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBlock
-                                x:Name="UserEmailText"
-                                HorizontalAlignment="Center"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind ViewModel.User.Email, Mode=OneWay}" />
+                                Spacing="10">
+                                <TextBlock
+                                    x:Name="NicknameText"
+                                    HorizontalAlignment="Center"
+                                    FontSize="22"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind ViewModel.User.Nickname, Mode=OneWay}"
+                                    TextAlignment="Center"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="Wrap" />
+                                <StackPanel
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <Border
+                                        Padding="10,4"
+                                        Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                        CornerRadius="14">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Glyph="&#xE77B;" />
+                                            <TextBlock
+                                                x:Name="UserIdText"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border
+                                        Padding="10,4"
+                                        Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                        CornerRadius="14">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Glyph="&#xE715;" />
+                                            <TextBlock
+                                                x:Name="UserEmailText"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{x:Bind ViewModel.User.Email, Mode=OneWay}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock
+                                    x:Name="AvatarHintText"
+                                    HorizontalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
-                    <!--  资料操作  -->
-                    <Grid ColumnDefinitions="*,*,*,Auto" ColumnSpacing="8">
+                    <!--  账号操作  -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
                         <Button
                             Grid.Column="0"
                             HorizontalAlignment="Stretch"
-                            Click="RefreshProfile_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                            Click="RefreshProfile_Click"
+                            Style="{StaticResource AccountTileButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon FontSize="16" Glyph="&#xE72C;" />
                                 <TextBlock x:Name="RefreshProfileText" />
                             </StackPanel>
                         </Button>
                         <Button
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
-                            Click="EditNickname_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="14" Glyph="&#xE70F;" />
+                            Click="EditNickname_Click"
+                            Style="{StaticResource AccountTileButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon FontSize="16" Glyph="&#xE70F;" />
                                 <TextBlock x:Name="EditNicknameText" />
                             </StackPanel>
                         </Button>
                         <Button
-                            Grid.Column="2"
+                            Grid.Row="1"
+                            Grid.Column="0"
                             HorizontalAlignment="Stretch"
-                            Click="ChangePassword_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="14" Glyph="&#xE192;" />
+                            Click="ChangePassword_Click"
+                            Style="{StaticResource AccountTileButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon FontSize="16" Glyph="&#xE192;" />
                                 <TextBlock x:Name="ChangePasswordText" />
                             </StackPanel>
                         </Button>
                         <Button
-                            Grid.Column="3"
-                            Click="Logout_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="14" Glyph="&#xE77B;" />
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            HorizontalAlignment="Stretch"
+                            Click="Logout_Click"
+                            Style="{StaticResource AccountTileButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon
+                                    FontSize="16"
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    Glyph="&#xE7E8;" />
                                 <TextBlock x:Name="LogoutText" />
                             </StackPanel>
                         </Button>
                     </Grid>
 
                     <!--  云同步卡片  -->
-                    <Border
-                        Padding="16,14"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="12">
-                            <TextBlock x:Name="CloudSyncTitleText" FontSize="15" FontWeight="SemiBold" />
-                            <Grid ColumnDefinitions="*,Auto">
+                    <Border Padding="20" Style="{StaticResource AccountCardStyle}">
+                        <StackPanel Spacing="2">
+                            <!--  标题: 图标徽章 + 文本  -->
+                            <StackPanel
+                                Margin="0,0,0,12"
+                                Orientation="Horizontal"
+                                Spacing="12">
+                                <Border
+                                    Width="32"
+                                    Height="32"
+                                    Background="{StaticResource AccentDiagonalBrush}"
+                                    CornerRadius="8">
+                                    <FontIcon
+                                        FontSize="15"
+                                        Foreground="White"
+                                        Glyph="&#xE895;" />
+                                </Border>
+                                <TextBlock
+                                    x:Name="CloudSyncTitleText"
+                                    VerticalAlignment="Center"
+                                    FontSize="15"
+                                    FontWeight="SemiBold" />
+                            </StackPanel>
+
+                            <!--  启用开关行  -->
+                            <Grid MinHeight="44" ColumnDefinitions="*,Auto">
                                 <TextBlock
                                     x:Name="CloudSyncEnableText"
                                     VerticalAlignment="Center"
-                                    FontSize="13" />
+                                    FontSize="13"
+                                    TextWrapping="Wrap" />
                                 <ToggleSwitch
                                     Grid.Column="1"
+                                    Margin="12,0,0,0"
                                     MinWidth="0"
                                     IsOn="{x:Bind ViewModel.CloudSyncEnabled, Mode=TwoWay}"
                                     Toggled="CloudSyncToggle_Toggled" />
                             </Grid>
-                            <Grid ColumnDefinitions="Auto,*">
+
+                            <!--  频率行  -->
+                            <Grid MinHeight="44" ColumnDefinitions="*,Auto">
                                 <TextBlock
                                     x:Name="CloudSyncFrequencyText"
                                     VerticalAlignment="Center"
@@ -377,14 +539,20 @@
                                 <ComboBox
                                     x:Name="FrequencyComboBox"
                                     Grid.Column="1"
-                                    HorizontalAlignment="Stretch"
+                                    Width="200"
+                                    VerticalAlignment="Center"
                                     SelectionChanged="FrequencyComboBox_SelectionChanged" />
                             </Grid>
+
+                            <!--  立即同步  -->
                             <Button
+                                Margin="0,12,0,0"
+                                MinHeight="40"
                                 HorizontalAlignment="Stretch"
                                 Click="SyncNow_Click"
                                 IsEnabled="{x:Bind ViewModel.IsCloudSyncing, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="14" Glyph="&#xE895;" />
                                     <ProgressRing
                                         Width="14"
                                         Height="14"
@@ -393,16 +561,38 @@
                                     <TextBlock x:Name="SyncNowText" />
                                 </StackPanel>
                             </Button>
+
+                            <!--  查看云数据  -->
+                            <Button
+                                Margin="0,8,0,6"
+                                MinHeight="40"
+                                HorizontalAlignment="Stretch"
+                                Click="CloudDataButton_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon
+                                        FontFamily="{StaticResource MaterialDesignIconsFontFamily}"
+                                        FontSize="15"
+                                        Glyph="&#xF0163;" />
+                                    <TextBlock x:Name="CloudDataButtonText" />
+                                </StackPanel>
+                            </Button>
                             <TextBlock
                                 x:Name="LastSyncText"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind ViewModel.LastSyncText, Mode=OneWay}" />
+                                Text="{x:Bind ViewModel.LastSyncText, Mode=OneWay}"
+                                TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
+
+        <!--  云数据查看/管理视图(与主内容互斥显示)  -->
+        <subview:CloudDataView
+            x:Name="CloudDataPanel"
+            Grid.Row="1"
+            Visibility="Collapsed" />
 
         <!--  状态栏  -->
         <TextBlock

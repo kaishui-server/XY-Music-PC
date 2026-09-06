@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -349,6 +350,10 @@ namespace WinUIMusicPlayer.Services.Plugins
         /// <summary>当前解析令牌: 新一次点击取消上一次仍在进行的解析, 避免多个回退链并行堆积把网络与 UI 拖死。</summary>
         private static CancellationTokenSource? _resolutionCts;
 
+        /// <summary>当前播放默认音质(底栏音质菜单的持久化设置, 归一化为 128k/320k/flac/flac24bit, 非法/未设置回退 320k)。</summary>
+        public static string GetPreferredQuality()
+            => LxSources.NormalizeQuality(Model.AppSettings.PreferredQuality) is { Length: > 0 } q ? q : "320k";
+
         /// <summary>若 music 为未解析的在线歌曲(Path 仍然是虚拟路径)则解析音源并下载缓存, 就地更新 Path。</summary>
         public static async Task<(bool Ok, string? Error)> EnsurePlayableAsync(Model.Music music)
         {
@@ -387,27 +392,36 @@ namespace WinUIMusicPlayer.Services.Plugins
             // VIP 试听兜底: 所有音源都只有试听版(如酷狗 60 秒)时先记下, 优先继续找完整版
             string? trialFile = null;
             OnlineSong? trialSong = null;
-            // 主源逐档位回退最多 8 档(320k/high/flac/.../128k), 单档 10 秒不够用, 放宽到 20 秒
-            var (source, error) = await GetMediaSourceWithTimeoutAsync(pluginManager, song, ct, TimeSpan.FromSeconds(20));
+            // 全链路计时打点: 定位点击→起播各阶段耗时(用后可留作慢日志)
+            var log = App.GetLogger<App>();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            log.LogInformation("[播放计时] 开始 「{title}」 平台={platform}", music.Title, song.Platform);
+            // 主源逐档位回退最多 8 档(320k/high/flac/.../128k), 整体限时 15 秒:
+            // 正常插件 2-5 秒完成, 病态插件(内部重试 45 秒)不再拖满 20 秒才回退换源
+            var (source, error) = await GetMediaSourceWithTimeoutAsync(pluginManager, song, ct, TimeSpan.FromSeconds(15));
+            log.LogInformation("[播放计时] 主源解析 {ms}ms 成功={ok} 错误={err}", sw.ElapsedMilliseconds, source is not null, error);
             if (source is not null)
             {
                 var (cacheFile, downloadError) = await DownloadAudioWithTimeoutAsync(source.Url, source.Headers, ct, TimeSpan.FromSeconds(15));
+                log.LogInformation("[播放计时] 主源下载 {ms}ms 成功={ok} 错误={err}", sw.ElapsedMilliseconds, cacheFile is not null, downloadError);
                 if (cacheFile is not null)
                 {
                     if (!IsTrialVersion(cacheFile, expectedSec))
                     {
                         music.OnlineVirtualPath = song.VirtualPath;
                         music.Path = cacheFile;
+                        log.LogInformation("[播放计时] 完成(主源完整版) 总耗时 {ms}ms", sw.ElapsedMilliseconds);
                         return (true, null);
                     }
                     trialFile = cacheFile;
                     trialSong = song;
+                    log.LogInformation("[播放计时] 主源为试听版, 进入回退搜索");
                 }
                 else error = downloadError;
                 // LX 插件返回死链(下载 404)时用公共 API 按音质 hash 重新解析(对齐手机版兜底链路, 酷狗主场景)
                 if (cacheFile is null && song.IsLx)
                 {
-                    var apiSource = await pluginManager.GetLxApiFallbackAsync(song);
+                    var apiSource = await pluginManager.GetLxApiFallbackAsync(song, GetPreferredQuality(), qualityDownFirst: true);
                     if (apiSource is not null)
                     {
                         var (apiFile, _) = await DownloadAudioWithTimeoutAsync(apiSource.Url, apiSource.Headers, ct, TimeSpan.FromSeconds(15));
@@ -426,9 +440,9 @@ namespace WinUIMusicPlayer.Services.Plugins
             }
             lastError = error;
             ct.ThrowIfCancellationRequested();
-            // 主音源失败或仅试听(如酷狗代理故障/VIP 试听): 回退搜索可能耗时数十秒, 立即提示避免点击看似无响应
-            View.SubView.ToastFlyout.ShowInfo($"正在为「{music.Title}」查找可用音源…");
+            // 主音源失败或仅试听时静默回退搜索(可能耗时数十秒), 仅最终结果(试听版提示/失败)才弹窗
             var candidates = await FindAlternateCandidatesAsync(music, song, ct);
+            log.LogInformation("[播放计时] 回退搜索完成 {ms}ms 候选数={n}", sw.ElapsedMilliseconds, candidates.Count);
             // 该插件取流已失败/超时的不再尝试(如汽水内部重试一次长达 45 秒), 整体限时 40 秒防止点击长时间无响应
             var failedPlugins = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var deadline = DateTime.UtcNow.AddSeconds(40);
@@ -437,15 +451,18 @@ namespace WinUIMusicPlayer.Services.Plugins
                 ct.ThrowIfCancellationRequested();
                 if (DateTime.UtcNow >= deadline) break;
                 if (string.IsNullOrEmpty(cand.PluginHash) || failedPlugins.Contains(cand.PluginHash)) continue;
+                var swCand = System.Diagnostics.Stopwatch.StartNew();
                 var (altSource, _) = await GetMediaSourceWithTimeoutAsync(pluginManager, cand, ct, TimeSpan.FromSeconds(12));
                 if (altSource is null)
                 {
                     // 解析确认失败/超时才封杀该插件的其余候选: 仅试听/下载失败不应封杀——
                     // LX 五音源共用一个插件 hash, 提前封杀会把其他音源的可用完整版一并跳过
                     failedPlugins.Add(cand.PluginHash);
+                    log.LogInformation("[播放计时] 候选[{platform}] 解析失败 {ms}ms", cand.Platform, swCand.ElapsedMilliseconds);
                     continue;
                 }
                 var (altFile, _) = await DownloadAudioWithTimeoutAsync(altSource.Url, altSource.Headers, ct, TimeSpan.FromSeconds(15));
+                log.LogInformation("[播放计时] 候选[{platform}] 解析+下载 {ms}ms 下载成功={ok}", cand.Platform, swCand.ElapsedMilliseconds, altFile is not null);
                 if (altFile is null) continue;
                 if (IsTrialVersion(altFile, cand.DurationSec > 0 ? cand.DurationSec : expectedSec))
                 {
@@ -458,6 +475,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                 _ = Task.Run(() => RepairOnlineSongInDbAsync(music, cand));
                 music.OnlineVirtualPath = cand.VirtualPath;
                 music.Path = altFile;
+                log.LogInformation("[播放计时] 完成(回退换源[{platform}]) 总耗时 {ms}ms", cand.Platform, sw.ElapsedMilliseconds);
                 return (true, null);
             }
             ct.ThrowIfCancellationRequested();
@@ -468,22 +486,25 @@ namespace WinUIMusicPlayer.Services.Plugins
                 OnlineMusicRegistry.Register(trialSong);
                 music.OnlineVirtualPath = trialSong.VirtualPath;
                 music.Path = trialFile;
+                log.LogInformation("[播放计时] 完成(试听兜底) 总耗时 {ms}ms", sw.ElapsedMilliseconds);
                 return (true, null);
             }
+            log.LogInformation("[播放计时] 失败 总耗时 {ms}ms 错误={err}", sw.ElapsedMilliseconds, lastError);
             return (false, lastError);
         }
 
         /// <summary>主音源失败时按 标题+歌手 在其余插件中搜索同曲, 返回按匹配分降序的候选(排除已失败插件, 严格匹配标题+歌手/时长)。限时 8 秒。
         /// LX 歌曲额外并入其余 LX 音源的同名歌候选(对齐弦予 findAlternativeLxSource): LX 五音源共用一个
-        /// 插件 hash, 按插件排除的常规回退对 LX 歌曲无效, 必须按"已失败音源"粒度换源。</summary>
-        private static async Task<List<OnlineSong>> FindAlternateCandidatesAsync(Model.Music music, OnlineSong song, CancellationToken ct)
+        /// 插件 hash, 按插件排除的常规回退对 LX 歌曲无效, 必须按"已失败音源"粒度换源。
+        /// music 仅供标题/歌手/时长兜底(下载链路无 Music 对象, 传 null)。</summary>
+        internal static async Task<List<OnlineSong>> FindAlternateCandidatesAsync(Model.Music? music, OnlineSong song, CancellationToken ct)
         {
             try
             {
                 var pm = App.Services.GetRequiredService<PluginManagerService>();
-                var title = song.Title ?? music.Title ?? string.Empty;
-                var artist = song.Artist ?? music.Author ?? string.Empty;
-                var durationSec = song.DurationSec > 0 ? song.DurationSec : music.Duration.TotalSeconds;
+                var title = song.Title ?? music?.Title ?? string.Empty;
+                var artist = song.Artist ?? music?.Author ?? string.Empty;
+                var durationSec = song.DurationSec > 0 ? song.DurationSec : (music?.Duration.TotalSeconds ?? 0);
                 var hashes = pm.ActivePlugins
                     .Where(r => r.SupportsMethod("search") && r.Hash != song.PluginHash)
                     .Select(r => r.Hash).ToList();
@@ -519,12 +540,15 @@ namespace WinUIMusicPlayer.Services.Plugins
 
         /// <summary>限时取流(移植弦予"超时即放弃该插件"模型): 超时通过 CancellationToken 真正取消
         /// 插件内的逐档解析循环(Jint 档间检查), 引擎立即释放给后续调用, 不再出现旧版
-        /// "超时后底层循环继续占用引擎数分钟, 该插件所有歌曲全部排队失败"的瘫痪。</summary>
-        private static async Task<(OnlineMediaSource? Source, string? Error)> GetMediaSourceWithTimeoutAsync(
-            PluginManagerService pm, OnlineSong song, CancellationToken ct, TimeSpan timeout)
+        /// "超时后底层循环继续占用引擎数分钟, 该插件所有歌曲全部排队失败"的瘫痪。
+        /// quality/qualityDownFirst 可覆盖(下载链路回退时按用户所选音质保持 asc 序)。</summary>
+        internal static async Task<(OnlineMediaSource? Source, string? Error)> GetMediaSourceWithTimeoutAsync(
+            PluginManagerService pm, OnlineSong song, CancellationToken ct, TimeSpan timeout,
+            string? quality = null, bool qualityDownFirst = true)
         {
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            var task = pm.GetMediaSourceAsync(song, "320k", timeoutCts.Token);
+            // 播放默认音质 + 向下优先回退: 用户选择的档位不支持时先降档, 降到最低仍不可用再升档(仅本次歌曲, 不改默认设置)
+            var task = pm.GetMediaSourceAsync(song, quality ?? GetPreferredQuality(), timeoutCts.Token, qualityDownFirst);
             var done = await Task.WhenAny(task, Task.Delay(timeout, timeoutCts.Token));
             if (done != task)
             {
@@ -733,6 +757,14 @@ namespace WinUIMusicPlayer.Services.Plugins
             return est is > 5 && est < expectedSec * 0.55;
         }
 
+        /// <summary>判断下载字节是否为 VIP 试听版(与播放链路 IsTrialVersion 同阈值, 供下载链路复用)。</summary>
+        internal static bool IsTrialAudioBytes(byte[] bytes, double expectedSec)
+        {
+            if (expectedSec < 90) return false;
+            var est = EstimateMp3DurationSeconds(bytes);
+            return est is > 5 && est < expectedSec * 0.55;
+        }
+
         /// <summary>估算 MP3 文件时长(秒): VBR 读 Xing/Info 帧数, CBR 按 文件大小*8/码率。非 MP3 或解析失败返回 null。</summary>
         private static double? EstimateMp3DurationSeconds(string file)
         {
@@ -742,15 +774,36 @@ namespace WinUIMusicPlayer.Services.Plugins
                 var buf = new byte[16384];
                 int read = fs.Read(buf, 0, buf.Length);
                 if (read < 8) return null;
-                int i = 0;
-                // 跳过 ID3v2 标签
-                if (buf[0] == (byte)'I' && buf[1] == (byte)'D' && buf[2] == (byte)'3')
-                {
-                    if (read < 10) return null;
-                    int tagSize = (buf[6] << 21) | (buf[7] << 14) | (buf[8] << 7) | buf[9];
-                    i = 10 + tagSize;
-                    if (i < 0 || i + 8 >= read) return null;
-                }
+                return ParseMp3Duration(buf.AsSpan(0, read), fs.Length);
+            }
+            catch { return null; }
+        }
+
+        /// <summary>估算内存字节流的 MP3 时长(秒): 下载链路拿到 bytes 后无需落盘即可判定试听版。</summary>
+        internal static double? EstimateMp3DurationSeconds(byte[] bytes)
+        {
+            try
+            {
+                if (bytes.Length < 8) return null;
+                var len = Math.Min(bytes.Length, 16384);
+                return ParseMp3Duration(bytes.AsSpan(0, len), bytes.Length);
+            }
+            catch { return null; }
+        }
+
+        /// <summary>解析 MP3 时长: buf 为文件头部(含帧头/Xing 区), totalLen 为音频总字节数(CBR 估时用)。</summary>
+        private static double? ParseMp3Duration(ReadOnlySpan<byte> buf, long totalLen)
+        {
+            int read = buf.Length;
+            int i = 0;
+            // 跳过 ID3v2 标签
+            if (buf[0] == (byte)'I' && buf[1] == (byte)'D' && buf[2] == (byte)'3')
+            {
+                if (read < 10) return null;
+                int tagSize = (buf[6] << 21) | (buf[7] << 14) | (buf[8] << 7) | buf[9];
+                i = 10 + tagSize;
+                if (i < 0 || i + 8 >= read) return null;
+            }
                 // 找帧同步字
                 while (i + 4 <= read)
                 {
@@ -790,10 +843,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                 int[] bitratesV2 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
                 int bitrate = versionBits == 3 ? bitratesV1[bitIdx] : bitratesV2[bitIdx];
                 if (bitrate <= 0) return null;
-                var len = new System.IO.FileInfo(file).Length;
-                return (len - i) * 8.0 / (bitrate * 1000);
-            }
-            catch { return null; }
+                return (totalLen - i) * 8.0 / (bitrate * 1000);
         }
 
         /// <summary>MP3 采样率表: versionBits 3=MPEG1, 2=MPEG2, 0=MPEG2.5。</summary>

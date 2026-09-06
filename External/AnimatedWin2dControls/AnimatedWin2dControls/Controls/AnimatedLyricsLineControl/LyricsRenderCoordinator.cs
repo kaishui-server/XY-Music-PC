@@ -394,7 +394,8 @@ namespace AnimatedWin2dControls.Controls.AnimatedLyricsLineControl
                 }
                 _lastExternalTimeMs = externalTimeMs;
 
-                currentTimeMs = _internalTimeMs - _cachedOffsetMs;
+                // +偏移 = 歌词提前: 有效时间 = 实际播放 + 偏移(后续时间戳的词提前点亮)
+                currentTimeMs = _internalTimeMs + _cachedOffsetMs;
 
                 int newIndex = _synchronizer.GetCurrentLineIndex(currentTimeMs, lines);
                 _lastCurrentLineIndex = _currentLineIndex;
@@ -413,7 +414,7 @@ namespace AnimatedWin2dControls.Controls.AnimatedLyricsLineControl
             {
                 _internalTimeMs = externalTimeMs;
                 _lastExternalTimeMs = externalTimeMs;
-                currentTimeMs = _internalTimeMs - _cachedOffsetMs;
+                currentTimeMs = _internalTimeMs + _cachedOffsetMs;
 
                 int newIndex = _synchronizer.GetCurrentLineIndex(currentTimeMs, lines);
                 _lastCurrentLineIndex = _currentLineIndex;
@@ -600,7 +601,7 @@ namespace AnimatedWin2dControls.Controls.AnimatedLyricsLineControl
             int endIdx = Math.Min(lines.Count - 1, _cachedVisibleEnd + 3);
 
             double yOffsetBase = ry + rh * playingLineTopOffsetFactor + combinedScroll;
-            double currentTimeMs = _internalTimeMs - _cachedOffsetMs;
+            double currentTimeMs = _internalTimeMs + _cachedOffsetMs;
 
             for (int i = startIdx; i <= endIdx; i++)
             {
@@ -747,7 +748,8 @@ namespace AnimatedWin2dControls.Controls.AnimatedLyricsLineControl
                 _userScrolling = false;
                 _userScrollCooldownSec = 0;
 
-                var time = line.StartMs + _cachedOffsetMs;
+                // 反演 currentTimeMs = internal + offset: 跳到该行需 seek 到 StartMs - offset
+                var time = line.StartMs - _cachedOffsetMs;
                 if (time < 0) time = 0;
                 LyricLineClicked?.Invoke(this, TimeSpan.FromMilliseconds(time));
             }

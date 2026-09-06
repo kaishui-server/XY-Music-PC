@@ -44,17 +44,40 @@ namespace WinUIMusicPlayer.Services.Plugins
 
         public IEnumerable<LxPluginRuntime> ActiveLxPlugins => _lxRuntimes.Values;
 
-        /// <summary>当前启用 LX 插件覆盖的音源 Tab(按标准顺序 kw/kg/tx/wy/mg)。返回 (tabHash, 显示名, 解析用插件 hash)。</summary>
-        public List<(string TabHash, string Name, string PluginHash)> GetLxSourceTabs()
+        /// <summary>按清单(插件管理页)顺序返回启用插件的运行时(MF 与 LX 二选一), 供在线搜索 Tab 排序。</summary>
+        public List<(PluginRuntime? Mf, LxPluginRuntime? Lx)> GetActiveRuntimesInOrder()
         {
-            var tabs = new List<(string, string, string)>();
-            foreach (var source in LxSources.StandardOrder)
+            lock (_manifestGate)
             {
-                var runtime = _lxRuntimes.Values.FirstOrDefault(r => r.SupportsSource(source));
-                if (runtime is null) continue;
-                tabs.Add(($"lx:{source}", LxSources.DisplayName(source), runtime.Hash));
+                return _manifest
+                    .Where(e => e.Enabled)
+                    .Select(e =>
+                    {
+                        _runtimes.TryGetValue(e.Hash, out var mf);
+                        _lxRuntimes.TryGetValue(e.Hash, out var lx);
+                        return (Mf: mf, Lx: lx);
+                    })
+                    .Where(t => t.Mf is not null || t.Lx is not null)
+                    .ToList();
             }
-            return tabs;
+        }
+
+        /// <summary>按插件管理页拖拽后的顺序重排插件清单并持久化(同时决定在线搜索 Tab 顺序)。</summary>
+        public (bool Ok, string? Error) ReorderPlugins(IReadOnlyList<string> orderedHashes)
+        {
+            lock (_manifestGate)
+            {
+                if (orderedHashes.Count != _manifest.Count ||
+                    orderedHashes.Any(h => _manifest.All(e => e.Hash != h)))
+                    return (false, "插件列表已变化, 请刷新后重试");
+                var map = _manifest.ToDictionary(e => e.Hash);
+                _manifest.Clear();
+                foreach (var hash in orderedHashes)
+                    _manifest.Add(map[hash]);
+                SaveManifestLocked();
+            }
+            PluginsChanged?.Invoke();
+            return (true, (string?)null);
         }
 
         /// <summary>启动时加载所有已安装插件(后台线程执行 Jint)。</summary>
@@ -1148,8 +1171,9 @@ namespace WinUIMusicPlayer.Services.Plugins
         }
 
         /// <summary>解析在线歌曲播放地址: MF 走 getMediaSource(返回 url+headers, 如 B 站 Referer/Cookie), LX 走 musicUrl。
-        /// ct 由外层限时器传入: 超时后逐档循环立即停止, 释放引擎给后续调用(对齐弦予版"超时即放弃该插件"模型)。</summary>
-        public Task<(OnlineMediaSource? Source, string? Error)> GetMediaSourceAsync(OnlineSong song, string quality = "320k", CancellationToken ct = default)
+        /// ct 由外层限时器传入: 超时后逐档循环立即停止, 释放引擎给后续调用(对齐弦予版"超时即放弃该插件"模型)。
+        /// qualityDownFirst: 播放链路为 true 时回退序为"向下优先"(首选不支持先降档, 降到最低仍不可用再升档), 仅影响本次调用。</summary>
+        public Task<(OnlineMediaSource? Source, string? Error)> GetMediaSourceAsync(OnlineSong song, string quality = "320k", CancellationToken ct = default, bool qualityDownFirst = false)
         {
             return Task.Run<(OnlineMediaSource?, string?)>(async () =>
             {
@@ -1159,9 +1183,12 @@ namespace WinUIMusicPlayer.Services.Plugins
                     var lx = ResolveLxRuntime(song);
                     var normalized = LxSources.NormalizeQuality(quality);
                     if (normalized.Length == 0) normalized = "320k";
-                    // 插件逐档位回退(对齐手机版 pluginQualityCandidates): 自定义 LX 音源通常只支持部分音质档
-                    var pluginQualities = new[] { normalized, "320k", "128k" }
-                        .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                    // 插件逐档位回退(对齐手机版 pluginQualityCandidates): 自定义 LX 音源通常只支持部分音质档;
+                    // 播放链路按"向下优先"排序([首选, 更低档由高到低, 更高档由低到高]), 下载链路保持原 [首选,320k,128k]
+                    var pluginQualities = qualityDownFirst
+                        ? OrderDownFirst((string[])["128k", "320k", "flac", "flac24bit"], normalized).ToArray()
+                        : new[] { normalized, "320k", "128k" }
+                            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
                     string? lastError = null;
                     if (lx is not null && lx.SupportsAction(song.Platform, "musicUrl"))
                     {
@@ -1176,7 +1203,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                     else lastError = lx is null ? "没有启用的 LX 插件支持该音源" : "LX 插件不支持获取音源";
                     // 公共 API 兜底(对齐手机版 lxResolveUrl): 插件失败(如内部接口 404)时酷狗等音源仍可解析;
                     // kg 的解析 ID 是各音质 hash 而非 songmid, 插件用错 ID 返回死链/404 是 LX 酷狗播放失败主因
-                    var apiSource = await ResolveLxUrlViaApiAsync(song, normalized);
+                    var apiSource = await ResolveLxUrlViaApiAsync(song, normalized, qualityDownFirst);
                     if (apiSource is not null) return (apiSource, null);
                     return (null, lastError);
                 }
@@ -1217,7 +1244,8 @@ namespace WinUIMusicPlayer.Services.Plugins
                         mfLastError = "插件未返回有效音源 URL";
                         return null;
                     }
-                    var order = MfQualityOrder(quality);
+                    // 播放链路"向下优先": [首选, ...更低侧(由近到远), ...更高侧(由近到远)]; 下载链路保持官方 asc 序
+                    var order = MfQualityOrder(quality, qualityDownFirst);
                     var tried = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     foreach (var mfQ in order)
                     {
@@ -1225,7 +1253,10 @@ namespace WinUIMusicPlayer.Services.Plugins
                         tried.Add(mfQ);
                         try
                         {
+                            var swQ = System.Diagnostics.Stopwatch.StartNew();
                             var src = TryGet(mfQ);
+                            if (swQ.ElapsedMilliseconds > 800)
+                                _logger.LogInformation("[播放计时] 档位[{q}] 耗时 {ms}ms 成功={ok}", mfQ, swQ.ElapsedMilliseconds, src is not null);
                             if (src is not null) return (src, null);
                         }
                         catch (OperationCanceledException) { throw; }
@@ -1237,10 +1268,14 @@ namespace WinUIMusicPlayer.Services.Plugins
                         if (preUrl is not null) return (preUrl, null);
                     }
                     // [原生键补试] 四级键全部报"不支持音质"时, 插件实际只认 flac/320k/128k 等原生键,
-                    // 逐个补试避免"该歌曲不支持low音质"直接失败(移植弦予 buildNativePluginQualityPairs)
+                    // 逐个补试避免"该歌曲不支持low音质"直接失败(移植弦予 buildNativePluginQualityPairs);
+                    // 播放链路同样"向下优先"排序原生键
                     if (mfLastError is not null && IsUnsupportedQualityError(mfLastError))
                     {
-                        foreach (var nq in new[] { quality, "320k", "flac", "128k", "flac24bit", "192k" }
+                        var nativeCandidates = new[] { quality, "320k", "flac", "128k", "flac24bit", "192k" };
+                        if (qualityDownFirst)
+                            nativeCandidates = OrderDownFirst(nativeCandidates, quality).ToArray();
+                        foreach (var nq in nativeCandidates
                                      .Where(q => !string.IsNullOrWhiteSpace(q) && !tried.Contains(q))
                                      .Distinct(StringComparer.OrdinalIgnoreCase))
                         {
@@ -1279,8 +1314,8 @@ namespace WinUIMusicPlayer.Services.Plugins
         /// <summary>LX 公共 API 直链兜底(对齐手机版 rust resolve_url_via_api):
         /// 主 API https://lxmusicapi.onrender.com/url/{source}/{id}/{quality}, 备用 ts.tempmusics.tk。
         /// ID 规则: kg 优先 _types[quality].hash → hash → songmid(酷狗按音质 hash 解析, 用 songmid 会得到死链);
-        /// kw/tx/wy 用 songmid; mg 用 copyrightId → songmid。</summary>
-        private static async Task<OnlineMediaSource?> ResolveLxUrlViaApiAsync(OnlineSong song, string preferredQuality)
+        /// kw/tx/wy 用 songmid; mg 用 copyrightId → songmid。downFirst 时候选音质按"向下优先"排序。</summary>
+        private static async Task<OnlineMediaSource?> ResolveLxUrlViaApiAsync(OnlineSong song, string preferredQuality, bool downFirst = false)
         {
             try
             {
@@ -1289,9 +1324,11 @@ namespace WinUIMusicPlayer.Services.Plugins
                 string songmid = GetStringProp(root, "songmid");
                 string? hash = GetStringProp(root, "hash") is { Length: > 0 } h ? h : null;
                 string? copyrightId = GetStringProp(root, "copyrightId") is { Length: > 0 } c ? c : null;
-                var qualities = new[] { preferredQuality, "320k", "flac", "128k" }
-                    .Where(q => !string.IsNullOrWhiteSpace(q))
-                    .Distinct(StringComparer.OrdinalIgnoreCase);
+                var qualityBase = new[] { preferredQuality, "320k", "flac", "128k" }
+                    .Where(q => !string.IsNullOrWhiteSpace(q));
+                var qualities = downFirst
+                    ? OrderDownFirst(qualityBase, preferredQuality)
+                    : qualityBase.Distinct(StringComparer.OrdinalIgnoreCase);
                 foreach (var q in qualities)
                 {
                     // 各音源解析 ID: kg 按音质取 hash; 其他音源用 songmid / copyrightId
@@ -1331,9 +1368,10 @@ namespace WinUIMusicPlayer.Services.Plugins
         private static string GetStringProp(JsonElement obj, string name)
             => obj.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? string.Empty : string.Empty;
 
-        /// <summary>是否为"不支持音质"错误(移植弦予 isUnsupportedQualityError): 此类错误换音质键可能解决。</summary>
+        /// <summary>是否为"不支持音质"错误(移植弦予 isUnsupportedQualityError): 此类错误换音质键可能解决。
+        /// 覆盖英文 "Unsupported ... quality" 单词形态(如 Bilibili 插件 "Unsupported Bilibili audio quality: low")。</summary>
         private static bool IsUnsupportedQualityError(string message)
-            => System.Text.RegularExpressions.Regex.IsMatch(message, @"不支持.*音质|音质.*不支持|quality.*not\s+support|not\s+support.*quality",
+            => System.Text.RegularExpressions.Regex.IsMatch(message, @"不支持.*音质|音质.*不支持|unsupported.*quality|quality.*unsupported|quality.*not\s+support|not\s+support.*quality",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         /// <summary>是否为歌曲级错误(移植弦予 isSongLevelError): 歌曲不存在/版权/VIP 等, 换音质无意义, 立即停止逐级。</summary>
@@ -1354,16 +1392,52 @@ namespace WinUIMusicPlayer.Services.Plugins
         };
 
         /// <summary>MusicFree 官方 getQualityOrder('asc') 顺序(移植弦予 mfAscOrder):
-        /// [首选, ...更高侧, ...更低侧], 如 high → [high, super, standard, low]。</summary>
-        private static string[] MfQualityOrder(string quality)
+        /// [首选, ...更高侧, ...更低侧], 如 high → [high, super, standard, low]。
+        /// downFirst=true 为播放链路"向下优先"序: [首选, ...更低侧(由近到远), ...更高侧(由近到远)],
+        /// 如 high → [high, standard, low, super]。</summary>
+        private static string[] MfQualityOrder(string quality, bool downFirst = false)
         {
             var order = new[] { "low", "standard", "high", "super" };
             var baseIdx = Array.IndexOf(order, QualityToMfKey(quality));
             if (baseIdx < 0) baseIdx = 2; // high
             var result = new List<string> { order[baseIdx] };
-            for (var i = baseIdx + 1; i < order.Length; i++) result.Add(order[i]);
-            for (var i = baseIdx - 1; i >= 0; i--) result.Add(order[i]);
+            if (downFirst)
+            {
+                for (var i = baseIdx - 1; i >= 0; i--) result.Add(order[i]);
+                for (var i = baseIdx + 1; i < order.Length; i++) result.Add(order[i]);
+            }
+            else
+            {
+                for (var i = baseIdx + 1; i < order.Length; i++) result.Add(order[i]);
+                for (var i = baseIdx - 1; i >= 0; i--) result.Add(order[i]);
+            }
             return result.ToArray();
+        }
+
+        /// <summary>原生/LX 音质键档位序: 128k &lt; 192k &lt; 320k &lt; flac &lt; flac24bit, 未知键按 320k 档。</summary>
+        private static int NativeQualityRank(string q) => q?.ToLowerInvariant() switch
+        {
+            "128k" or "128" or "mgg" or "96k" => 0,
+            "192k" or "192" => 1,
+            "320k" or "320" or "exhigh" => 2,
+            "flac" or "sq" => 3,
+            "flac24bit" or "hires" or "hi-res" or "hr" or "zq24" => 4,
+            _ => 2,
+        };
+
+        /// <summary>播放链路"向下优先"回退序(用户语义: 首选不支持先降档, 降到最低仍不可用再升档):
+        /// [首选, 低于首选的档位(由高到低), 高于首选的档位(由低到高)], 忽略大小写去重。</summary>
+        private static IEnumerable<string> OrderDownFirst(IEnumerable<string> candidates, string preferred)
+        {
+            var prefRank = NativeQualityRank(preferred);
+            var list = candidates.Where(q => !string.IsNullOrWhiteSpace(q)).ToList();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var q in new[] { preferred }
+                         .Concat(list.Where(q => NativeQualityRank(q) < prefRank).OrderByDescending(NativeQualityRank))
+                         .Concat(list.Where(q => NativeQualityRank(q) > prefRank).OrderBy(NativeQualityRank)))
+            {
+                if (seen.Add(q)) yield return q;
+            }
         }
 
         /// <summary>从 musicItem.qualities 取预解析直链(移植弦予 MusicFree 官方语义):
@@ -1386,11 +1460,11 @@ namespace WinUIMusicPlayer.Services.Plugins
         }
 
         /// <summary>LX 公共 API 直链兜底(对外): 供播放链路在插件返回死链(下载 404)时按音质 hash 重新解析。</summary>
-        public Task<OnlineMediaSource?> GetLxApiFallbackAsync(OnlineSong song, string quality = "320k")
+        public Task<OnlineMediaSource?> GetLxApiFallbackAsync(OnlineSong song, string quality = "320k", bool qualityDownFirst = false)
         {
             var normalized = LxSources.NormalizeQuality(quality);
             if (normalized.Length == 0) normalized = "320k";
-            return ResolveLxUrlViaApiAsync(song, normalized);
+            return ResolveLxUrlViaApiAsync(song, normalized, qualityDownFirst);
         }
 
         /// <summary>解析插件音源结果中的 headers 对象(B 站等 CDN 校验 Referer/Cookie, 缺失会 403)。</summary>

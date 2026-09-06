@@ -34,6 +34,7 @@ namespace WinUIMusicPlayer.View
             ViewModel.LoginChanged += OnLoginChanged;
             ViewModel.LoginSucceeded += OnLoginSucceeded;
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            CloudDataPanel.CloseRequested += CloudDataPanel_CloseRequested;
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -42,7 +43,19 @@ namespace WinUIMusicPlayer.View
             _ = Task.Run(() => ViewModel.SyncProfileAsync());
         }
 
-        private void AccountPage_Loaded(object sender, RoutedEventArgs e) => InitializeTexts();
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            // 进入页面即拉取最新资料(离线期间头像被审核通过等场景), 完成后 LoginChanged 会刷新头像
+            _ = ViewModel.SyncProfileAsync();
+        }
+
+        private async void AccountPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            InitializeTexts();
+            // 已登录用户直接进入页面时登录事件不会触发, 此处主动加载头像(显示本地缓存的资料)
+            await UpdateAvatarAsync();
+        }
 
         private void InitializeTexts()
         {
@@ -76,6 +89,7 @@ namespace WinUIMusicPlayer.View
             CloudSyncEnableText.Text = ToolUtils.GetString("AccountCloudSyncEnable");
             CloudSyncFrequencyText.Text = ToolUtils.GetString("AccountCloudSyncFrequency");
             SyncNowText.Text = ToolUtils.GetString("AccountSyncNow");
+            CloudDataButtonText.Text = ToolUtils.GetString("CloudDataTitle");
 
             UpdateAvatarStatusText();
             UpdateSendCodeButton();
@@ -91,6 +105,9 @@ namespace WinUIMusicPlayer.View
             {
                 TitleText.Text = ViewModel.IsLoggedIn ? ToolUtils.GetString("AccountMyTitle") : ToolUtils.GetString("AccountTitle");
                 UserIdText.Text = ViewModel.IsLoggedIn ? string.Format(ToolUtils.GetString("AccountIdFormat"), ViewModel.AccountId) : string.Empty;
+                // 退出登录时若正停留在云数据视图, 收回并恢复主内容
+                if (!ViewModel.IsLoggedIn && CloudDataPanel.Visibility == Visibility.Visible)
+                    CloudDataPanel_CloseRequested(this, EventArgs.Empty);
                 await UpdateAvatarAsync();
             });
         }
@@ -506,5 +523,23 @@ namespace WinUIMusicPlayer.View
 
         private void SyncNow_Click(object sender, RoutedEventArgs e)
             => _ = ViewModel.RunCloudSyncCommand.ExecuteAsync(null);
+
+        // ─── 云数据查看/管理 ───────────────────────
+
+        /// <summary>打开云数据视图(隐藏账号主内容)。</summary>
+        private void CloudDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!ViewModel.IsLoggedIn) return;
+            MainContentScroll.Visibility = Visibility.Collapsed;
+            CloudDataPanel.Visibility = Visibility.Visible;
+            CloudDataPanel.Open();
+        }
+
+        /// <summary>云数据视图返回概览后再点返回 → 收回视图, 恢复账号主内容。</summary>
+        private void CloudDataPanel_CloseRequested(object? sender, EventArgs e)
+        {
+            CloudDataPanel.Visibility = Visibility.Collapsed;
+            MainContentScroll.Visibility = Visibility.Visible;
+        }
     }
 }

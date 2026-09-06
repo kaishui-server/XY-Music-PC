@@ -99,6 +99,8 @@ namespace WinUIMusicPlayer.Model
         public bool EnableGlobalHotKey { get; set; } = false;
         public bool IsTrimOnHideEnabled { get; set; } = false;
         public bool IsTrimAfterPlaybackEnabled { get; set; } = false;
+        /// <summary>在线播放默认音质(128k/192k/320k/flac/flac24bit), 解析音源时的首选档位。</summary>
+        public string PreferredQuality { get; set; } = "320k";
         public string ArtistSplitSymbols { get; set; } = ", ; / 、 & feat.";
         public bool IsDesktopLyricsEnabled { get; set; } = false;
         public bool IsDesktopLyricsLocked { get; set; } = false;

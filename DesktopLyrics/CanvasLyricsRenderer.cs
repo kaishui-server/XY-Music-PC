@@ -218,7 +218,8 @@ namespace WinUIMusicPlayer.DesktopLyrics
                     _internalTimeMs = externalTimeMs;
                     _timeSyncValid = true;
                 }
-                double currentTimeMs = _internalTimeMs - _offsetMs;
+                // +偏移 = 歌词提前: 与主窗口歌词符号约定一致
+                double currentTimeMs = _internalTimeMs + _offsetMs;
 
                 int newIndex = FindCurrentLineIndex(currentTimeMs);
                 bool lineChanged = newIndex != _currentIndex;
@@ -289,7 +290,7 @@ namespace WinUIMusicPlayer.DesktopLyrics
             if (line?.PrimaryTextLayout is null) return;
             if (line.PrimaryTextLayout.LayoutBounds.Width <= 0) return;
 
-            double currentTimeMs = _internalTimeMs - _offsetMs;
+            double currentTimeMs = _internalTimeMs + _offsetMs;
 
             try
             {

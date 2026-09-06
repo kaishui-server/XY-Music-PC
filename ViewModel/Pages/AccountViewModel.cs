@@ -235,6 +235,7 @@ namespace WinUIMusicPlayer.ViewModel.Pages
         public async Task SyncProfileAsync()
         {
             if (!_auth.IsLoggedIn) return;
+            if (IsProfileBusy) return;
             IsProfileBusy = true;
             try
             {

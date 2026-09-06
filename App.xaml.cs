@@ -114,6 +114,8 @@ namespace WinUIMusicPlayer
                 services.AddSingleton<View.AccountPage>();
                 services.AddSingleton<Services.Account.AuthService>();
                 services.AddSingleton<Services.Account.AccountCloudSyncService>();
+                services.AddSingleton<Services.Account.CloudDataService>();
+                services.AddSingleton<ViewModel.Pages.CloudDataViewModel>();
              }).Build();
 
         public static string GetAppVersion()

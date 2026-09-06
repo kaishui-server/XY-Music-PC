@@ -37,11 +37,11 @@ namespace WinUIMusicPlayer.View
             ViewModel.ReceiveNavigation();
         }
 
-        private void FolderGridView_ItemClick(object sender, ItemClickEventArgs e)
+        private void FolderListView_ItemClick(object sender, ItemClickEventArgs e)
         {
             if (DetailView.ViewModel.IsClosingForTransition) return;
-            var gridView = sender as GridView;
-            var item = gridView?.ContainerFromItem(e.ClickedItem)?.As<GridViewItem>();
+            var listView = sender as ListView;
+            var item = listView?.ContainerFromItem(e.ClickedItem)?.As<ListViewItem>();
             var coverBorder = FindCoverBorderInItem(item);
             if (coverBorder is not null)
             {
@@ -49,7 +49,7 @@ namespace WinUIMusicPlayer.View
                     .PrepareToAnimate("FolderCover", coverBorder);
             }
             SetEntryTransitions();
-            ViewModel.FolderGridView_ItemClick(sender, e);
+            ViewModel.FolderListView_ItemClick(sender, e);
             if (coverBorder is not null)
             {
                 DispatcherQueue.TryEnqueue(() =>
@@ -67,11 +67,11 @@ namespace WinUIMusicPlayer.View
             var detailBorder = DetailView.DetailCoverBorder;
 
             // 跨链进入(SongsList 行点 Artist/Album,主界面 bottom bar 跳转)时
-            // 对应的 GridViewItem 可能不在视觉树里，此时不能触发 ConnectedAnimation。
+            // 对应的 ListViewItem 可能不在视觉树里，此时不能触发 ConnectedAnimation。
             Border? sourceBorder = null;
             if (folder is not null)
             {
-                var item = FolderGridView.ContainerFromItem(folder)?.As<GridViewItem>();
+                var item = FolderListView.ContainerFromItem(folder)?.As<ListViewItem>();
                 sourceBorder = FindCoverBorderInItem(item);
             }
             bool canAnimate = detailBorder is not null && sourceBorder is not null;
@@ -116,7 +116,7 @@ namespace WinUIMusicPlayer.View
             }
         }
 
-        private static Border? FindCoverBorderInItem(GridViewItem? item)
+        private static Border? FindCoverBorderInItem(ListViewItem? item)
         {
             if (item is null) return null;
             return FindVisualChild<Border>(item, b => b.Name == "CoverBorder");

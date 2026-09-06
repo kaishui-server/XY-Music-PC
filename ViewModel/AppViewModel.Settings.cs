@@ -1904,11 +1904,93 @@ namespace WinUIMusicPlayer.ViewModel
                 {
                     _ = _musicDatabaseService.SaveSettingAsync();
                 }
+                // 应用图片后检测: 图片与文字颜色过近看不清时自动切换运行时主题(不覆盖用户保存的主题设置)
+                _ = CheckBackgroundContrastAsync(dest);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "选择自定义背景图片失败");
             }
+        }
+
+        /// <summary>背景图与文字对比度检测阈值(WCAG 对比度比率): 低于该值视为"看不清", 3.0 对应大字号文本可读下限。</summary>
+        private const double BackgroundContrastThreshold = 3.0;
+
+        /// <summary>检测背景图片与当前文字颜色(深色主题白字/浅色主题黑字)的对比度,
+        /// 过低时自动切换运行时主题(Dark↔Light)提升可读性。仅改本次运行的界面主题,
+        /// 不写 AppSettings.AppTheme——用户保存的主题设置优先, 手动改回或重启后即恢复。</summary>
+        private async Task CheckBackgroundContrastAsync(string imagePath)
+        {
+            try
+            {
+                var luminance = await Task.Run(() => AnalyzeImageLuminance(imagePath));
+                if (luminance is null) return; // 解析失败不打扰用户
+                // 文字相对亮度: 深色主题白字=1, 浅色主题黑字=0
+                var textLum = IsDarkMode ? 1.0 : 0.0;
+                var current = ContrastRatio(textLum, luminance.Value);
+                var flipped = ContrastRatio(1.0 - textLum, luminance.Value);
+                if (current >= BackgroundContrastThreshold || flipped <= current) return;
+                // 切换目标: 亮图白字看不清 → 浅色(黑字); 暗图黑字看不清 → 深色(白字)
+                var toDark = !IsDarkMode;
+                IsDarkMode = toDark;
+                AppSettings.ElementTheme = toDark ? ElementTheme.Dark : ElementTheme.Light;
+                App.MainWindow?.ApplyRuntimeTheme(toDark ? ElementTheme.Dark : ElementTheme.Light);
+                App.Services.GetRequiredService<MusicBrowseViewModel>().ThemeChangedUpdateCover();
+                var themeName = ToolUtils.GetString(toDark ? "Dark.Content" : "Light.Content");
+                View.SubView.ToastFlyout.ShowWarning(string.Format(ToolUtils.GetString("BackgroundAutoThemeSwitched"), themeName));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "背景图对比度检测失败: {Message}", ex.Message);
+            }
+        }
+
+        /// <summary>计算图片平均相对亮度(0=纯黑, 1=纯白): 缩到最长边 64 采样, sRGB 线性化 + Rec.709 加权。失败返回 null。</summary>
+        private static double? AnalyzeImageLuminance(string imagePath)
+        {
+            try
+            {
+                if (!File.Exists(imagePath)) return null;
+                var file = StorageFile.GetFileFromPathAsync(imagePath).AsTask().GetAwaiter().GetResult();
+                using var fileStream = file.OpenReadAsync().AsTask().GetAwaiter().GetResult();
+                var decoder = Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(fileStream).AsTask().GetAwaiter().GetResult();
+                var transform = new Windows.Graphics.Imaging.BitmapTransform { ScaledWidth = 64, ScaledHeight = 64 };
+                var pixels = decoder.GetPixelDataAsync(
+                    Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8,
+                    Windows.Graphics.Imaging.BitmapAlphaMode.Ignore,
+                    transform,
+                    Windows.Graphics.Imaging.ExifOrientationMode.IgnoreExifOrientation,
+                    Windows.Graphics.Imaging.ColorManagementMode.DoNotColorManage).AsTask().GetAwaiter().GetResult();
+                var bytes = pixels.DetachPixelData();
+                double total = 0;
+                var count = bytes.Length / 4;
+                for (var i = 0; i < bytes.Length; i += 4)
+                {
+                    total += SrgbToLinear(bytes[i + 2]) * 0.2126   // R (BGRA8)
+                           + SrgbToLinear(bytes[i + 1]) * 0.7152   // G
+                           + SrgbToLinear(bytes[i]) * 0.0722;      // B
+                }
+                return count > 0 ? total / count : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>sRGB 分量(0-255) → 线性亮度(WCAG 相对亮度公式)。</summary>
+        private static double SrgbToLinear(byte channel)
+        {
+            var c = channel / 255.0;
+            return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+
+        /// <summary>WCAG 对比度比率: (亮+0.05)/(暗+0.05), 范围 1(无对比)~21(黑字白底)。</summary>
+        private static double ContrastRatio(double l1, double l2)
+        {
+            var max = Math.Max(l1, l2);
+            var min = Math.Min(l1, l2);
+            return (max + 0.05) / (min + 0.05);
         }
 
         [RelayCommand]

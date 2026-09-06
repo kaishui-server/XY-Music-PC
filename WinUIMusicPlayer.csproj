@@ -56,12 +56,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\SplashScreen.scale-200.png" />
-    <Content Include="Assets\LockScreenLogo.scale-200.png" />
-    <Content Include="Assets\Square150x150Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <!-- 全部图标/图片复制到输出(托盘图标/窗口图标/默认封面等在安装目录需物理文件) -->
+    <Content Include="Assets\*.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -313,8 +310,8 @@
     <SelfContained>true</SelfContained>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <!-- 禁用裁剪: 裁剪会关闭 System.Text.Json 反射序列化(插件清单/云同步/用户变量全部失败)且 Jint 动态代码生成不受裁剪支持 -->
+    <PublishTrimmed>false</PublishTrimmed>
 	<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefaultLanguage>en</DefaultLanguage>
@@ -395,6 +392,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="UpdateNotes.json" />
+    <Content Include="UpdateNotes.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

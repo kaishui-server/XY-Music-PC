@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="WinUIMusicPlayer.View.FolderBrowsePage"
     xmlns:tools="using:WinUIMusicPlayer.Utils"
@@ -20,65 +20,60 @@
                     IsHitTestVisible="{x:Bind tools:BindUtils.BoolToBoolReConverter(ViewModel.IsInDetailMode), Mode=OneWay}"
             Opacity="{x:Bind tools:BindUtils.BoolToOpacityReConverter(ViewModel.IsInDetailMode), Mode=OneWay}">
             <SemanticZoom.ZoomedInView>
-                <GridView
-                    x:Name="FolderGridView"
-                    Margin="10,0,0,0"
+                <ListView
+                    x:Name="FolderListView"
+                    Margin="10,0,10,0"
                     IsItemClickEnabled="True"
                     IsRightTapEnabled="True"
-                    ItemClick="FolderGridView_ItemClick"
+                    ItemClick="FolderListView_ItemClick"
                     ItemsSource="{x:Bind ViewModel.AppViewModel.FolderPageSource.View, Mode=OneWay}"
                     RightTapped="Folder_RightTapped"
                     SelectionMode="None">
-                    <GridView.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource DefaultGridViewItemStyle}" TargetType="GridViewItem">
+                    <ListView.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource DefaultListViewItemStyle}" TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0,2" />
                             <Setter Property="ContextFlyout">
                                 <Setter.Value>
                                     <MenuFlyout extensions:MenuFlyoutExtensions.ItemsSource="{x:Bind ViewModel.FolderMenuOptions, Mode=OneWay}" />
                                 </Setter.Value>
                             </Setter>
                         </Style>
-                    </GridView.ItemContainerStyle>
-                    <GridView.GroupStyle>
+                    </ListView.ItemContainerStyle>
+                    <ListView.GroupStyle>
                         <GroupStyle>
                             <GroupStyle.HeaderTemplate>
                                 <DataTemplate x:DataType="model:MusicGroup">
                                     <TextBlock
-                                        Margin="10,0,5,5"
+                                        Margin="6,10,6,6"
                                         FontSize="28"
                                         FontWeight="SemiBold"
                                         Text="{x:Bind Key}" />
                                 </DataTemplate>
                             </GroupStyle.HeaderTemplate>
                             <GroupStyle.HeaderContainerStyle>
-                                <StaticResource ResourceKey="NoBorderGridViewHeaderItemStyle" />
+                                <StaticResource ResourceKey="NoBorderListViewHeaderItemStyle" />
                             </GroupStyle.HeaderContainerStyle>
                         </GroupStyle>
-                    </GridView.GroupStyle>
-                    <GridView.ItemTemplate>
+                    </ListView.GroupStyle>
+                    <ListView.ItemTemplate>
                         <DataTemplate x:DataType="model:Music">
-                            <Grid ColumnDefinitions="*">
-                                <Grid Grid.Row="0" Visibility="Collapsed">
-                                    <ProgressRing
-                                        Width="50"
-                                        Height="50"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        IsActive="True" />
-                                </Grid>
-                                <StackPanel
-                                    Grid.Row="0"
-                                    Margin="5"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                                    <Grid Width="150" Height="150">
+                            <!--  横条状文件夹卡片: 左封面 + 中名称/路径 + 右状态图标  -->
+                            <Border
+                                Padding="12,8"
+                                HorizontalAlignment="Stretch"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" MinHeight="44">
+                                    <!--  封面缩略图(连接动画锚点)  -->
+                                    <Grid Grid.Column="0" Width="44" Height="44">
                                         <Border
                                             x:Name="CoverBorder"
-                                            Grid.Row="0"
-                                            Width="150"
-                                            Height="150"
-                                            Margin="0,0,0,0"
-                                            Padding="0"
-                                            CornerRadius="10">
+                                            Width="44"
+                                            Height="44"
+                                            CornerRadius="6">
                                             <Grid>
                                                 <Image
                                                     HorizontalAlignment="Center"
@@ -90,41 +85,53 @@
                                                     </interactivity:Interaction.Behaviors>
                                                 </Image>
                                                 <Grid
-                                                    Width="150"
-                                                    Height="150"
+                                                    Width="44"
+                                                    Height="44"
                                                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                                     Canvas.ZIndex="0">
                                                     <FontIcon
                                                         Canvas.ZIndex="0"
-                                                        FontSize="50"
+                                                        FontSize="18"
                                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                         Glyph="&#xf12b;" />
                                                 </Grid>
                                             </Grid>
                                         </Border>
                                         <FontIcon
-                                            x:Name="IsExistOnDeviceIcon"
-                                            Margin="0,0,5,5"
+                                            Margin="0,0,-4,-4"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Bottom"
-                                            FontSize="16"
+                                            FontSize="13"
                                             Glyph="{x:Bind tools:BindUtils.IsExistOnDeviceGlyphConverter(IsExistOnDevice), Mode=OneWay}" />
                                     </Grid>
-                                    <TextBlock
-                                        Width="150"
-                                        Height="60"
-                                        Margin="0,5,0,0"
-                                        HorizontalAlignment="Center"
+                                    <!--  文件夹名 + 完整路径  -->
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Margin="12,0,12,0"
                                         VerticalAlignment="Center"
-                                        Text="{x:Bind LastLevelFolderPath}"
-                                        TextAlignment="Center"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Grid>
+                                        Spacing="2">
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind LastLevelFolderPath, Mode=OneWay}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind FolderPath, Mode=OneWay}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <!--  右侧进入箭头  -->
+                                    <FontIcon
+                                        Grid.Column="3"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                        Glyph="&#xE76B;" />
+                                </Grid>
+                            </Border>
                         </DataTemplate>
-                    </GridView.ItemTemplate>
-                </GridView>
+                    </ListView.ItemTemplate>
+                </ListView>
             </SemanticZoom.ZoomedInView>
             <SemanticZoom.ZoomedOutView>
                 <GridView

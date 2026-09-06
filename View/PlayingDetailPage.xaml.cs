@@ -50,9 +50,26 @@ namespace WinUIMusicPlayer.View
             this.InitializeComponent();
             ViewModel = viewModel;
             DataContext = this;
+            // 播放音质菜单: 与主底栏共用同一套构建逻辑(持久化默认音质 + 在线歌曲换质重播)
+            PlayQualityButtonPlayingDetail.Flyout = Helper.PlayQualityMenuHelper.BuildMenu();
             Loaded += PlayingDetailPage_Loaded;
+            // 页面 DI 单例: 静态歌词总线订阅一次, 空歌词(如 B 站无词歌曲)时显示"暂无歌词"空态
+            AnimatedWin2dControls.Messages.UILyricsBus.Changed += OnUILyricsChangedForEmpty;
+            UpdateEmptyLyricsPanel(viewModel.AppViewModel.UILyrics);
             _logger = App.GetLogger<PlayingDetailPage>();
         }
+
+        /// <summary>歌词数据变化: null/空列表显示"暂无歌词"空态, 有词隐藏。</summary>
+        private void OnUILyricsChangedForEmpty(System.Collections.Generic.IList<AnimatedWin2dControls.Controls.AnimatedLyricsLineControl.LyricLine>? value)
+            => UpdateEmptyLyricsPanel(value);
+
+        private void UpdateEmptyLyricsPanel(System.Collections.Generic.IList<AnimatedWin2dControls.Controls.AnimatedLyricsLineControl.LyricLine>? value)
+            => EmptyLyricsPanel.Visibility = (value is null || value.Count == 0)
+                ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary>空态"关联歌词"按钮: 复用底栏关联歌词对话框流程。</summary>
+        private void EmptyLinkLyrics_Click(object sender, RoutedEventArgs e)
+            => LinkLyricsButtonPlayingDetail_Click(sender, e);
 
         private bool _isLoaded;
         private bool _disposed;
@@ -460,6 +477,10 @@ namespace WinUIMusicPlayer.View
                 _logger.LogError(ex, "关联歌词流程异常");
             }
         }
+
+        /// <summary>歌词区空态"关联歌词"按钮: 与底栏关联歌词按钮共用同一对话框流程。</summary>
+        private void LyricsView_LinkLyricsRequested(object? sender, EventArgs e)
+            => LinkLyricsButtonPlayingDetail_Click(sender, new RoutedEventArgs());
         private void UpdateCurrentPlayList()
         {
             if (ViewModel.AppViewModel.CurrentPlayingList is not null)
@@ -589,6 +610,7 @@ namespace WinUIMusicPlayer.View
                     appWindow.Changed -= AppWindow_Changed;
                 if (ViewModel?.AppViewModel is { } appvm)
                     appvm.PropertyChanged -= AppViewModel_PropertyChanged;
+                AnimatedWin2dControls.Messages.UILyricsBus.Changed -= OnUILyricsChangedForEmpty;
                 LyricsView?.LyricInteracted -= LyricsView_LyricInteracted;
                 LyricsView?.ExceptionInteracted -= LyricsView_ExceptionInteracted;
                 LyricsView?.ShutdownLyricsCanvas();

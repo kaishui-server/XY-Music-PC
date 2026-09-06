@@ -124,18 +124,32 @@ public sealed partial class LyricsLinkDialog : ContentDialog
             }
         }
 
-    /// <summary>来源下拉 = 已启用插件(MusicFree 按平台名) + LX 音源, 与在线搜索页 Tab 一致。</summary>
+    /// <summary>来源下拉 = 已启用插件(MF 按平台名, LX 按音源), 顺序与在线搜索页 Tab 一致(= 插件管理页排序)。</summary>
     private void LoadSources()
     {
         _sourcesLoading = true;
         try
         {
             var sources = new List<(string Hash, string Name)>();
-            sources.AddRange(_pluginManager.ActivePlugins
-                .Where(p => p.SupportsMethod("search"))
-                .Select(p => (p.Hash, p.Metadata.Platform)));
-            sources.AddRange(_pluginManager.GetLxSourceTabs()
-                .Select(t => (t.TabHash, t.Name)));
+            var usedLxSources = new HashSet<string>();
+            // MF 插件一个插件一个来源; LX 插件按其覆盖音源生成多个来源(重复音源先到先得), 与在线搜索页 Tab 生成逻辑一致
+            foreach (var (mf, lx) in _pluginManager.GetActiveRuntimesInOrder())
+            {
+                if (mf is not null)
+                {
+                    if (mf.SupportsMethod("search"))
+                        sources.Add((mf.Hash, mf.Metadata.Platform));
+                }
+                else if (lx is not null)
+                {
+                    foreach (var source in LxSources.StandardOrder)
+                    {
+                        if (usedLxSources.Contains(source) || !lx.SupportsSource(source)) continue;
+                        usedLxSources.Add(source);
+                        sources.Add(($"lx:{source}", LxSources.DisplayName(source)));
+                    }
+                }
+            }
 
             foreach (var (hash, name) in sources)
                 SourceComboBox.Items.Add(new ComboBoxItem { Content = name, Tag = hash });

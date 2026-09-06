@@ -194,7 +194,8 @@ namespace WinUIMusicPlayer.Controls.Lyrics
         {
             if (_lyrics is null || _lyrics.Count == 0) return;
 
-            double effectiveMs = totalMs - _cachedOffsetMs;
+            // +偏移 = 歌词提前: 有效时间 = 实际播放 + 偏移
+            double effectiveMs = totalMs + _cachedOffsetMs;
             int newIndex = FindCurrentLineIndex(effectiveMs);
             if (newIndex == _currentLineIndex) return;
 
@@ -248,7 +249,8 @@ namespace WinUIMusicPlayer.Controls.Lyrics
             _manualBrowsing = false;
 
             BuildDisplayItems();
-            MatchCurrentLineFromTime(_cachedOffsetMs, preferLatest: true);
+            // 初始定位: 偏移量不是播放时间, 从 0 开始由时间事件驱动校正
+            MatchCurrentLineFromTime(0, preferLatest: true);
             LyricList.ItemsSource = _displayItems;
             if (ScrollHost.ActualWidth > 0)
                 LyricList.Width = ScrollHost.ActualWidth;

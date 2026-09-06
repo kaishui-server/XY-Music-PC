@@ -78,14 +78,15 @@
                     Grid.Column="1"
                     Margin="20,0,20,0"
                     RowDefinitions="Auto,Auto,Auto">
-                    <!--  标题行: 标题 + 收藏按钮(歌名右侧), 整体跟随歌词对齐方式  -->
+                    <!--  标题行: 标题 + 收藏/添加到歌单按钮。文本列用 * 约束宽度(长歌名截断/跑马灯),
+                          按钮固定右侧不被覆盖; 文本水平位置由 TextBlock 的 TextAlignment 跟随歌词对齐  -->
                     <Grid
                         Grid.Row="0"
-                        ColumnDefinitions="Auto,Auto,Auto"
-                        HorizontalAlignment="{x:Bind tools:BindUtils.TextAlignmentToHorizontalAlignmentConverter(ViewModel.AppViewModel.EffectivePlayingDetailAlignment), Mode=OneWay}">
+                        ColumnDefinitions="*,Auto,Auto">
                         <atb:AnimatedTextBlock
                             x:Name="AnimatedPlayingDetailTitleTextBlock"
                             Margin="0"
+                            HorizontalAlignment="{x:Bind tools:BindUtils.TextAlignmentToHorizontalAlignmentConverter(ViewModel.AppViewModel.EffectivePlayingDetailAlignment), Mode=OneWay}"
                             x:Load="{x:Bind ViewModel.AppViewModel.IsWin2dAnimatedText, Mode=OneTime}"
                             FontSize="24"
                             FontWeight="SemiBold"
@@ -97,7 +98,7 @@
                             Grid.Column="0"
                             Margin="0"
                             Padding="0"
-                            HorizontalAlignment="Left"
+                            HorizontalAlignment="{x:Bind tools:BindUtils.TextAlignmentToHorizontalAlignmentConverter(ViewModel.AppViewModel.EffectivePlayingDetailAlignment), Mode=OneWay}"
                             IsPlaying="False"
                             PointerCanceled="AutoScrollHover_PointerCanceled"
                             PointerEntered="AutoScrollHover_PointerEntered"
@@ -126,7 +127,7 @@
                             CommandParameter="{x:Bind ViewModel.AppViewModel.CurrentPlayingMusic, Mode=OneWay}"
                             Style="{StaticResource MenuButtonStyle}">
                             <FontIcon
-                                FontSize="20"
+                                FontSize="26"
                                 Foreground="Red"
                                 Glyph="{x:Bind tools:BindUtils.FavouriteGlyphConverter(ViewModel.AppViewModel.CurrentPlayingMusic.IsFavorite), Mode=OneWay}" />
                         </Button>
@@ -144,7 +145,7 @@
                             <ToolTipService.ToolTip>
                                 <ToolTip x:Uid="AddToMyPlayListToolTip" />
                             </ToolTipService.ToolTip>
-                            <FontIcon FontFamily="{StaticResource MaterialDesignIconsFontFamily}" FontSize="26" Glyph="&#xF0412;" />
+                            <FontIcon FontFamily="{StaticResource MaterialDesignIconsFontFamily}" FontSize="32" Glyph="&#xF0412;" />
                         </Button>
                     </Grid>
                     <atb:AnimatedTextBlock
@@ -250,6 +251,24 @@
                     ExceptionInteracted="LyricsView_ExceptionInteracted"
                     LyricInteracted="LyricsView_LyricInteracted"
                     LyricsMargin="{x:Bind ViewModel.AppViewModel.LyricsMargin, Mode=OneWay}" />
+                <!-- 无歌词空态(页面级, 流体/普通模式均生效): 暂无歌词 + 关联歌词入口 -->
+                <StackPanel
+                    x:Name="EmptyLyricsPanel"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="Collapsed">
+                    <TextBlock
+                        x:Uid="LyricsEmptyText"
+                        HorizontalAlignment="Center"
+                        FontSize="20"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <HyperlinkButton
+                        x:Uid="LyricsEmptyLink"
+                        Margin="0,8,0,0"
+                        Padding="8,4"
+                        HorizontalAlignment="Center"
+                        Click="EmptyLinkLyrics_Click" />
+                </StackPanel>
             </Grid>
         </Grid>
         <StackPanel
@@ -389,12 +408,21 @@
                             BorderBrush="Transparent"
                             BorderThickness="0"
                             Command="{x:Bind ViewModel.PlayButtonChangedCommand, Mode=OneWay}"
+                            IsEnabled="{x:Bind tools:BindUtils.IsPlayControlEnabled(ViewModel.AppViewModel.IsResolvingSource, ViewModel.AppViewModel.CurrentPlayingMusic), Mode=OneWay}"
                             Style="{StaticResource PlayButtonStyle}">
-                            <FontIcon
-                                Width="32"
-                                Height="32"
-                                FontSize="26"
-                                Glyph="{x:Bind tools:BindUtils.PlayStatusToGlyphConverter(ViewModel.AppViewModel.IsPlaying), Mode=OneWay}" />
+                            <Grid>
+                                <ProgressRing
+                                    Width="24"
+                                    Height="24"
+                                    IsActive="{x:Bind ViewModel.AppViewModel.IsResolvingSource, Mode=OneWay}"
+                                    Visibility="{x:Bind tools:BindUtils.BoolToVisibilityConverter(ViewModel.AppViewModel.IsResolvingSource), Mode=OneWay}" />
+                                <FontIcon
+                                    Width="32"
+                                    Height="32"
+                                    FontSize="26"
+                                    Glyph="{x:Bind tools:BindUtils.PlayStatusToGlyphConverter(ViewModel.AppViewModel.IsPlaying), Mode=OneWay}"
+                                    Visibility="{x:Bind tools:BindUtils.BoolToVisibilityReConverter(ViewModel.AppViewModel.IsResolvingSource), Mode=OneWay}" />
+                            </Grid>
                         </Button>
                         <Button
                             x:Name="NextMusicButtonPlayingDetail"
@@ -498,6 +526,24 @@
                                 x:Name="CurrentPlayListIconPlayingDetail"
                                 FontSize="18"
                                 Glyph="&#xE90B;" />
+                        </Button>
+                        <!--  播放音质选择(音量按钮左侧): 弹出 128k/320k/flac/flac24bit 单选菜单, 持久化为默认音质  -->
+                        <Button
+                            x:Name="PlayQualityButtonPlayingDetail"
+                            Margin="5"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            Style="{StaticResource MenuButtonStyle}">
+                            <FontIcon
+                                FontSize="18"
+                                FontFamily="{StaticResource MaterialDesignIconsFontFamily}"
+                                Glyph="&#xF07CF;" />
+                            <ToolTipService.ToolTip>
+                                <ToolTip x:Uid="PlayQualityToolTip" />
+                            </ToolTipService.ToolTip>
                         </Button>
                         <Button
                             x:Name="VolumePlayingDetailBtn"

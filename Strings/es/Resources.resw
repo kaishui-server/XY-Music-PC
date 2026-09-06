@@ -1169,6 +1169,12 @@
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>Desfase de tiempo de la letra</value>
   </data>
+  <data name="LyricsEmptyText.Text" xml:space="preserve">
+    <value>Sin letra disponible</value>
+  </data>
+  <data name="LyricsEmptyLink.Content" xml:space="preserve">
+    <value>Vincular letra</value>
+  </data>
   <data name="LinkLyricsTitle" xml:space="preserve">
     <value>Vincular letra</value>
   </data>
@@ -1607,6 +1613,12 @@
   <data name="PluginManageEmpty" xml:space="preserve">
     <value>No hay plugins instalados</value>
   </data>
+  <data name="PluginReorderSaved" xml:space="preserve">
+    <value>Orden de plugins guardado, las pestañas de búsqueda seguirán este orden</value>
+  </data>
+  <data name="PluginDragHandle.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Arrastra para reordenar (define el orden de las pestañas de búsqueda de izquierda a derecha)</value>
+  </data>
   <data name="PluginManageTitle.Text" xml:space="preserve">
     <value>Plugins</value>
   </data>
@@ -1761,6 +1773,45 @@
   <data name="DownloadQualityFlac24bit" xml:space="preserve">
     <value>Hi-Res 24bit FLAC</value>
   </data>
+  <data name="PlayQualityToolTip.Content" xml:space="preserve">
+    <value>Calidad de reproducción</value>
+  </data>
+  <data name="PlayQuality128k" xml:space="preserve">
+    <value>Estándar 128k</value>
+  </data>
+  <data name="PlayQuality320k" xml:space="preserve">
+    <value>Alta 320k</value>
+  </data>
+  <data name="PlayQualityFlac" xml:space="preserve">
+    <value>FLAC sin pérdida</value>
+  </data>
+  <data name="PlayQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="PlayQualityChanged" xml:space="preserve">
+    <value>Calidad de reproducción cambiada a {0} (repliegue automático si no está disponible)</value>
+  </data>
+  <data name="BackgroundAutoThemeSwitched" xml:space="preserve">
+    <value>La imagen de fondo es demasiado parecida al color del texto: se cambió temporalmente al tema {0} (tu configuración de tema no cambia)</value>
+  </data>
+  <data name="HomeSearchScopeOnline" xml:space="preserve">
+    <value>Buscar en línea</value>
+  </data>
+  <data name="HomeSearchScopeLocal" xml:space="preserve">
+    <value>Buscar localmente</value>
+  </data>
+  <data name="HomeSearchPlaceholderOnline" xml:space="preserve">
+    <value>Buscar canciones, artistas y listas en línea…</value>
+  </data>
+  <data name="HomeSearchPlaceholderLocal" xml:space="preserve">
+    <value>Buscar en la biblioteca local…</value>
+  </data>
+  <data name="HomeSearchButton" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="LocalSearchChipPrefix" xml:space="preserve">
+    <value>Búsqueda local</value>
+  </data>
   <data name="DownloadSaveCover" xml:space="preserve">
     <value>Guardar también portada</value>
   </data>
@@ -1778,6 +1829,12 @@
   </data>
   <data name="DownloadStatusResolving" xml:space="preserve">
     <value>Resolviendo fuente de audio...</value>
+  </data>
+  <data name="DownloadStatusFindingFull" xml:space="preserve">
+    <value>La fuente principal es una vista previa, buscando la versión completa...</value>
+  </data>
+  <data name="DownloadTrialOnlyNote" xml:space="preserve">
+    <value>Nota: solo hay vistas previas en todas las fuentes; se guardó un fragmento de vista previa</value>
   </data>
   <data name="DownloadSuccessFormat" xml:space="preserve">
     <value>Guardado en: {0}</value>
@@ -2184,5 +2241,197 @@
   </data>
   <data name="AccountCloudSyncPromptWait" xml:space="preserve">
     <value>Podrás elegir en {0}s</value>
+  </data>
+  <data name="CloudDataTitle" xml:space="preserve">
+    <value>Datos en la nube</value>
+  </data>
+  <data name="CloudDataSectionTitle" xml:space="preserve">
+    <value>Resumen</value>
+  </data>
+  <data name="CloudDataRetry" xml:space="preserve">
+    <value>Reintentar</value>
+  </data>
+  <data name="CloudDataStatPlaylists" xml:space="preserve">
+    <value>Playlists</value>
+  </data>
+  <data name="CloudDataStatSongs" xml:space="preserve">
+    <value>Canciones</value>
+  </data>
+  <data name="CloudDataStatFavorites" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="CloudDataStatPlugins" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="CloudDataEntryUserTitle" xml:space="preserve">
+    <value>Información de la cuenta</value>
+  </data>
+  <data name="CloudDataClearButton" xml:space="preserve">
+    <value>Borrar datos de la nube</value>
+  </data>
+  <data name="CloudDataEmptyPlaylists" xml:space="preserve">
+    <value>No hay playlists en la nube</value>
+  </data>
+  <data name="CloudDataEmptyPlaylistSongs" xml:space="preserve">
+    <value>No hay canciones en esta playlist</value>
+  </data>
+  <data name="CloudDataEmptyFavorites" xml:space="preserve">
+    <value>No hay favoritos en la nube</value>
+  </data>
+  <data name="CloudDataEmptyPlugins" xml:space="preserve">
+    <value>No hay plugins en la nube</value>
+  </data>
+  <data name="CloudDataEmailLabel" xml:space="preserve">
+    <value>Correo</value>
+  </data>
+  <data name="CloudDataClientTypeLabel" xml:space="preserve">
+    <value>Tipo de cliente</value>
+  </data>
+  <data name="CloudDataCreatedAtLabel" xml:space="preserve">
+    <value>Fecha de registro</value>
+  </data>
+  <data name="CloudDataUploadPlaylistsLabel" xml:space="preserve">
+    <value>Playlists: última subida</value>
+  </data>
+  <data name="CloudDataUploadPluginsLabel" xml:space="preserve">
+    <value>Plugins: última subida</value>
+  </data>
+  <data name="CloudDataUploadSettingsLabel" xml:space="preserve">
+    <value>Ajustes: última subida</value>
+  </data>
+  <data name="CloudDataUserNotFound" xml:space="preserve">
+    <value>No se encontró la cuenta en la nube</value>
+  </data>
+  <data name="CloudDataSongCountFormat" xml:space="preserve">
+    <value>{0} canciones</value>
+  </data>
+  <data name="CloudDataOnlineBadge" xml:space="preserve">
+    <value>En línea</value>
+  </data>
+  <data name="CloudDataEnabled" xml:space="preserve">
+    <value>Activado</value>
+  </data>
+  <data name="CloudDataDisabled" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="CloudDataPlaylistsTitle" xml:space="preserve">
+    <value>Playlists en la nube</value>
+  </data>
+  <data name="CloudDataPlaylistDetailTitle" xml:space="preserve">
+    <value>Detalle de la playlist</value>
+  </data>
+  <data name="CloudDataFavoritesTitle" xml:space="preserve">
+    <value>Favoritos en la nube</value>
+  </data>
+  <data name="CloudDataPluginsTitle" xml:space="preserve">
+    <value>Plugins en la nube</value>
+  </data>
+  <data name="CloudDataUserTitle" xml:space="preserve">
+    <value>Cuenta en la nube</value>
+  </data>
+  <data name="CloudDataLastUploadFormat" xml:space="preserve">
+    <value>Última subida: {0}</value>
+  </data>
+  <data name="CloudDataNeverUpload" xml:space="preserve">
+    <value>Nunca</value>
+  </data>
+  <data name="CloudDataNoData" xml:space="preserve">
+    <value>No hay datos en la nube</value>
+  </data>
+  <data name="CloudDataEntryPlaylistsSubFormat" xml:space="preserve">
+    <value>{0} playlists · {1} canciones</value>
+  </data>
+  <data name="CloudDataEntryFavoritesSubFormat" xml:space="preserve">
+    <value>{0} canciones</value>
+  </data>
+  <data name="CloudDataEntryPluginsSubFormat" xml:space="preserve">
+    <value>{0} plugins</value>
+  </data>
+  <data name="CloudDataEntryUserDefault" xml:space="preserve">
+    <value>Ver información de la cuenta</value>
+  </data>
+  <data name="CloudDataUserIdLabel" xml:space="preserve">
+    <value>ID de usuario</value>
+  </data>
+  <data name="CloudDataBatchExit" xml:space="preserve">
+    <value>Salir de la gestión</value>
+  </data>
+  <data name="CloudDataBatchManage" xml:space="preserve">
+    <value>Gestionar</value>
+  </data>
+  <data name="CloudDataSelectAll" xml:space="preserve">
+    <value>Seleccionar todo</value>
+  </data>
+  <data name="CloudDataDeleteSelectedFormat" xml:space="preserve">
+    <value>Eliminar ({0})</value>
+  </data>
+  <data name="CloudDataDeleteNote" xml:space="preserve">
+    <value>Los datos eliminados no se pueden recuperar</value>
+  </data>
+  <data name="CloudDataDeletePlaylistOneFormat" xml:space="preserve">
+    <value>¿Eliminar la playlist "{0}" ({1} canciones)?</value>
+  </data>
+  <data name="CloudDataDeletePlaylistTitle" xml:space="preserve">
+    <value>Eliminar playlist</value>
+  </data>
+  <data name="CloudDataDelete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="CloudDataDeletedPlaylistsFormat" xml:space="preserve">
+    <value>Se eliminaron {0} playlists</value>
+  </data>
+  <data name="CloudDataDeleteFailedPrefix" xml:space="preserve">
+    <value>Error al eliminar: </value>
+  </data>
+  <data name="CloudDataDeleteSongOneFavoriteFormat" xml:space="preserve">
+    <value>¿Eliminar "{0}" de los favoritos?</value>
+  </data>
+  <data name="CloudDataDeleteSongOnePlaylistFormat" xml:space="preserve">
+    <value>¿Eliminar "{1}" de la playlist "{0}"?</value>
+  </data>
+  <data name="CloudDataDeleteSongTitle" xml:space="preserve">
+    <value>Eliminar canción</value>
+  </data>
+  <data name="CloudDataDeletedSongsFormat" xml:space="preserve">
+    <value>Se eliminaron {0} canciones</value>
+  </data>
+  <data name="CloudDataDeletePluginOneFormat" xml:space="preserve">
+    <value>¿Eliminar el plugin "{0}"?</value>
+  </data>
+  <data name="CloudDataDeletePluginTitle" xml:space="preserve">
+    <value>Eliminar plugin</value>
+  </data>
+  <data name="CloudDataDeletedPluginsFormat" xml:space="preserve">
+    <value>Se eliminaron {0} plugins</value>
+  </data>
+  <data name="CloudDataDeletePlaylistSelectedFormat" xml:space="preserve">
+    <value>¿Eliminar las {0} playlists seleccionadas?</value>
+  </data>
+  <data name="CloudDataDeleteSongSelectedFormat" xml:space="preserve">
+    <value>¿Eliminar las {0} canciones seleccionadas?</value>
+  </data>
+  <data name="CloudDataDeleteSongSelectedFavoriteFormat" xml:space="preserve">
+    <value>¿Eliminar los {0} favoritos seleccionados?</value>
+  </data>
+  <data name="CloudDataDeletePluginSelectedFormat" xml:space="preserve">
+    <value>¿Eliminar los {0} plugins seleccionados?</value>
+  </data>
+  <data name="CloudDataClearConfirmFormat" xml:space="preserve">
+    <value>Se borrarán todos los datos de la nube: {0} playlists, {1} canciones, {2} favoritos, {3} plugins</value>
+  </data>
+  <data name="CloudDataClearConfirmTitle" xml:space="preserve">
+    <value>Borrar datos de la nube</value>
+  </data>
+  <data name="CloudDataClearConfirmButton" xml:space="preserve">
+    <value>Borrar</value>
+  </data>
+  <data name="CloudDataCleared" xml:space="preserve">
+    <value>Datos de la nube borrados</value>
+  </data>
+  <data name="CloudDataClearNothing" xml:space="preserve">
+    <value>No hay datos que borrar</value>
+  </data>
+  <data name="CloudDataPlaylistNotFound" xml:space="preserve">
+    <value>La playlist no existe o fue eliminada</value>
   </data>
 </root>

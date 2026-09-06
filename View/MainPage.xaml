@@ -34,22 +34,17 @@
                                 <TextBlock x:Uid="Home" />
                             </NavigationViewItem.Content>
                         </NavigationViewItem>
-                        <NavigationViewItem Icon="NewFolder" Tag="AddFolder">
+                        <NavigationViewItem Tag="OnlineSearch">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE721;" />
+                            </NavigationViewItem.Icon>
                             <NavigationViewItem.Content>
-                                <TextBlock x:Uid="AddFolder" />
+                                <TextBlock x:Uid="OnlineSearch" />
                             </NavigationViewItem.Content>
                         </NavigationViewItem>
                         <NavigationViewItem Icon="Audio" Tag="MusicBrowse">
                             <NavigationViewItem.Content>
                                 <TextBlock x:Uid="MusicBrowse" />
-                            </NavigationViewItem.Content>
-                        </NavigationViewItem>
-                        <NavigationViewItem Tag="PlayLists">
-                            <NavigationViewItem.Icon>
-                                <FontIcon FontFamily="{StaticResource UntamedFontFamily}" Glyph="&#xED3B;" />
-                            </NavigationViewItem.Icon>
-                            <NavigationViewItem.Content>
-                                <TextBlock x:Uid="PlayLists" />
                             </NavigationViewItem.Content>
                         </NavigationViewItem>
                         <NavigationViewItem Tag="MyPlayLists">
@@ -60,20 +55,9 @@
                                 <TextBlock x:Uid="MyPlayLists" />
                             </NavigationViewItem.Content>
                         </NavigationViewItem>
-                        <NavigationViewItem Tag="OnlineSearch">
-                            <NavigationViewItem.Icon>
-                                <FontIcon Glyph="&#xE721;" />
-                            </NavigationViewItem.Icon>
+                        <NavigationViewItem Icon="NewFolder" Tag="AddFolder">
                             <NavigationViewItem.Content>
-                                <TextBlock x:Uid="OnlineSearch" />
-                            </NavigationViewItem.Content>
-                        </NavigationViewItem>
-                        <NavigationViewItem Tag="PluginManage">
-                            <NavigationViewItem.Icon>
-                                <FontIcon Glyph="&#xE8F1;" />
-                            </NavigationViewItem.Icon>
-                            <NavigationViewItem.Content>
-                                <TextBlock x:Uid="PluginManage" />
+                                <TextBlock x:Uid="AddFolder" />
                             </NavigationViewItem.Content>
                         </NavigationViewItem>
                         <NavigationViewItem Tag="Stats">
@@ -82,6 +66,14 @@
                             </NavigationViewItem.Icon>
                             <NavigationViewItem.Content>
                                 <TextBlock x:Uid="Stats" />
+                            </NavigationViewItem.Content>
+                        </NavigationViewItem>
+                        <NavigationViewItem Tag="PluginManage">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE8F1;" />
+                            </NavigationViewItem.Icon>
+                            <NavigationViewItem.Content>
+                                <TextBlock x:Uid="PluginManage" />
                             </NavigationViewItem.Content>
                         </NavigationViewItem>
                     </NavigationView.MenuItems>
@@ -446,13 +438,21 @@
                             BorderBrush="Transparent"
                             BorderThickness="0"
                             Command="{x:Bind ViewModel.MusicBrowseVM.PlayButtonChangedCommand, Mode=OneWay}"
-                            IsEnabled="{x:Bind tools:BindUtils.IsCurrentMusicExist(ViewModel.AppViewModel.CurrentPlayingMusic), Mode=OneWay}"
+                            IsEnabled="{x:Bind tools:BindUtils.IsPlayControlEnabled(ViewModel.AppViewModel.IsResolvingSource, ViewModel.AppViewModel.CurrentPlayingMusic), Mode=OneWay}"
                             Style="{StaticResource PlayButtonStyle}">
-                            <FontIcon
-                                Width="45"
-                                Height="45"
-                                FontSize="30"
-                                Glyph="{x:Bind tools:BindUtils.PlayStatusToGlyphConverter(ViewModel.AppViewModel.IsPlaying), Mode=OneWay}" />
+                            <Grid>
+                                <ProgressRing
+                                    Width="34"
+                                    Height="34"
+                                    IsActive="{x:Bind ViewModel.AppViewModel.IsResolvingSource, Mode=OneWay}"
+                                    Visibility="{x:Bind tools:BindUtils.BoolToVisibilityConverter(ViewModel.AppViewModel.IsResolvingSource), Mode=OneWay}" />
+                                <FontIcon
+                                    Width="45"
+                                    Height="45"
+                                    FontSize="30"
+                                    Glyph="{x:Bind tools:BindUtils.PlayStatusToGlyphConverter(ViewModel.AppViewModel.IsPlaying), Mode=OneWay}"
+                                    Visibility="{x:Bind tools:BindUtils.BoolToVisibilityReConverter(ViewModel.AppViewModel.IsResolvingSource), Mode=OneWay}" />
+                            </Grid>
                         </Button>
 
                         <Button
@@ -548,9 +548,27 @@
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
+                        <!--  播放音质选择(音量按钮左侧): 弹出 128k/320k/flac/flac24bit 单选菜单, 持久化为默认音质  -->
+                        <Button
+                            x:Name="PlayQualityButton"
+                            Margin="0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            Style="{StaticResource MenuButtonStyle}">
+                            <FontIcon
+                                FontSize="18"
+                                FontFamily="{StaticResource MaterialDesignIconsFontFamily}"
+                                Glyph="&#xF07CF;" />
+                            <ToolTipService.ToolTip>
+                                <ToolTip x:Uid="PlayQualityToolTip" />
+                            </ToolTipService.ToolTip>
+                        </Button>
                         <Button
                             x:Name="VolumeButton"
-                            Margin="0"
+                            Margin="10,0,0,0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
                             Background="Transparent"
@@ -702,7 +720,7 @@
                 </Button.OpacityTransition>
                 <FontIcon FontSize="18" Glyph="&#xE70D;" />
             </Button>
-            <!--  顶栏账号入口: 未登录人形图标 / 登录后头像  -->
+            <!--  顶栏账号入口: 未登录人形图标 / 登录后头像; 播放详情页时隐藏(该页顶栏仅保留返回与窗口控制)  -->
             <Button
                 x:Name="AccountAvatarButton"
                 Grid.Column="2"
@@ -715,7 +733,8 @@
                 BorderThickness="0"
                 Click="AccountAvatarButton_Click"
                 CornerRadius="16"
-                Style="{StaticResource TitleBarButtonStyle}">
+                Style="{StaticResource TitleBarButtonStyle}"
+                Visibility="{x:Bind tools:BindUtils.BoolToVisibilityReConverter(ViewModel.AppViewModel.IsPlayingDetailVisible), Mode=OneWay}">
                 <ToolTipService.ToolTip>
                     <ToolTip>
                         <TextBlock x:Name="AccountAvatarToolTipText" />

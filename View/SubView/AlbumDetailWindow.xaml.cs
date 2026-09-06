@@ -9,6 +9,7 @@ using Microsoft.Windows.Storage.Pickers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -117,7 +118,7 @@ namespace WinUIMusicPlayer.View.SubView
         {
             hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
             WindowSizeHelper.ResizeWindowAndCenterInMainWindow(hwnd, 700, 550, App.MainWindow.AppWindow, this.AppWindow);
-            this.AppWindow.SetIcon("Assets/icon.ico");
+            this.AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico"));
             NotificationService = App.Services.GetRequiredService<NotificationService>();
         }
         private void MainWindow_customStyleChanged(object? sender, EventArgs e)

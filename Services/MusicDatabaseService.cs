@@ -1269,6 +1269,8 @@ namespace WinUIMusicPlayer.Services
                 AppViewModel.CustomBackgroundBlur = AppSettings.CustomBackgroundBlur;
                 AppSettings.DownloadPath = settings.DownloadPath ?? string.Empty;
                 AppSettings.DownloadQuality = LxSources.NormalizeQuality(settings.DownloadQuality) is { Length: > 0 } q ? q : "320k";
+                // 在线播放默认音质: 归一化(128k/320k/flac/flac24bit), 非法值回退 320k
+                AppSettings.PreferredQuality = LxSources.NormalizeQuality(settings.PreferredQuality) is { Length: > 0 } pq ? pq : "320k";
                 AppSettings.DownloadSaveLrc = settings.DownloadSaveLrc;
                 AppSettings.DownloadSaveCover = settings.DownloadSaveCover;
                 AppViewModel.LyricsAlignment = settings.LyricsAlignment;
@@ -1425,6 +1427,7 @@ namespace WinUIMusicPlayer.Services
             newSettings.CustomBackgroundBlur = AppSettings.CustomBackgroundBlur;
             newSettings.DownloadPath = AppSettings.DownloadPath;
             newSettings.DownloadQuality = AppSettings.DownloadQuality;
+            newSettings.PreferredQuality = AppSettings.PreferredQuality;
             newSettings.DownloadSaveLrc = AppSettings.DownloadSaveLrc;
             newSettings.DownloadSaveCover = AppSettings.DownloadSaveCover;
             newSettings.LyricsAlignment = AppViewModel.LyricsAlignment;

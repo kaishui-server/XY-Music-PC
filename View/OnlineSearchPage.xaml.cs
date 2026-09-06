@@ -31,6 +31,12 @@ namespace WinUIMusicPlayer.View
         {
             base.OnNavigatedTo(e);
             ViewModel.RefreshPluginTabs();
+            // 首页搜索框入口: 带关键词导航进来时填充并自动搜索
+            if (e.Parameter is string keyword && !string.IsNullOrWhiteSpace(keyword))
+            {
+                ViewModel.Keyword = keyword;
+                _ = ViewModel.SearchCommand.ExecuteAsync(null);
+            }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)

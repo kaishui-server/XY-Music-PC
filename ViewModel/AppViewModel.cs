@@ -236,6 +236,8 @@ namespace WinUIMusicPlayer.ViewModel
         public bool IsMaximized { get; set => SetProperty(ref field, value); } = false;
         public bool IsPlayingDetailVisible { get; set => SetProperty(ref field, value); } = false;
         public bool IsPointerOverTitleBar { get; set => SetProperty(ref field, value); } = true;
+        /// <summary>在线歌曲正在解析音源: 底栏/详情页播放按钮显示加载圈并禁用, 解析结束(成功/失败/超时/被取代)复位。</summary>
+        public bool IsResolvingSource { get; set => SetProperty(ref field, value); } = false;
 
         public void ToggleFullScreen() => IsFullScreen = !IsFullScreen;
 

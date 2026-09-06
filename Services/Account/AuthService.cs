@@ -97,7 +97,8 @@ namespace WinUIMusicPlayer.Services.Account
 
         // ─── 签名请求 ─────────────────────────────────
 
-        /// <summary>发起带签名的账号请求, 校验 code===200 并返回 data。</summary>
+        /// <summary>发起带签名的账号请求, 校验 code===200 并返回 data。
+        /// 已登录时附带 Authorization: Bearer token（服务端用户级接口凭此鉴权）。</summary>
         public async Task<JsonElement> RequestActionAsync(string action, object body, int? timeoutMs = null)
         {
             var bodyJson = JsonSerializer.Serialize(body);
@@ -112,6 +113,9 @@ namespace WinUIMusicPlayer.Services.Account
             req.Headers.Add("X-Timestamp", timestamp);
             req.Headers.Add("X-Nonce", nonce);
             req.Headers.Add("X-Sign", sign);
+            var token = _token;
+            if (!string.IsNullOrEmpty(token))
+                req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromMilliseconds(timeoutMs ?? 25000));
             using var resp = await _http.SendAsync(req, cts.Token);
@@ -120,9 +124,15 @@ namespace WinUIMusicPlayer.Services.Account
                 throw new AuthException("服务器WAF拦截: 请求体过大");
             using var doc = JsonDocument.Parse(text);
             var root = doc.RootElement;
+            var code = root.TryGetProperty("code", out var c) ? c.GetInt32() : -1;
+            if (code == 401)
+            {
+                // 登录态失效（token 过期/服务端重置）：清空本地登录态并引导重新登录
+                Logout();
+                throw new AuthException("登录已过期，请重新登录");
+            }
             if (!root.TryGetProperty("code", out var codeEl) || codeEl.GetInt32() != 200)
             {
-                var code = root.TryGetProperty("code", out var c) ? c.GetInt32() : -1;
                 var msg = root.TryGetProperty("msg", out var m) ? m.GetString() : string.Empty;
                 throw new AuthException(string.IsNullOrEmpty(msg) ? $"请求失败（code {code}）" : msg);
             }

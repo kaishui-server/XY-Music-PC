@@ -48,6 +48,21 @@ namespace WinUIMusicPlayer.ViewModel.Pages
             IsBusy = busy;
         }
 
+        /// <summary>拖拽排序完成后, 把当前列表顺序持久化到插件清单(顺序即在线搜索 Tab 顺序)。</summary>
+        public void CommitReorder()
+        {
+            var hashes = Plugins.Select(p => p.Hash).ToList();
+            Task.Run(() =>
+            {
+                var (ok, error) = _pluginManager.ReorderPlugins(hashes);
+                App.MainWindow?.DispatcherQueue.TryEnqueue(() =>
+                {
+                    if (!ok) ToastFlyout.ShowError(error ?? "操作失败");
+                    else ToastFlyout.ShowSuccess(ToolUtils.GetString("PluginReorderSaved"));
+                });
+            });
+        }
+
         [RelayCommand]
         private async Task InstallFromFileAsync()
         {

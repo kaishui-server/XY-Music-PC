@@ -195,6 +195,10 @@ namespace WinUIMusicPlayer.Utils
             return true;
         }
 
+        /// <summary>播放/暂停按钮可用性: 有曲 且 未在解析音源(解析中显示加载圈并禁用防重复点击)。</summary>
+        public static bool IsPlayControlEnabled(bool isResolvingSource, Music current)
+            => !isResolvingSource && current is not null;
+
         public static bool IsCurrentPlayListExist(IEnumerable<Music> playList)
         {
             if (playList is null || !playList.Any()) return false;
@@ -342,6 +346,55 @@ namespace WinUIMusicPlayer.Utils
             ts.Minutes.TryFormat(span.Slice(0, 2), out _, "D2", CultureInfo.InvariantCulture);
             span[2] = ':';
             ts.Seconds.TryFormat(span.Slice(3, 2), out _, "D2", CultureInfo.InvariantCulture);
+        }
+
+        // ==== 云数据管理(CloudDataView DataTemplate 专用) ====
+        // 注意: 本版 XamlCompiler 对 DataTemplate 内调用页面类自身方法会崩溃(WMC9999),
+        // 因此这些格式化函数必须放在静态工具类里以 tools:BindUtils.Xxx() 形式调用。
+
+        public static string CloudSongSubtitle(string artist, string album)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(artist)) parts.Add(artist);
+            if (!string.IsNullOrEmpty(album)) parts.Add(album);
+            return string.Join(" - ", parts);
+        }
+
+        public static string CloudPlaylistSubtitle(int songCount, string createdAt)
+        {
+            var countText = string.Format(GetString("CloudDataSongCountFormat"), songCount);
+            return string.IsNullOrEmpty(createdAt) ? countText : $"{countText} · {createdAt}";
+        }
+
+        public static string CloudPluginSubtitle(string version, string author)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(version)) parts.Add("v" + version);
+            if (!string.IsNullOrEmpty(author)) parts.Add(author);
+            return string.Join(" · ", parts);
+        }
+
+        public static string CloudOnlineBadge(string title) => GetString("CloudDataOnlineBadge");
+
+        public static string CloudEnabledBadge(bool enabled) => enabled ? GetString("CloudDataEnabled") : string.Empty;
+
+        public static string CloudDisabledBadge(bool enabled) => enabled ? string.Empty : GetString("CloudDataDisabled");
+
+        /// <summary>云端封面 URL(仅 http/https) → ImageSource; 本地路径/data URI 返回 null 显示占位图标。</summary>
+        public static ImageSource? CloudCoverToImage(string? coverUrl)
+        {
+            if (string.IsNullOrEmpty(coverUrl)) return null;
+            if (!coverUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !coverUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return null;
+            try
+            {
+                return new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(coverUrl, UriKind.Absolute));
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

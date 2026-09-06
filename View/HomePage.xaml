@@ -27,125 +27,70 @@
                 Text="正在处理数据，请稍候..." />
         </Grid>
 
-        <!--  空状态：新用户首启引导  -->
-        <Grid x:Name="WelcomeGrid" Visibility="Collapsed">
+        <!--  品牌主内容: 大字标题 + 副标题 + 搜索框(靠上方居中)  -->
+        <Grid x:Name="BrandGrid">
             <StackPanel
-                MaxWidth="520"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-                <Border
-                    Width="96"
-                    Height="96"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                    CornerRadius="28">
-                    <FontIcon
-                        FontSize="44"
-                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                        Glyph="&#xE8B7;" />
-                </Border>
+                MaxWidth="1200"
+                Margin="48,180,48,0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Spacing="20">
                 <TextBlock
-                    x:Uid="AddFolderPageWelcomeTitle"
-                    Margin="0,24,0,0"
                     HorizontalAlignment="Center"
-                    FontSize="28"
-                    FontWeight="SemiBold"
-                    TextAlignment="Center" />
+                    FontSize="56"
+                    FontWeight="Bold"
+                    Text="XY Music" />
                 <TextBlock
-                    x:Uid="AddFolderPageWelcomeSubtitle"
-                    Margin="0,8,0,0"
                     HorizontalAlignment="Center"
-                    FontSize="14"
+                    FontSize="16"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    TextAlignment="Center"
-                    TextWrapping="Wrap" />
-                <Button
-                    x:Name="EmptyAddFolderButton"
-                    Margin="0,32,0,0"
-                    HorizontalAlignment="Center"
-                    Click="AddFolderButton_Click"
-                    Style="{StaticResource AccentButtonStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <FontIcon Glyph="&#xE8B7;" />
-                        <TextBlock
-                            x:Uid="AddFolder"
-                            Margin="8,0,0,0"
-                            VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-                <StackPanel
-                    Margin="0,20,0,0"
-                    HorizontalAlignment="Center"
-                    Opacity="0.6"
-                    Orientation="Horizontal">
-                    <FontIcon
-                        VerticalAlignment="Center"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Glyph="&#xE8B7;" />
-                    <TextBlock
-                        x:Uid="AddFolderPageDragHint"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-            </StackPanel>
-        </Grid>
+                    Text="Music is part of my life." />
 
-        <!--  就绪状态：已有音乐文件夹  -->
-        <Grid x:Name="ReadyGrid" Visibility="Collapsed">
-            <StackPanel
-                MaxWidth="520"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-                <Border
-                    Width="96"
-                    Height="96"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                    CornerRadius="28">
-                    <FontIcon
-                        FontSize="44"
-                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                        Glyph="&#xE8D6;" />
-                </Border>
-                <TextBlock
-                    x:Uid="AddFolderPageWelcomeTitle"
-                    Margin="0,24,0,0"
-                    HorizontalAlignment="Center"
-                    FontSize="28"
-                    FontWeight="SemiBold"
-                    TextAlignment="Center" />
-                <StackPanel
-                    Margin="0,8,0,0"
-                    HorizontalAlignment="Center"
-                    Orientation="Horizontal">
-                    <TextBlock
+                <!--  搜索框(含内嵌下拉) + 搜索按钮: 按钮在搜索框外侧右侧  -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <Grid Grid.Column="0" x:Name="SearchPanel">
+                        <!--  搜索框: 普通 TextBox, 垂直对称 Padding 自然撑高(文字天然居中),
+                              右侧 Padding 加大让出原生清除按钮(✕)位置, 使 ✕ 位于下拉框左侧不重叠,
+                              随窗口宽度伸缩(最大 1200)  -->
+                        <TextBox
+                            x:Name="SearchBox"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            Padding="14,13,152,13"
+                            KeyDown="SearchBox_KeyDown"
+                            PlaceholderText="{x:Bind SearchPlaceholderText, Mode=OneWay}" />
+                        <!--  内嵌无框下拉框: 在网络搜索 / 在本地搜索(项由 code-behind 本地化填充),
+                              叠放在搜索框内右侧  -->
+                        <ComboBox
+                            x:Name="SearchScopeBox"
+                            Width="128"
+                            MinHeight="36"
+                            Margin="0,0,10,0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            FontSize="13"
+                            IsHitTestVisible="True"
+                            SelectionChanged="SearchScopeBox_SelectionChanged" />
+                    </Grid>
+                    <!--  搜索按钮: 搜索框外侧右侧, 回车/点击均可触发搜索  -->
+                    <Button
+                        x:Name="SearchButton"
+                        Grid.Column="1"
+                        MinWidth="96"
+                        MinHeight="48"
+                        Margin="8,0,0,0"
+                        HorizontalAlignment="Stretch"
                         VerticalAlignment="Center"
-                        FontSize="14"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind FolderViewModel.FolderList.Count, Mode=OneWay}" />
-                    <TextBlock
-                        x:Uid="AddFolderPageFolderCountSuffix"
-                        Margin="4,0,0,0"
-                        VerticalAlignment="Center"
-                        FontSize="14"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-                <Button
-                    Margin="0,32,0,0"
-                    HorizontalAlignment="Center"
-                    Click="GoMusicBrowseButton_Click"
-                    Style="{StaticResource AccentButtonStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <FontIcon Glyph="&#xE8D6;" />
-                        <TextBlock
-                            x:Uid="HomePageGoMusicBrowse"
-                            Margin="8,0,0,0"
-                            VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
+                        Click="SearchButton_Click"
+                        Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE721;" />
+                            <TextBlock x:Name="SearchButtonText" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
             </StackPanel>
         </Grid>
 

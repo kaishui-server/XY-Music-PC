@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="WinUIMusicPlayer.View.SongListPage"
     xmlns:tools="using:WinUIMusicPlayer.Utils"
@@ -29,9 +29,49 @@
             </Setter>
         </Style>
     </Page.Resources>
-    <Grid>
+    <Grid RowDefinitions="Auto,*">
+        <!--  顶部操作栏: 播放全部 + 本地搜索过滤提示条(仅过滤生效时显示, 右侧按钮清除过滤)  -->
+        <StackPanel
+            Grid.Row="0"
+            Margin="6,4,6,2"
+            Orientation="Horizontal"
+            Spacing="10">
+            <Button
+                x:Name="PlayAllButton"
+                Click="PlayAllButton_Click"
+                Style="{StaticResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Glyph="&#xE768;" />
+                    <TextBlock x:Uid="PlayAll" />
+                </StackPanel>
+            </Button>
+            <Border
+                x:Name="FilterChipBorder"
+                Padding="12,6"
+                VerticalAlignment="Center"
+                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                CornerRadius="14"
+                Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Glyph="&#xE721;" />
+                    <TextBlock
+                        x:Name="FilterChipText"
+                        VerticalAlignment="Center"
+                        FontSize="13" />
+                    <Button
+                        Click="ClearFilterButton_Click"
+                        Content="&#xE711;"
+                        FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                        FontSize="12"
+                        Padding="4,2"
+                        Background="Transparent"
+                        BorderThickness="0" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
         <ListView
             x:Name="MusicListView"
+            Grid.Row="1"
             DoubleTapped="MusicListView_DoubleTapped"
             ItemContainerStyle="{StaticResource ListViewItemStyle}"
             ItemsSource="{x:Bind ViewModel.AppViewModel.ListSongs, Mode=OneWay}"

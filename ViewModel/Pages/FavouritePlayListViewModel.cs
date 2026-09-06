@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
@@ -152,6 +152,15 @@ namespace WinUIMusicPlayer.ViewModel
         }
 
         public void MusicListView_DoubleTapped(Music selectedMusic) => _ = MusicListView_DoubleTappedAsync(selectedMusic);
+
+        /// <summary>播放全部收藏: 收藏列表设为顺序播放列表并从第一首开始播放。</summary>
+        [RelayCommand]
+        public void PlayAll()
+        {
+            if (BrowseViewModel is null || AppViewModel.FavoriteSongs.Count == 0) return;
+            AppViewModel.SequentialPlayingList = new BulkObservableCollection<Music>(AppViewModel.FavoriteSongs);
+            _ = BrowseViewModel.PlayMusic(music: AppViewModel.FavoriteSongs[0], IsChangeList: true);
+        }
 
         public void PlayMenuItem_Click(IEnumerable<Music> uniqueSelectedMusics)
         {

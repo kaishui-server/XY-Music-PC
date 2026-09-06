@@ -100,6 +100,26 @@ namespace WinUIMusicPlayer.Services.Plugins
                 var (bytes, audioError) = await DownloadBytesAsync(url, source.Headers, onProgress);
                 if (bytes is null) return (false, audioError ?? "下载音频失败", false, false);
 
+                // 2.5 试听检测 + 完整版回退(对齐播放链路): 主源仅 45/60 秒试听时跨插件找完整版,
+                //     播放能自动换源所以完整, 下载此前直接保存试听片段导致"下载只有 45 秒"
+                string? trialNote = null;
+                var expectedSec = song.DurationSec;
+                if (OnlinePlaybackResolver.IsTrialAudioBytes(bytes, expectedSec))
+                {
+                    onStatus?.Invoke(ToolUtils.GetString("DownloadStatusFindingFull"));
+                    var full = await TryDownloadFullVersionAsync(pluginManager, song, quality, expectedSec, onProgress);
+                    if (full is not null)
+                    {
+                        bytes = full.Value.Bytes;
+                        url = full.Value.Url;
+                    }
+                    else
+                    {
+                        // 全部音源仅试听: 与播放链路一致仍交付试听版, 但明确提示用户
+                        trialNote = ToolUtils.GetString("DownloadTrialOnlyNote");
+                    }
+                }
+
                 // 3. 并行获取封面与歌词(失败不阻断下载)
                 onStatus?.Invoke(ToolUtils.GetString("DownloadStatusFetchingExtras"));
                 var coverTask = DownloadCoverBytesAsync(song);
@@ -135,7 +155,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                     coverSaved = true;
                 }
 
-                return (true, file, lrcSaved, coverSaved);
+                return (true, trialNote is null ? file : file + "\n" + trialNote, lrcSaved, coverSaved);
             }
             catch (Exception ex)
             {
@@ -243,6 +263,62 @@ namespace WinUIMusicPlayer.Services.Plugins
             {
                 return (null, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// 主源为试听版时寻找完整版(对齐播放链路回退): LX 歌曲先走公共 API 兜底,
+        /// 再按 标题+歌手 跨插件搜索同曲候选逐个试下, 取首个完整版。整体限时 120 秒。
+        /// 返回 (完整版字节, 直链) 或 null(全部仅试听/失败, 由调用方交付试听版并提示)。
+        /// </summary>
+        private static async Task<(byte[] Bytes, string Url)?> TryDownloadFullVersionAsync(
+            PluginManagerService pluginManager, OnlineSong song, string quality, double expectedSec, Action<double>? onProgress)
+        {
+            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(120));
+            var ct = cts.Token;
+            try
+            {
+                // LX 歌曲: 公共 API 兜底(插件用错解析 ID 返回死链/试听是 LX 酷狗问题主因)
+                if (song.IsLx)
+                {
+                    var apiSource = await pluginManager.GetLxApiFallbackAsync(song, quality);
+                    if (apiSource is not null)
+                    {
+                        var (apiBytes, _) = await DownloadBytesWithTimeoutAsync(apiSource.Url, apiSource.Headers, onProgress, TimeSpan.FromSeconds(45), ct);
+                        if (apiBytes is not null && !OnlinePlaybackResolver.IsTrialAudioBytes(apiBytes, expectedSec))
+                            return (apiBytes, apiSource.Url);
+                    }
+                }
+                // 跨插件候选: 按标题+歌手搜索其他插件的同曲(解析限时 12 秒/候选, 下载限时 45 秒/候选)
+                var candidates = await OnlinePlaybackResolver.FindAlternateCandidatesAsync(null, song, ct);
+                foreach (var cand in candidates)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var (altSource, _) = await OnlinePlaybackResolver.GetMediaSourceWithTimeoutAsync(
+                        pluginManager, cand, ct, TimeSpan.FromSeconds(12), quality, qualityDownFirst: false);
+                    if (altSource is null) continue;
+                    var (altBytes, _) = await DownloadBytesWithTimeoutAsync(altSource.Url, altSource.Headers, onProgress, TimeSpan.FromSeconds(45), ct);
+                    if (altBytes is null) continue;
+                    if (!OnlinePlaybackResolver.IsTrialAudioBytes(altBytes, cand.DurationSec > 0 ? cand.DurationSec : expectedSec))
+                        return (altBytes, altSource.Url);
+                }
+            }
+            catch (OperationCanceledException) { /* 整体限时到 */ }
+            catch { /* 回退失败由调用方交付试听版 */ }
+            return null;
+        }
+
+        /// <summary>限时版 DownloadBytesAsync: 回退候选下载超时快速放弃换下一个(播放链路 DownloadAudioWithTimeoutAsync 同模型)。</summary>
+        private static async Task<(byte[]? Bytes, string? Error)> DownloadBytesWithTimeoutAsync(
+            string url, Dictionary<string, string>? headers, Action<double>? onProgress, TimeSpan timeout, System.Threading.CancellationToken ct)
+        {
+            var task = DownloadBytesAsync(url, headers, onProgress);
+            var done = await Task.WhenAny(task, Task.Delay(timeout, ct));
+            if (done != task)
+            {
+                ct.ThrowIfCancellationRequested(); // 区分"整体限时取消"与"单源下载超时"
+                return (null, "音源下载超时");
+            }
+            return await task;
         }
 
         /// <summary>下载封面图片字节(无封面或失败返回 null, 不阻断下载)。</summary>

@@ -43,6 +43,43 @@ namespace WinUIMusicPlayer.View
         {
             base.OnNavigatedTo(e);
             RestoreSubPageState();
+            // 本地搜索入口(首页搜索框): 带关键词时切到歌曲列表并按关键词过滤; 常规进入时清除过滤
+            if (e.Parameter is string keyword && !string.IsNullOrWhiteSpace(keyword))
+            {
+                _pendingSearchKeyword = keyword;
+                ApplySearchKeyword(keyword);
+            }
+            else
+            {
+                _pendingSearchKeyword = null;
+                if (ContentFrame.Content is SongListPage songListPage)
+                {
+                    songListPage.SetSearchKeyword(null);
+                }
+            }
+        }
+
+        /// <summary>待应用的本地搜索关键词(首次导航时 ContentFrame 尚未就绪, 由 OnPageLoaded 兜底应用)。</summary>
+        private string? _pendingSearchKeyword;
+
+        /// <summary>应用/清除本地搜索关键词: 切到歌曲列表 tab 并过滤; keyword 为空则恢复完整列表。</summary>
+        public void ApplySearchKeyword(string? keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                _pendingSearchKeyword = null;
+                if (ContentFrame.Content is SongListPage clearedPage)
+                {
+                    clearedPage.SetSearchKeyword(null);
+                }
+                return;
+            }
+            _pendingSearchKeyword = keyword;
+            SelectBarItem("song");
+            if (ContentFrame.Content is SongListPage page)
+            {
+                page.SetSearchKeyword(keyword);
+            }
         }
 
         private void RestoreSubPageState()
@@ -94,6 +131,12 @@ namespace WinUIMusicPlayer.View
             if (ContentFrame.Content is null)
             {
                 SelectBarItem(ViewModel.AppViewModel.DefaultPlayListComboBoxTag);
+            }
+            // 本地搜索关键词尚未应用(ContentFrame 首次就绪后兜底): 强制歌曲 tab 并过滤
+            if (_pendingSearchKeyword is not null && ContentFrame.Content is SongListPage pendingPage)
+            {
+                SelectBarItem("song");
+                pendingPage.SetSearchKeyword(_pendingSearchKeyword);
             }
             Loaded -= OnPageLoaded;
         }

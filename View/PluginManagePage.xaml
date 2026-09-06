@@ -48,11 +48,14 @@
             </Button>
         </StackPanel>
 
-        <!--  插件列表  -->
+        <!--  插件列表: 拖拽把手排序, 顺序决定在线搜索页 Tab 从左到右顺序  -->
         <ListView
             Grid.Row="2"
             Margin="16,4,16,0"
             HorizontalAlignment="Stretch"
+            AllowDrop="True"
+            CanReorderItems="True"
+            DragItemsCompleted="PluginList_DragItemsCompleted"
             ItemsSource="{x:Bind ViewModel.Plugins, Mode=OneWay}"
             SelectionMode="None">
             <ListView.ItemContainerStyle>
@@ -65,9 +68,12 @@
                 <DataTemplate x:DataType="pluginmodels:InstalledPluginItem">
                     <Grid ColumnDefinitions="Auto,*,Auto" Padding="8,8">
                         <FontIcon
+                            x:Uid="PluginDragHandle"
                             Grid.Column="0"
                             VerticalAlignment="Center"
-                            Glyph="&#xE8F1;" />
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Glyph="&#xE700;" />
                         <StackPanel
                             Grid.Column="1"
                             Margin="12,0,12,0"

@@ -247,7 +247,6 @@
                                     <ComboBoxItem x:Uid="HomeCombox" Tag="Home" />
                                     <ComboBoxItem x:Uid="AddFolderCombox" Tag="AddFolder" />
                                     <ComboBoxItem x:Uid="MusicBrowseCombox" Tag="MusicBrowse" />
-                                    <ComboBoxItem x:Uid="PlayListsCombox" Tag="PlayLists" />
                                 </ComboBox>
                             </Grid>
 

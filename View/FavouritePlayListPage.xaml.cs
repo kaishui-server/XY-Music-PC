@@ -36,6 +36,12 @@ namespace WinUIMusicPlayer.View
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
             _scrollHelper = new ScrollerHelper(DispatcherQueue);
             _scrollHelper.Tick += OnScrollTick;
+            PlayAllButtonText.Text = Utils.ToolUtils.GetString("PlayAll/Text");
+        }
+
+        private void PlayAllButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.PlayAll();
         }
 
         private async void MusicListView_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)

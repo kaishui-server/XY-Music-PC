@@ -1169,6 +1169,12 @@
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>歌詞タイムオフセット</value>
   </data>
+  <data name="LyricsEmptyText.Text" xml:space="preserve">
+    <value>歌詞がありません</value>
+  </data>
+  <data name="LyricsEmptyLink.Content" xml:space="preserve">
+    <value>歌詞を関連付ける</value>
+  </data>
   <data name="LinkLyricsTitle" xml:space="preserve">
     <value>歌詞を関連付ける</value>
   </data>
@@ -1607,6 +1613,12 @@
   <data name="PluginManageEmpty" xml:space="preserve">
     <value>プラグインが未インストールです</value>
   </data>
+  <data name="PluginReorderSaved" xml:space="preserve">
+    <value>プラグインの順序を保存しました。検索タブはこの順序に従います</value>
+  </data>
+  <data name="PluginDragHandle.ToolTipService.ToolTip" xml:space="preserve">
+    <value>ドラッグして順序を変更（検索タブの並び順を決定）</value>
+  </data>
   <data name="PluginManageTitle.Text" xml:space="preserve">
     <value>プラグイン管理</value>
   </data>
@@ -1761,6 +1773,45 @@
   <data name="DownloadQualityFlac24bit" xml:space="preserve">
     <value>Hi-Res 24bit FLAC</value>
   </data>
+  <data name="PlayQualityToolTip.Content" xml:space="preserve">
+    <value>再生音質</value>
+  </data>
+  <data name="PlayQuality128k" xml:space="preserve">
+    <value>標準 128k</value>
+  </data>
+  <data name="PlayQuality320k" xml:space="preserve">
+    <value>高音質 320k</value>
+  </data>
+  <data name="PlayQualityFlac" xml:space="preserve">
+    <value>ロスレス FLAC</value>
+  </data>
+  <data name="PlayQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="PlayQualityChanged" xml:space="preserve">
+    <value>再生音質を {0} に変更しました（非対応時は自動フォールバック）</value>
+  </data>
+  <data name="BackgroundAutoThemeSwitched" xml:space="preserve">
+    <value>背景画像が文字色と近いため、一時的に{0}テーマへ切り替えました（テーマ設定は変更されません）</value>
+  </data>
+  <data name="HomeSearchScopeOnline" xml:space="preserve">
+    <value>オンラインで検索</value>
+  </data>
+  <data name="HomeSearchScopeLocal" xml:space="preserve">
+    <value>ローカルで検索</value>
+  </data>
+  <data name="HomeSearchPlaceholderOnline" xml:space="preserve">
+    <value>オンラインの楽曲・アーティスト・プレイリストを検索…</value>
+  </data>
+  <data name="HomeSearchPlaceholderLocal" xml:space="preserve">
+    <value>ローカル音楽ライブラリを検索…</value>
+  </data>
+  <data name="HomeSearchButton" xml:space="preserve">
+    <value>検索</value>
+  </data>
+  <data name="LocalSearchChipPrefix" xml:space="preserve">
+    <value>ローカル検索</value>
+  </data>
   <data name="DownloadSaveCover" xml:space="preserve">
     <value>カバーアートも保存</value>
   </data>
@@ -1778,6 +1829,12 @@
   </data>
   <data name="DownloadStatusResolving" xml:space="preserve">
     <value>音源を解決中…</value>
+  </data>
+  <data name="DownloadStatusFindingFull" xml:space="preserve">
+    <value>主ソースが試聴版のため、完全版の音源を検索中…</value>
+  </data>
+  <data name="DownloadTrialOnlyNote" xml:space="preserve">
+    <value>注意：すべての音源が試聴版のみのため、試聴断片を保存しました</value>
   </data>
   <data name="DownloadSuccessFormat" xml:space="preserve">
     <value>保存しました：{0}</value>
@@ -2184,5 +2241,197 @@
   </data>
   <data name="AccountCloudSyncPromptWait" xml:space="preserve">
     <value>{0} 秒後に選択できます</value>
+  </data>
+  <data name="CloudDataTitle" xml:space="preserve">
+    <value>クラウドデータ</value>
+  </data>
+  <data name="CloudDataSectionTitle" xml:space="preserve">
+    <value>概要</value>
+  </data>
+  <data name="CloudDataRetry" xml:space="preserve">
+    <value>再試行</value>
+  </data>
+  <data name="CloudDataStatPlaylists" xml:space="preserve">
+    <value>プレイリスト</value>
+  </data>
+  <data name="CloudDataStatSongs" xml:space="preserve">
+    <value>曲</value>
+  </data>
+  <data name="CloudDataStatFavorites" xml:space="preserve">
+    <value>お気に入り</value>
+  </data>
+  <data name="CloudDataStatPlugins" xml:space="preserve">
+    <value>プラグイン</value>
+  </data>
+  <data name="CloudDataEntryUserTitle" xml:space="preserve">
+    <value>アカウント情報</value>
+  </data>
+  <data name="CloudDataClearButton" xml:space="preserve">
+    <value>クラウドデータを消去</value>
+  </data>
+  <data name="CloudDataEmptyPlaylists" xml:space="preserve">
+    <value>クラウドプレイリストはありません</value>
+  </data>
+  <data name="CloudDataEmptyPlaylistSongs" xml:space="preserve">
+    <value>このプレイリストに曲がありません</value>
+  </data>
+  <data name="CloudDataEmptyFavorites" xml:space="preserve">
+    <value>クラウドのお気に入りはありません</value>
+  </data>
+  <data name="CloudDataEmptyPlugins" xml:space="preserve">
+    <value>クラウドプラグインはありません</value>
+  </data>
+  <data name="CloudDataEmailLabel" xml:space="preserve">
+    <value>メール</value>
+  </data>
+  <data name="CloudDataClientTypeLabel" xml:space="preserve">
+    <value>クライアント種別</value>
+  </data>
+  <data name="CloudDataCreatedAtLabel" xml:space="preserve">
+    <value>登録日時</value>
+  </data>
+  <data name="CloudDataUploadPlaylistsLabel" xml:space="preserve">
+    <value>プレイリスト最終アップロード</value>
+  </data>
+  <data name="CloudDataUploadPluginsLabel" xml:space="preserve">
+    <value>プラグイン最終アップロード</value>
+  </data>
+  <data name="CloudDataUploadSettingsLabel" xml:space="preserve">
+    <value>設定最終アップロード</value>
+  </data>
+  <data name="CloudDataUserNotFound" xml:space="preserve">
+    <value>クラウドアカウントが見つかりません</value>
+  </data>
+  <data name="CloudDataSongCountFormat" xml:space="preserve">
+    <value>{0} 曲</value>
+  </data>
+  <data name="CloudDataOnlineBadge" xml:space="preserve">
+    <value>オンライン</value>
+  </data>
+  <data name="CloudDataEnabled" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="CloudDataDisabled" xml:space="preserve">
+    <value>無効</value>
+  </data>
+  <data name="CloudDataPlaylistsTitle" xml:space="preserve">
+    <value>クラウドプレイリスト</value>
+  </data>
+  <data name="CloudDataPlaylistDetailTitle" xml:space="preserve">
+    <value>プレイリスト詳細</value>
+  </data>
+  <data name="CloudDataFavoritesTitle" xml:space="preserve">
+    <value>クラウドのお気に入り</value>
+  </data>
+  <data name="CloudDataPluginsTitle" xml:space="preserve">
+    <value>クラウドプラグイン</value>
+  </data>
+  <data name="CloudDataUserTitle" xml:space="preserve">
+    <value>クラウドアカウント</value>
+  </data>
+  <data name="CloudDataLastUploadFormat" xml:space="preserve">
+    <value>最終アップロード：{0}</value>
+  </data>
+  <data name="CloudDataNeverUpload" xml:space="preserve">
+    <value>未アップロード</value>
+  </data>
+  <data name="CloudDataNoData" xml:space="preserve">
+    <value>クラウドデータはありません</value>
+  </data>
+  <data name="CloudDataEntryPlaylistsSubFormat" xml:space="preserve">
+    <value>プレイリスト {0} · {1} 曲</value>
+  </data>
+  <data name="CloudDataEntryFavoritesSubFormat" xml:space="preserve">
+    <value>{0} 曲</value>
+  </data>
+  <data name="CloudDataEntryPluginsSubFormat" xml:space="preserve">
+    <value>{0} 個</value>
+  </data>
+  <data name="CloudDataEntryUserDefault" xml:space="preserve">
+    <value>アカウント情報を見る</value>
+  </data>
+  <data name="CloudDataUserIdLabel" xml:space="preserve">
+    <value>ユーザー ID</value>
+  </data>
+  <data name="CloudDataBatchExit" xml:space="preserve">
+    <value>管理を終了</value>
+  </data>
+  <data name="CloudDataBatchManage" xml:space="preserve">
+    <value>管理</value>
+  </data>
+  <data name="CloudDataSelectAll" xml:space="preserve">
+    <value>すべて選択</value>
+  </data>
+  <data name="CloudDataDeleteSelectedFormat" xml:space="preserve">
+    <value>削除({0})</value>
+  </data>
+  <data name="CloudDataDeleteNote" xml:space="preserve">
+    <value>削除したデータは復元できません</value>
+  </data>
+  <data name="CloudDataDeletePlaylistOneFormat" xml:space="preserve">
+    <value>プレイリスト「{0}」（{1} 曲）を削除しますか？</value>
+  </data>
+  <data name="CloudDataDeletePlaylistTitle" xml:space="preserve">
+    <value>プレイリストを削除</value>
+  </data>
+  <data name="CloudDataDelete" xml:space="preserve">
+    <value>削除</value>
+  </data>
+  <data name="CloudDataDeletedPlaylistsFormat" xml:space="preserve">
+    <value>{0} 個のプレイリストを削除しました</value>
+  </data>
+  <data name="CloudDataDeleteFailedPrefix" xml:space="preserve">
+    <value>削除に失敗しました：</value>
+  </data>
+  <data name="CloudDataDeleteSongOneFavoriteFormat" xml:space="preserve">
+    <value>お気に入りから「{0}」を削除しますか？</value>
+  </data>
+  <data name="CloudDataDeleteSongOnePlaylistFormat" xml:space="preserve">
+    <value>プレイリスト「{0}」から「{1}」を削除しますか？</value>
+  </data>
+  <data name="CloudDataDeleteSongTitle" xml:space="preserve">
+    <value>曲を削除</value>
+  </data>
+  <data name="CloudDataDeletedSongsFormat" xml:space="preserve">
+    <value>{0} 曲を削除しました</value>
+  </data>
+  <data name="CloudDataDeletePluginOneFormat" xml:space="preserve">
+    <value>プラグイン「{0}」を削除しますか？</value>
+  </data>
+  <data name="CloudDataDeletePluginTitle" xml:space="preserve">
+    <value>プラグインを削除</value>
+  </data>
+  <data name="CloudDataDeletedPluginsFormat" xml:space="preserve">
+    <value>{0} 個のプラグインを削除しました</value>
+  </data>
+  <data name="CloudDataDeletePlaylistSelectedFormat" xml:space="preserve">
+    <value>選択した {0} 個のプレイリストを削除しますか？</value>
+  </data>
+  <data name="CloudDataDeleteSongSelectedFormat" xml:space="preserve">
+    <value>選択した {0} 曲を削除しますか？</value>
+  </data>
+  <data name="CloudDataDeleteSongSelectedFavoriteFormat" xml:space="preserve">
+    <value>選択した {0} 曲のお気に入りを削除しますか？</value>
+  </data>
+  <data name="CloudDataDeletePluginSelectedFormat" xml:space="preserve">
+    <value>選択した {0} 個のプラグインを削除しますか？</value>
+  </data>
+  <data name="CloudDataClearConfirmFormat" xml:space="preserve">
+    <value>すべてのクラウドデータを消去します：プレイリスト {0}、曲 {1}、お気に入り {2}、プラグイン {3}</value>
+  </data>
+  <data name="CloudDataClearConfirmTitle" xml:space="preserve">
+    <value>クラウドデータを消去</value>
+  </data>
+  <data name="CloudDataClearConfirmButton" xml:space="preserve">
+    <value>消去</value>
+  </data>
+  <data name="CloudDataCleared" xml:space="preserve">
+    <value>クラウドデータを消去しました</value>
+  </data>
+  <data name="CloudDataClearNothing" xml:space="preserve">
+    <value>クラウドにデータはありません</value>
+  </data>
+  <data name="CloudDataPlaylistNotFound" xml:space="preserve">
+    <value>プレイリストが存在しないか削除されました</value>
   </data>
 </root>

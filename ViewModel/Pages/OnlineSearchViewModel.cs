@@ -277,16 +277,30 @@ namespace WinUIMusicPlayer.ViewModel.Pages
             UpdateShowHistory();
         }
 
-        /// <summary>页面激活时刷新插件 Tab(按当前搜索类型过滤)。</summary>
+        /// <summary>页面激活时刷新插件 Tab(按当前搜索类型过滤)。Tab 从左到右的顺序 = 插件管理页排序。</summary>
         public void RefreshPluginTabs()
         {
-            var plugins = _pluginManager.ActivePlugins
-                .Where(p => p.SupportsMethod("search") && PluginSupportsSearchType(p, _selectedSearchType))
-                .Select(p => new PluginTab { Hash = p.Hash, Name = p.Metadata.Platform })
-                .ToList();
-            // LX 音源 Tab: 每个有插件支持的音源独立成 Tab(酷我/酷狗/QQ/网易云/咪咕), 四种类型均支持
-            plugins.AddRange(_pluginManager.GetLxSourceTabs()
-                .Select(t => new PluginTab { Hash = t.TabHash, Name = t.Name }));
+            var plugins = new List<PluginTab>();
+            var usedLxSources = new HashSet<string>();
+            // MF 插件一个插件一个 Tab; LX 插件按其覆盖音源生成多个 Tab(同一插件的音源间保持标准顺序, 重复音源先到先得)
+            foreach (var (mf, lx) in _pluginManager.GetActiveRuntimesInOrder())
+            {
+                if (mf is not null)
+                {
+                    if (mf.SupportsMethod("search") && PluginSupportsSearchType(mf, _selectedSearchType))
+                        plugins.Add(new PluginTab { Hash = mf.Hash, Name = mf.Metadata.Platform });
+                }
+                else if (lx is not null)
+                {
+                    // LX 音源四种搜索类型均支持
+                    foreach (var source in LxSources.StandardOrder)
+                    {
+                        if (usedLxSources.Contains(source) || !lx.SupportsSource(source)) continue;
+                        usedLxSources.Add(source);
+                        plugins.Add(new PluginTab { Hash = $"lx:{source}", Name = LxSources.DisplayName(source) });
+                    }
+                }
+            }
             AvailablePlugins.Clear();
             foreach (var p in plugins) AvailablePlugins.Add(p);
             NoPlugins = AvailablePlugins.Count == 0;

@@ -1,11 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.System;
 using WinUIMusicPlayer.ViewModel;
 using ZLinq;
 
@@ -13,17 +15,27 @@ namespace WinUIMusicPlayer.View
 {
     /// <summary>
     /// 首页:应用启动后的默认入口页面。
-    /// 无文件夹时展示欢迎引导(支持点击/拖拽添加文件夹),已有文件夹时展示就绪状态。
+    /// 品牌大字 + 副标题 + 搜索框(可选在网络/在本地搜索), 支持拖拽文件夹添加音乐库。
     /// </summary>
     public sealed partial class HomePage : Page
     {
         public AddFolderViewModel FolderViewModel { get; }
+
+        /// <summary>搜索框占位文案: 跟随下拉选择的搜索范围(在网络搜索/在本地搜索)。</summary>
+        public string SearchPlaceholderText => (SearchScopeBox?.SelectedIndex ?? 0) == 1
+            ? Utils.ToolUtils.GetString("HomeSearchPlaceholderLocal")
+            : Utils.ToolUtils.GetString("HomeSearchPlaceholderOnline");
 
         public HomePage()
         {
             InitializeComponent();
             FolderViewModel = App.Services.GetRequiredService<AddFolderViewModel>();
             DataContext = this;
+            // 下拉项用代码填充本地化字符串(字符串项直接渲染, 避免 ComboBoxItem 显示空白)
+            SearchScopeBox.Items.Add(Utils.ToolUtils.GetString("HomeSearchScopeOnline"));
+            SearchScopeBox.Items.Add(Utils.ToolUtils.GetString("HomeSearchScopeLocal"));
+            SearchScopeBox.SelectedIndex = 0;
+            SearchButtonText.Text = Utils.ToolUtils.GetString("HomeSearchButton");
             FolderViewModel.FoldersLoaded += OnFoldersLoaded;
             NavigationCacheMode = NavigationCacheMode.Disabled;
         }
@@ -31,55 +43,61 @@ namespace WinUIMusicPlayer.View
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            UpdateState();
+            Bindings.Update();
         }
 
         private void OnFoldersLoaded()
         {
-            if (DispatcherQueue is not null)
+            // 文件夹列表异步加载完成后无需更新 UI(首页已不展示文件夹状态), 保留订阅以兼容基类事件
+        }
+
+        private void SearchScopeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            Bindings.Update(); // 刷新占位文案
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter)
             {
-                DispatcherQueue.TryEnqueue(UpdateState);
+                ExecuteSearch();
+                e.Handled = true;
+            }
+        }
+
+        private void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            ExecuteSearch();
+        }
+
+        /// <summary>执行搜索: 在网络搜索 → 跳转在线搜索页并自动搜索; 在本地搜索 → 跳转音乐库歌曲列表并按关键词过滤。</summary>
+        private void ExecuteSearch()
+        {
+            var keyword = SearchBox.Text?.Trim() ?? string.Empty;
+            if (keyword.Length == 0) return;
+            // MainPage 是 DI 单例(HomePage 位于其 MainFrame 内, 必然已构造), 直接解析调用
+            var mainPage = App.Services.GetRequiredService<MainPage>();
+            if (SearchScopeBox.SelectedIndex == 1)
+            {
+                // 本地搜索: 跳转音乐库歌曲列表并带入关键词过滤
+                mainPage.NavigateToMusicBrowsePage(keyword);
             }
             else
             {
-                UpdateState();
-            }
-        }
-
-        private void UpdateState()
-        {
-            bool hasFolders = FolderViewModel.FolderList.Count > 0;
-            WelcomeGrid.Visibility = hasFolders ? Visibility.Collapsed : Visibility.Visible;
-            ReadyGrid.Visibility = hasFolders ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private async void AddFolderButton_Click(object sender, RoutedEventArgs e)
-        {
-            ShowLoading();
-            await FolderViewModel.AddFolderButton_Click();
-            HideLoading();
-        }
-
-        private void GoMusicBrowseButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (App.MainWindow?.Content is Frame shellFrame && shellFrame.Content is MainPage mainPage)
-            {
-                mainPage.NavigateToMusicBrowsePage();
+                // 网络搜索: 跳转在线搜索页并带入关键词自动搜索
+                mainPage.NavigateToOnlineSearchPage(keyword);
             }
         }
 
         private void ShowLoading()
         {
             LoadingGrid.Visibility = Visibility.Visible;
-            WelcomeGrid.Visibility = Visibility.Collapsed;
-            ReadyGrid.Visibility = Visibility.Collapsed;
             DropOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void HideLoading()
         {
             LoadingGrid.Visibility = Visibility.Collapsed;
-            UpdateState();
         }
 
         private void Grid_DragOver(object sender, DragEventArgs e)

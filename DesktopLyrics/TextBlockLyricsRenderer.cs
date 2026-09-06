@@ -115,20 +115,21 @@ namespace WinUIMusicPlayer.DesktopLyrics
         {
             _lyrics = lyrics as List<LyricLine> ?? (lyrics is null ? null : [.. lyrics]);
             _currentIndex = -1;
-            ApplyCurrentLine(_lastTotalMs - _offsetMs);
+            ApplyCurrentLine(_lastTotalMs + _offsetMs);
         }
 
         public void SetPlaybackTime(long totalMs)
         {
             _lastTotalMs = totalMs;
-            ApplyCurrentLine(totalMs - _offsetMs);
+            // +偏移 = 歌词提前: 与主窗口歌词符号约定一致
+            ApplyCurrentLine(totalMs + _offsetMs);
         }
 
         public void SetOffset(double offsetMs)
         {
             if (Math.Abs(_offsetMs - offsetMs) < 0.5) return;
             _offsetMs = offsetMs;
-            ApplyCurrentLine(_lastTotalMs - _offsetMs);
+            ApplyCurrentLine(_lastTotalMs + _offsetMs);
         }
 
         public void SetIsPlaying(bool isPlaying)

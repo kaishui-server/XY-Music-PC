@@ -104,6 +104,8 @@ namespace WinUIMusicPlayer.Model
         public static bool EnableGlobalHotKey { get; set; } = false;
         public static bool IsTrimOnHideEnabled { get; set; } = false;
         public static bool IsTrimAfterPlaybackEnabled { get; set; } = false;
+        /// <summary>在线播放默认音质(128k/192k/320k/flac/flac24bit), 播放链路读取的静态镜像。</summary>
+        public static string PreferredQuality { get; set; } = "320k";
         private static string _artistSplitSymbols = ", ; / 、 & feat.";
         private static string[] _artistSplitters = ParseArtistSplitSymbols(_artistSplitSymbols);
         public static string ArtistSplitSymbols

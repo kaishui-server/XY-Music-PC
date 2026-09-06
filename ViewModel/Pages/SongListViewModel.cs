@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using System;
@@ -140,6 +140,16 @@ namespace WinUIMusicPlayer.ViewModel
         }
 
         public void MusicListView_DoubleTapped() => _ = MusicListView_DoubleTappedAsync();
+
+        /// <summary>播放全部: 播放歌曲页当前展示的列表(本地搜索过滤生效时播放过滤后的结果)。</summary>
+        public void PlayAllFromList(IEnumerable<Music> songs)
+        {
+            if (MusicBrowseViewModel is null) return;
+            var list = songs?.Where(m => m is not null).ToList();
+            if (list is null || list.Count == 0) return;
+            AppViewModel.SequentialPlayingList = new BulkObservableCollection<Music>(list);
+            _ = MusicBrowseViewModel.PlayMusic(music: list[0], IsChangeList: true);
+        }
 
         public void PlayMenuItem_Click(IEnumerable<Music> uniqueSelectedMusics)
         {

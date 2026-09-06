@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
+using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,6 +65,8 @@ namespace WinUIMusicPlayer.View
             _playingNavigation = navigationServiceFactory.CreateNavigationService(PlayingFrame);
             _playingNavigation.RegisterPage<PlayingDetailPage>();
             ViewModel.MusicBrowseVM.SetMainPage(this);
+            // 播放音质菜单: 主底栏与播放详情页底栏共用同一套构建逻辑(持久化默认音质 + 在线歌曲换质重播)
+            PlayQualityButton.Flyout = Helper.PlayQualityMenuHelper.BuildMenu();
             Loaded += MainPage_Loaded;
             Unloaded += MainPage_Unloaded;
         }
@@ -256,13 +259,11 @@ namespace WinUIMusicPlayer.View
                 case "MusicBrowse":
                     NavigateTo(typeof(MusicBrowsePage), null, new EntranceNavigationTransitionInfo());
                     break;
-                case "PlayLists":
-                    NavigateTo(typeof(PlayListPage), null, new EntranceNavigationTransitionInfo());
-                    break;
                 case "Stats":
                     NavigateTo(typeof(StatsPage), null, new EntranceNavigationTransitionInfo());
                     break;
                 default:
+                    // 播放列表页已从侧边栏隐藏, 历史配置值回退到首页
                     NavigateTo(typeof(HomePage), null, new EntranceNavigationTransitionInfo());
                     break;
             }
@@ -390,12 +391,39 @@ namespace WinUIMusicPlayer.View
             }
         }
 
-        public void NavigateToMusicBrowsePage()
+        public void NavigateToMusicBrowsePage(string? keyword = null)
         {
+            // 按 Tag 定位侧边栏选中项(不依赖菜单顺序, 顺序调整后不会错位)
+            NavigationViewControl.SelectedItem = NavigationViewControl.MenuItems.OfType<NavigationViewItem>()
+                .FirstOrDefault(item => item.Tag?.ToString() == "MusicBrowse");
             if (MainFrame.Content is not MusicBrowsePage)
             {
-                NavigationViewControl.SelectedItem = NavigationViewControl.MenuItems[2];
-                NavigateTo(typeof(MusicBrowsePage), null, new EntranceNavigationTransitionInfo());
+                NavigateTo(typeof(MusicBrowsePage), keyword, new EntranceNavigationTransitionInfo());
+            }
+            else if (MainFrame.Content is MusicBrowsePage browsePage)
+            {
+                // 页面已在当前: 直接应用/清除本地搜索关键词
+                browsePage.ApplySearchKeyword(keyword);
+            }
+        }
+
+        /// <summary>跳转到在线搜索页(首页搜索框入口): 选中侧边栏对应项并带入关键词自动搜索。</summary>
+        public void NavigateToOnlineSearchPage(string keyword)
+        {
+            NavigationViewControl.SelectedItem = NavigationViewControl.MenuItems.OfType<NavigationViewItem>()
+                .FirstOrDefault(item => item.Tag?.ToString() == "OnlineSearch");
+            if (MainFrame.Content is not OnlineSearchPage)
+            {
+                NavigateTo(typeof(OnlineSearchPage), keyword, new EntranceNavigationTransitionInfo());
+            }
+            else
+            {
+                // 页面已在当前(缓存被禁用场景外的二次进入), 直接触发搜索
+                if (MainFrame.Content is OnlineSearchPage page)
+                {
+                    page.ViewModel.Keyword = keyword;
+                    _ = page.ViewModel.SearchCommand.ExecuteAsync(null);
+                }
             }
         }
 

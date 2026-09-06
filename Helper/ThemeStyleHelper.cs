@@ -1,4 +1,4 @@
-﻿using Microsoft.UI;
+using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using System;
@@ -160,21 +160,45 @@ namespace WinUIMusicPlayer.Helper
         {
             try
             {
+                // 持久化入口: 按用户设置的 AppTheme 应用主题
+                ApplyThemeCore(AppSettings.AppTheme switch
+                {
+                    "Dark" => ElementTheme.Dark,
+                    "Light" => ElementTheme.Light,
+                    _ => ElementTheme.Default,
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"SetAppTheme error: {ex.Message}");
+            }
+        }
+
+        /// <summary>仅应用运行时主题(不读写 AppSettings.AppTheme):
+        /// 供自定义背景图对比度检测自动切换使用——切换只对本次运行生效,
+        /// 用户保存的主题设置不被覆盖, 手动改主题/重启后仍以用户设置优先。</summary>
+        public void ApplyRuntimeTheme(ElementTheme theme)
+        {
+            try
+            {
+                ApplyThemeCore(theme);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ApplyRuntimeTheme error: {ex.Message}");
+            }
+        }
+
+        private void ApplyThemeCore(ElementTheme theme)
+        {
+            try
+            {
                 AppWindowTitleBar titleBar = _appWindow.TitleBar;
                 if (_window.Content is FrameworkElement rootElement)
                 {
-                    switch (AppSettings.AppTheme)
+                    switch (theme)
                     {
-                        case "Default":
-                            titleBar.ButtonForegroundColor = null;
-                            titleBar.ButtonHoverForegroundColor = null;
-                            titleBar.ButtonPressedForegroundColor = null;
-                            titleBar.ButtonHoverBackgroundColor = null;
-                            titleBar.ButtonPressedBackgroundColor = null;
-                            rootElement.RequestedTheme = ElementTheme.Default;
-                            AppSettings.ElementTheme = ElementTheme.Default;
-                            break;
-                        case "Dark":
+                        case ElementTheme.Dark:
                             rootElement.RequestedTheme = ElementTheme.Dark;
                             AppSettings.ElementTheme = ElementTheme.Dark;
                             titleBar.ButtonForegroundColor = Colors.White;
@@ -183,7 +207,7 @@ namespace WinUIMusicPlayer.Helper
                             titleBar.ButtonHoverBackgroundColor = Color.FromArgb(255, 50, 50, 50);
                             titleBar.ButtonPressedBackgroundColor = Color.FromArgb(255, 80, 80, 80);
                             break;
-                        case "Light":
+                        case ElementTheme.Light:
                             rootElement.RequestedTheme = ElementTheme.Light;
                             AppSettings.ElementTheme = ElementTheme.Light;
                             titleBar.ButtonForegroundColor = Colors.Black;
@@ -207,7 +231,7 @@ namespace WinUIMusicPlayer.Helper
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"SetAppTheme error: {ex.Message}");
+                Debug.WriteLine($"ApplyThemeCore error: {ex.Message}");
             }
         }
     }

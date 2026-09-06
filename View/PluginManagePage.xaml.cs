@@ -37,6 +37,13 @@ namespace WinUIMusicPlayer.View
             ViewModel.RefreshList();
         }
 
+        /// <summary>拖拽排序完成: 把当前列表顺序写回插件清单(同时决定在线搜索 Tab 顺序)。</summary>
+        private void PluginList_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
+        {
+            if (args.Items.Count == 0) return;
+            ViewModel.CommitReorder();
+        }
+
         private void PluginToggle_Toggled(object sender, RoutedEventArgs e)
         {
             if (sender is ToggleSwitch toggle && toggle.DataContext is InstalledPluginItem item)

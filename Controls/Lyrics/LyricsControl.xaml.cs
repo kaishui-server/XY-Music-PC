@@ -1,3 +1,5 @@
+using AnimatedWin2dControls.Controls.AnimatedLyricsLineControl;
+using AnimatedWin2dControls.Messages;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -47,9 +49,16 @@ namespace WinUIMusicPlayer.Controls.Lyrics
 
         private void OnControlLoaded(object sender, RoutedEventArgs e)
         {
-            SimpleLyrics?.LyricLineClicked += OnCanvasLyricLineClicked;
-            LyricsCanvas?.LyricLineClicked += OnCanvasLyricLineClicked;
-            Loaded -= OnControlLoaded;
+            if (SimpleLyrics is not null)
+            {
+                SimpleLyrics.LyricLineClicked -= OnCanvasLyricLineClicked;
+                SimpleLyrics.LyricLineClicked += OnCanvasLyricLineClicked;
+            }
+            if (LyricsCanvas is not null)
+            {
+                LyricsCanvas.LyricLineClicked -= OnCanvasLyricLineClicked;
+                LyricsCanvas.LyricLineClicked += OnCanvasLyricLineClicked;
+            }
         }
 
         private void OnCanvasLyricLineClicked(object? sender, TimeSpan ts)

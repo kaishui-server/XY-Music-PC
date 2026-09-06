@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="WinUIMusicPlayer.View.FavouritePlayListPage"
     xmlns:tools="using:WinUIMusicPlayer.Utils"
@@ -28,17 +28,36 @@
             </Setter>
         </Style>
     </Page.Resources>
-    <ListView
-        x:Name="MusicListView"
-        AllowDrop="True"
-        CanDragItems="True"
-        CanReorderItems="True"
-        DoubleTapped="MusicListView_DoubleTapped"
-        ItemContainerStyle="{StaticResource ListViewItemStyle}"
-        ItemsSource="{x:Bind ViewModel.AppViewModel.FavoriteSongs, Mode=TwoWay}"
-        RightTapped="MusicListView_RightTapped"
-        SelectedItem="{x:Bind ViewModel.SelectedMusic, Mode=TwoWay}"
-        SelectionMode="Extended">
+    <Grid RowDefinitions="Auto,*">
+        <!--  顶部工具栏: 收藏数 + 播放全部按钮  -->
+        <StackPanel
+            Grid.Row="0"
+            Margin="12,8,12,4"
+            Orientation="Horizontal"
+            Spacing="12">
+            <Button
+                x:Name="PlayAllButton"
+                VerticalAlignment="Center"
+                Click="PlayAllButton_Click"
+                Style="{StaticResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Glyph="&#xE768;" />
+                    <TextBlock x:Name="PlayAllButtonText" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+        <ListView
+            x:Name="MusicListView"
+            Grid.Row="1"
+            AllowDrop="True"
+            CanDragItems="True"
+            CanReorderItems="True"
+            DoubleTapped="MusicListView_DoubleTapped"
+            ItemContainerStyle="{StaticResource ListViewItemStyle}"
+            ItemsSource="{x:Bind ViewModel.AppViewModel.FavoriteSongs, Mode=TwoWay}"
+            RightTapped="MusicListView_RightTapped"
+            SelectedItem="{x:Bind ViewModel.SelectedMusic, Mode=TwoWay}"
+            SelectionMode="Extended">
         <ListView.ItemTemplate>
             <DataTemplate x:DataType="model:Music">
                 <Grid ColumnDefinitions="Auto,Auto,3*,1.5*,3*,0.5*,70,Auto,50">
@@ -189,5 +208,6 @@
                 </Grid>
             </DataTemplate>
         </ListView.ItemTemplate>
-    </ListView>
+        </ListView>
+    </Grid>
 </Page>

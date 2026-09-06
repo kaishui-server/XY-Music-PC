@@ -220,7 +220,7 @@
     <value>文件夹</value>
   </data>
   <data name="FavouriteTab.Text" xml:space="preserve">
-    <value>最爱</value>
+    <value>收藏</value>
   </data>
   <data name="PlaylistTab.Text" xml:space="preserve">
     <value>播放列表</value>
@@ -1170,6 +1170,12 @@
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>歌词时间偏移</value>
   </data>
+  <data name="LyricsEmptyText.Text" xml:space="preserve">
+    <value>暂无歌词</value>
+  </data>
+  <data name="LyricsEmptyLink.Content" xml:space="preserve">
+    <value>关联歌词</value>
+  </data>
   <data name="LinkLyricsTitle" xml:space="preserve">
     <value>关联歌词</value>
   </data>
@@ -1611,6 +1617,12 @@
   <data name="PluginManageEmpty" xml:space="preserve">
     <value>还没有安装插件</value>
   </data>
+  <data name="PluginReorderSaved" xml:space="preserve">
+    <value>插件顺序已保存，搜索页 Tab 将按此顺序排列</value>
+  </data>
+  <data name="PluginDragHandle.ToolTipService.ToolTip" xml:space="preserve">
+    <value>拖拽调整插件顺序（决定搜索页 Tab 从左到右顺序）</value>
+  </data>
   <data name="PluginManageTitle.Text" xml:space="preserve">
     <value>插件管理</value>
   </data>
@@ -1765,6 +1777,45 @@
   <data name="DownloadQualityFlac24bit" xml:space="preserve">
     <value>Hi-Res 24bit FLAC</value>
   </data>
+  <data name="PlayQualityToolTip.Content" xml:space="preserve">
+    <value>播放音质</value>
+  </data>
+  <data name="PlayQuality128k" xml:space="preserve">
+    <value>标准 128k</value>
+  </data>
+  <data name="PlayQuality320k" xml:space="preserve">
+    <value>高品 320k</value>
+  </data>
+  <data name="PlayQualityFlac" xml:space="preserve">
+    <value>无损 FLAC</value>
+  </data>
+  <data name="PlayQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="PlayQualityChanged" xml:space="preserve">
+    <value>播放音质已切换为 {0}（不支持时将自动回退）</value>
+  </data>
+  <data name="BackgroundAutoThemeSwitched" xml:space="preserve">
+    <value>背景图片与文字颜色过近，已临时切换为{0}主题（你的主题设置保持不变）</value>
+  </data>
+  <data name="HomeSearchScopeOnline" xml:space="preserve">
+    <value>在网络搜索</value>
+  </data>
+  <data name="HomeSearchScopeLocal" xml:space="preserve">
+    <value>在本地搜索</value>
+  </data>
+  <data name="HomeSearchPlaceholderOnline" xml:space="preserve">
+    <value>搜索在线歌曲、歌手、歌单…</value>
+  </data>
+  <data name="HomeSearchPlaceholderLocal" xml:space="preserve">
+    <value>搜索本地音乐库…</value>
+  </data>
+  <data name="HomeSearchButton" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="LocalSearchChipPrefix" xml:space="preserve">
+    <value>本地搜索</value>
+  </data>
   <data name="DownloadSaveCover" xml:space="preserve">
     <value>额外下载封面图片</value>
   </data>
@@ -1782,6 +1833,12 @@
   </data>
   <data name="DownloadStatusResolving" xml:space="preserve">
     <value>正在解析音源…</value>
+  </data>
+  <data name="DownloadStatusFindingFull" xml:space="preserve">
+    <value>主源为试听版，正在寻找完整版音源…</value>
+  </data>
+  <data name="DownloadTrialOnlyNote" xml:space="preserve">
+    <value>注意：各音源均仅提供试听版，已保存试听片段</value>
   </data>
   <data name="DownloadSuccessFormat" xml:space="preserve">
     <value>已保存到：{0}</value>
@@ -2188,5 +2245,197 @@
   </data>
   <data name="AccountCloudSyncPromptWait" xml:space="preserve">
     <value>{0} 秒后可选择</value>
+  </data>
+  <data name="CloudDataTitle" xml:space="preserve">
+    <value>云端数据</value>
+  </data>
+  <data name="CloudDataSectionTitle" xml:space="preserve">
+    <value>数据概览</value>
+  </data>
+  <data name="CloudDataRetry" xml:space="preserve">
+    <value>重试</value>
+  </data>
+  <data name="CloudDataStatPlaylists" xml:space="preserve">
+    <value>歌单</value>
+  </data>
+  <data name="CloudDataStatSongs" xml:space="preserve">
+    <value>歌曲</value>
+  </data>
+  <data name="CloudDataStatFavorites" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="CloudDataStatPlugins" xml:space="preserve">
+    <value>插件</value>
+  </data>
+  <data name="CloudDataEntryUserTitle" xml:space="preserve">
+    <value>账号信息</value>
+  </data>
+  <data name="CloudDataClearButton" xml:space="preserve">
+    <value>清空云端数据</value>
+  </data>
+  <data name="CloudDataEmptyPlaylists" xml:space="preserve">
+    <value>暂无云端歌单</value>
+  </data>
+  <data name="CloudDataEmptyPlaylistSongs" xml:space="preserve">
+    <value>歌单内暂无歌曲</value>
+  </data>
+  <data name="CloudDataEmptyFavorites" xml:space="preserve">
+    <value>暂无云端收藏</value>
+  </data>
+  <data name="CloudDataEmptyPlugins" xml:space="preserve">
+    <value>暂无云端插件</value>
+  </data>
+  <data name="CloudDataEmailLabel" xml:space="preserve">
+    <value>邮箱</value>
+  </data>
+  <data name="CloudDataClientTypeLabel" xml:space="preserve">
+    <value>客户端类型</value>
+  </data>
+  <data name="CloudDataCreatedAtLabel" xml:space="preserve">
+    <value>注册时间</value>
+  </data>
+  <data name="CloudDataUploadPlaylistsLabel" xml:space="preserve">
+    <value>歌单上次上传</value>
+  </data>
+  <data name="CloudDataUploadPluginsLabel" xml:space="preserve">
+    <value>插件上次上传</value>
+  </data>
+  <data name="CloudDataUploadSettingsLabel" xml:space="preserve">
+    <value>设置上次上传</value>
+  </data>
+  <data name="CloudDataUserNotFound" xml:space="preserve">
+    <value>未找到云端账号</value>
+  </data>
+  <data name="CloudDataSongCountFormat" xml:space="preserve">
+    <value>{0} 首</value>
+  </data>
+  <data name="CloudDataOnlineBadge" xml:space="preserve">
+    <value>在线</value>
+  </data>
+  <data name="CloudDataEnabled" xml:space="preserve">
+    <value>已启用</value>
+  </data>
+  <data name="CloudDataDisabled" xml:space="preserve">
+    <value>已禁用</value>
+  </data>
+  <data name="CloudDataPlaylistsTitle" xml:space="preserve">
+    <value>云端歌单</value>
+  </data>
+  <data name="CloudDataPlaylistDetailTitle" xml:space="preserve">
+    <value>歌单详情</value>
+  </data>
+  <data name="CloudDataFavoritesTitle" xml:space="preserve">
+    <value>云端收藏</value>
+  </data>
+  <data name="CloudDataPluginsTitle" xml:space="preserve">
+    <value>云端插件</value>
+  </data>
+  <data name="CloudDataUserTitle" xml:space="preserve">
+    <value>云端账号</value>
+  </data>
+  <data name="CloudDataLastUploadFormat" xml:space="preserve">
+    <value>上次上传：{0}</value>
+  </data>
+  <data name="CloudDataNeverUpload" xml:space="preserve">
+    <value>从未上传</value>
+  </data>
+  <data name="CloudDataNoData" xml:space="preserve">
+    <value>暂无云端数据</value>
+  </data>
+  <data name="CloudDataEntryPlaylistsSubFormat" xml:space="preserve">
+    <value>{0} 个歌单 · 共 {1} 首</value>
+  </data>
+  <data name="CloudDataEntryFavoritesSubFormat" xml:space="preserve">
+    <value>共 {0} 首</value>
+  </data>
+  <data name="CloudDataEntryPluginsSubFormat" xml:space="preserve">
+    <value>{0} 个插件</value>
+  </data>
+  <data name="CloudDataEntryUserDefault" xml:space="preserve">
+    <value>查看账号信息</value>
+  </data>
+  <data name="CloudDataUserIdLabel" xml:space="preserve">
+    <value>用户 ID</value>
+  </data>
+  <data name="CloudDataBatchExit" xml:space="preserve">
+    <value>退出管理</value>
+  </data>
+  <data name="CloudDataBatchManage" xml:space="preserve">
+    <value>管理</value>
+  </data>
+  <data name="CloudDataSelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="CloudDataDeleteSelectedFormat" xml:space="preserve">
+    <value>删除({0})</value>
+  </data>
+  <data name="CloudDataDeleteNote" xml:space="preserve">
+    <value>删除后不可恢复</value>
+  </data>
+  <data name="CloudDataDeletePlaylistOneFormat" xml:space="preserve">
+    <value>确定删除歌单“{0}”（共 {1} 首）？</value>
+  </data>
+  <data name="CloudDataDeletePlaylistTitle" xml:space="preserve">
+    <value>删除歌单</value>
+  </data>
+  <data name="CloudDataDelete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="CloudDataDeletedPlaylistsFormat" xml:space="preserve">
+    <value>已删除 {0} 个歌单</value>
+  </data>
+  <data name="CloudDataDeleteFailedPrefix" xml:space="preserve">
+    <value>删除失败：</value>
+  </data>
+  <data name="CloudDataDeleteSongOneFavoriteFormat" xml:space="preserve">
+    <value>确定从云端收藏删除“{0}”？</value>
+  </data>
+  <data name="CloudDataDeleteSongOnePlaylistFormat" xml:space="preserve">
+    <value>确定从歌单“{0}”删除“{1}”？</value>
+  </data>
+  <data name="CloudDataDeleteSongTitle" xml:space="preserve">
+    <value>删除歌曲</value>
+  </data>
+  <data name="CloudDataDeletedSongsFormat" xml:space="preserve">
+    <value>已删除 {0} 首歌曲</value>
+  </data>
+  <data name="CloudDataDeletePluginOneFormat" xml:space="preserve">
+    <value>确定删除插件“{0}”？</value>
+  </data>
+  <data name="CloudDataDeletePluginTitle" xml:space="preserve">
+    <value>删除插件</value>
+  </data>
+  <data name="CloudDataDeletedPluginsFormat" xml:space="preserve">
+    <value>已删除 {0} 个插件</value>
+  </data>
+  <data name="CloudDataDeletePlaylistSelectedFormat" xml:space="preserve">
+    <value>确定删除所选 {0} 个歌单？</value>
+  </data>
+  <data name="CloudDataDeleteSongSelectedFormat" xml:space="preserve">
+    <value>确定删除所选 {0} 首歌曲？</value>
+  </data>
+  <data name="CloudDataDeleteSongSelectedFavoriteFormat" xml:space="preserve">
+    <value>确定删除所选 {0} 首收藏？</value>
+  </data>
+  <data name="CloudDataDeletePluginSelectedFormat" xml:space="preserve">
+    <value>确定删除所选 {0} 个插件？</value>
+  </data>
+  <data name="CloudDataClearConfirmFormat" xml:space="preserve">
+    <value>将清空全部云端数据：{0} 个歌单、{1} 首歌曲、{2} 首收藏、{3} 个插件</value>
+  </data>
+  <data name="CloudDataClearConfirmTitle" xml:space="preserve">
+    <value>清空云端数据</value>
+  </data>
+  <data name="CloudDataClearConfirmButton" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="CloudDataCleared" xml:space="preserve">
+    <value>云端数据已清空</value>
+  </data>
+  <data name="CloudDataClearNothing" xml:space="preserve">
+    <value>云端暂无数据</value>
+  </data>
+  <data name="CloudDataPlaylistNotFound" xml:space="preserve">
+    <value>歌单不存在或已被删除</value>
   </data>
 </root>

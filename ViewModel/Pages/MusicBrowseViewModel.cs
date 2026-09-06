@@ -678,54 +678,71 @@ namespace WinUIMusicPlayer.ViewModel
                     if (previousWasPlaying) _ = MusicPlaybackService.PlayButton();
                 });
                 _ = UpdatePlayBar(music, token);
-                AppViewModel.LoadLyricsToUI(music);
+                // 3.5 在线歌曲歌词延迟加载: 同一插件引擎串行(_gate), getLyric 在音质逐档循环间
+                // 插队抢锁会把起播拖长数秒 —— 立即清空旧歌词(空态显示"暂无歌词"), 解析完成后才取词;
+                // 本地歌曲无引擎争用, 保持原序立即加载
+                var wasOnlineSong = Services.Plugins.OnlineMusicRegistry.IsOnlinePath(music.Path);
+                if (wasOnlineSong) AppViewModel.UILyrics = [];
+                else AppViewModel.LoadLyricsToUI(music);
                 MainPage?.UpdateCurrentPlayList();
                 AppViewModel.UpdateProgressTimerUI();
                 // 3. 在线队列歌曲: Path 仍是虚拟路径时解析音源并下载缓存(点击搜索列表/自动切歌共用)
-                var (ok, onlineError) = await OnlinePlaybackResolver.EnsurePlayableAsync(music);
-                if (!ok)
+                // 解析期间底栏/详情页播放按钮转加载态并禁用; 各阶段自带超时(主源15s/回退40s),
+                // 超时或失败在弹报错的同时按钮经 finally 复位, 不会永久卡在加载中
+                AppViewModel.IsResolvingSource = wasOnlineSong;
+                try
                 {
-                    if (onlineError is null) return; // 解析被更新的点击取代, 静默让位
-                    _logger.LogWarning("在线歌曲解析失败, 停止播放: {Title} - {Error}", music.Title, onlineError);
+                    var (ok, onlineError) = await OnlinePlaybackResolver.EnsurePlayableAsync(music);
+                    if (ok && wasOnlineSong) AppViewModel.LoadLyricsToUI(music);
+                    if (!ok)
+                    {
+                        if (onlineError is null) return; // 解析被更新的点击取代, 静默让位
+                        _logger.LogWarning("在线歌曲解析失败, 停止播放: {Title} - {Error}", music.Title, onlineError);
+                        await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
+                        {
+                            // 播放栏已先行切到本曲, 解析失败时回退到原曲, 避免栏上显示与实际播放不符;
+                            // 原曲已在切栏瞬间暂停, 回退后保持暂停, 由用户手动恢复播放
+                            if (previousMusic is not null && ReferenceEquals(AppViewModel.CurrentPlayingMusic, music))
+                            {
+                                AppViewModel.CurrentPlayingMusic = previousMusic;
+                                MusicBrowsePage?.UpdateViewList();
+                            }
+                            // 同步歌单插件缺失/不匹配时明确告知用户, 避免点击无反应
+                            ToastFlyout.ShowError($"{music.Title}\n{onlineError}");
+                        });
+                        if (previousMusic is not null && ReferenceEquals(AppViewModel.CurrentPlayingMusic, previousMusic))
+                        {
+                            AppViewModel.LoadLyricsToUI(previousMusic);
+                            _ = UpdatePlayBar(previousMusic, token);
+                        }
+                        return;
+                    }
+                    // 4. 音源就绪, 交给播放子进程真正开始播放
+                    MusicPlaybackService.PlayMusic(music);
                     await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
                     {
-                        // 播放栏已先行切到本曲, 解析失败时回退到原曲, 避免栏上显示与实际播放不符;
-                        // 原曲已在切栏瞬间暂停, 回退后保持暂停, 由用户手动恢复播放
-                        if (previousMusic is not null && ReferenceEquals(AppViewModel.CurrentPlayingMusic, music))
+                        try
                         {
-                            AppViewModel.CurrentPlayingMusic = previousMusic;
-                            MusicBrowsePage?.UpdateViewList();
+                            App.Services.GetService<PlaybackStatsService>()?.StartSession(music);
                         }
-                        // 同步歌单插件缺失/不匹配时明确告知用户, 避免点击无反应
-                        ToastFlyout.ShowError($"{music.Title}\n{onlineError}");
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "记录播放统计会话失败: {Message}", ex.Message);
+                        }
                     });
-                    if (previousMusic is not null && ReferenceEquals(AppViewModel.CurrentPlayingMusic, previousMusic))
-                    {
-                        AppViewModel.LoadLyricsToUI(previousMusic);
-                        _ = UpdatePlayBar(previousMusic, token);
-                    }
-                    return;
+                    TrimMemory();
                 }
-                // 4. 音源就绪, 交给播放子进程真正开始播放
-                MusicPlaybackService.PlayMusic(music);
-                await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
+                finally
                 {
-                    try
-                    {
-                        App.Services.GetService<PlaybackStatsService>()?.StartSession(music);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "记录播放统计会话失败: {Message}", ex.Message);
-                    }
-                });
-                TrimMemory();
+                    // 解析结束(成功/失败/超时/被新点击取代): 播放按钮退出加载态
+                    AppViewModel.IsResolvingSource = false;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"播放音乐失败: {ex.Message}");
             }
-        }   
+        } 
 
         private void TrimMemory() {
             try

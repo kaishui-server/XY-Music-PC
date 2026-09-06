@@ -8,6 +8,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using System.Timers;
 using Windows.Graphics;
@@ -141,7 +142,7 @@ namespace WinUIMusicPlayer
 
         private void SetWindow()
         {
-            this.SetIcon("Assets/icon.ico");
+            this.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico"));
             Title = ToolUtils.GetString("AppMainTitle");
 
             var ps = App.Services.GetRequiredService<MusicDatabaseService>().CurrentPlayState;
@@ -259,6 +260,12 @@ namespace WinUIMusicPlayer
             {
                 _logger.LogWarning(ex, "应用主题初始化失败，可能是因为系统主题设置不受支持。");
             }
+        }
+
+        /// <summary>仅切换本次运行的界面主题(不写用户设置): 自定义背景图对比度检测自动切换用。</summary>
+        public void ApplyRuntimeTheme(Microsoft.UI.Xaml.ElementTheme theme)
+        {
+            themeStyleHelper?.ApplyRuntimeTheme(theme);
         }
 
         /// <summary>背景应用版本号: 拖动滑杆时丢弃过期的异步应用结果。</summary>

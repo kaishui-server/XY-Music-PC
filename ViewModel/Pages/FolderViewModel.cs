@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -92,10 +92,10 @@ namespace WinUIMusicPlayer.ViewModel
             }
         }
 
-        public void FolderGridView_ItemClick(object sender, ItemClickEventArgs e)
+        public void FolderListView_ItemClick(object sender, ItemClickEventArgs e)
         {
-            var gridView = sender as GridView;
-            GridViewItem? item = gridView?.ContainerFromItem(e.ClickedItem)?.As<GridViewItem>();
+            var listView = sender as ListView;
+            ListViewItem? item = listView?.ContainerFromItem(e.ClickedItem)?.As<ListViewItem>();
             if (item is not null)
             {
                 Music? folder = item.Content as Music;
@@ -110,7 +110,7 @@ namespace WinUIMusicPlayer.ViewModel
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"FolderGridView_ItemClick 导航失败: {ex.Message}");
+                        _logger.LogError(ex, $"FolderListView_ItemClick 导航失败: {ex.Message}");
                     }
                 }
             }
