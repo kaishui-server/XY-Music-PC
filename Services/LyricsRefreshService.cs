@@ -1,4 +1,4 @@
-﻿using AnimatedWin2dControls.Controls.AnimatedLyricsLineControl;
+using AnimatedWin2dControls.Controls.AnimatedLyricsLineControl;
 using CommunityToolkit.WinUI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using WinUIMusicPlayer.Model;
+using WinUIMusicPlayer.Services.Plugins;
 using WinUIMusicPlayer.ViewModel;
 using WinUIMusicPlayer.WebService;
 
@@ -119,12 +120,33 @@ namespace WinUIMusicPlayer.Services
             try
             {
                 await Task.Delay(500, ct);
-                var (lyricsText, transLrc, krc, tKrc) = await _musicDatabaseService.GetLyricsAsync(music.Id);
+                // 在线歌曲的负数临时 Id 每次会话都从 -2 重新分配, 会与历史会话持久化的歌词行撞 Id,
+                // 导致 GetLyricsAsync 读到"以前播放过的在线歌"的歌词 —— 在线歌曲禁用歌词库读写
+                var isOnline = IsOnlineMusic(music);
+                string? lyricsText = null, transLrc = null, krc = null, tKrc = null;
+                if (!isOnline)
+                    (lyricsText, transLrc, krc, tKrc) = await _musicDatabaseService.GetLyricsAsync(music.Id);
+
+                // 0. 在线歌曲的会话级关联歌词(用户手动关联, 优先级最高, 不落库)
+                if (isOnline && OnlineLyricsLinkStore.TryGet(music, out var linked))
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var linkedLyrics = ParseByFormat(linked.Krc is { Length: > 0 } ? linked.Krc : linked.Lrc, linked.Trans, ct);
+                    if (linkedLyrics is { Count: > 0 })
+                    {
+                        music.PlayCount++;
+                        await _musicDatabaseService.UpdateMusicInfo(music);
+                        FixEndMs(linkedLyrics, music.Duration.TotalMilliseconds);
+                        _previousLyrics = linkedLyrics;
+                        return linkedLyrics;
+                    }
+                }
 
                 // 1. 本地文件（.krc / .qrc / .lrc）
                 var localLyrics = TryParseLocalLyricsFile(music, ct);
                 if (localLyrics is { Count: > 0 })
                 {
+                    ct.ThrowIfCancellationRequested();
                     music.PlayCount++;
                     await _musicDatabaseService.UpdateMusicInfo(music);
                     FixEndMs(localLyrics, music.Duration.TotalMilliseconds);
@@ -132,25 +154,40 @@ namespace WinUIMusicPlayer.Services
                     return localLyrics;
                 }
 
-                // 2. music.Krc 缓存（KRC/QRC 在线）
+                // 2. 在线歌曲优先走插件 getLyric(同平台精确 id, 不串歌; 时间轴与音源一致)
+                var onlineLyrics = await TryParseOnlinePluginLyrics(music, ct);
+                if (onlineLyrics is { Count: > 0 })
+                {
+                    ct.ThrowIfCancellationRequested();
+                    music.PlayCount++;
+                    await _musicDatabaseService.UpdateMusicInfo(music);
+                    FixEndMs(onlineLyrics, music.Duration.TotalMilliseconds);
+                    _previousLyrics = onlineLyrics;
+                    return onlineLyrics;
+                }
+
+                // 3. music.Krc 缓存（KRC/QRC 在线）
                 var (krcLyrics, krcOut, tKrcOut) = await TryParseKrcLyricsInternal(music, krc ?? "", tKrc ?? "", ct);
                 if (krcLyrics.Count > 0)
                 {
+                    ct.ThrowIfCancellationRequested();
                     music.PlayCount++;
-                    await _musicDatabaseService.SaveLyricsAsync(music.Id, lyricsText, transLrc, krcOut, tKrcOut);
+                    if (!isOnline)
+                        await _musicDatabaseService.SaveLyricsAsync(music.Id, lyricsText, transLrc, krcOut, tKrcOut);
                     await _musicDatabaseService.UpdateMusicInfo(music);
                     FixEndMs(krcLyrics, music.Duration.TotalMilliseconds);
                     _previousLyrics = krcLyrics;
                     return krcLyrics;
                 }
 
-                // 3. LRC 缓存或在线搜索（本地文件已在步骤1处理）
+                // 4. LRC 缓存或在线搜索（本地文件已在步骤1处理; 在线歌曲插件歌词失败也走到这里回退联网搜索）
                 lyricsText ??= krcOut;
                 var (lrcLyrics, lrcOut, transOut) = await ParseLrcLyricsInternal(music, lyricsText ?? "", transLrc ?? "", null, null, ct);
 
                 ct.ThrowIfCancellationRequested();
                 music.PlayCount++;
-                await _musicDatabaseService.SaveLyricsAsync(music.Id, lrcOut, transOut, krcOut, tKrcOut);
+                if (!isOnline)
+                    await _musicDatabaseService.SaveLyricsAsync(music.Id, lrcOut, transOut, krcOut, tKrcOut);
                 await _musicDatabaseService.UpdateMusicInfo(music);
                 FixEndMs(lrcLyrics, music.Duration.TotalMilliseconds);
                 _previousLyrics = lrcLyrics;
@@ -160,6 +197,56 @@ namespace WinUIMusicPlayer.Services
             {
                 return [];
             }
+            catch (Exception ex)
+            {
+                // 数据库写失败等异常不得炸断歌词链路(fire-and-forget 调用方无 catch,
+                // 会卡住 UILyrics 更新导致切歌后仍显示上一首歌词), 兜底返回空并记录
+                _logger.LogError(ex, $"SetLyrics 歌词加载失败: {ex.Message}");
+                return [];
+            }
+        }
+
+        /// <summary>判断是否为插件在线歌曲(播放时 Path 被替换为缓存文件, 用 OnlineVirtualPath 判别)。</summary>
+        private static bool IsOnlineMusic(Music music)
+        {
+            var virtualPath = music.OnlineVirtualPath;
+            if (string.IsNullOrEmpty(virtualPath)) virtualPath = music.Path;
+            return OnlineMusicRegistry.IsOnlinePath(virtualPath);
+        }
+
+        /// <summary>
+        /// 在线歌曲(mfplugin:// 虚拟路径)优先经插件 getLyric 获取歌词:
+        /// 同平台精确 id 匹配(不串歌)、时间轴与音源一致。插件不支持或失败返回 null, 由调用方回退联网搜索。
+        /// </summary>
+        private async Task<List<LyricLine>?> TryParseOnlinePluginLyrics(Music music, CancellationToken ct)
+        {
+            if (!IsOnlineMusic(music)) return null;
+            var virtualPath = music.OnlineVirtualPath;
+            if (string.IsNullOrEmpty(virtualPath)) virtualPath = music.Path;
+            if (!OnlineMusicRegistry.TryGet(virtualPath, out var song)) return null;
+
+            try
+            {
+                var pluginManager = App.Services.GetRequiredService<PluginManagerService>();
+                var (lrc, trans, error) = await pluginManager.GetLyricAsync(song);
+                ct.ThrowIfCancellationRequested();
+                if (error is not null)
+                {
+                    _logger.LogInformation($"插件歌词获取失败, 回退联网搜索: {song.PluginName} {error}");
+                    return null;
+                }
+                if (string.IsNullOrWhiteSpace(lrc)) return null;
+
+                var lyrics = ParseByFormat(lrc, trans, ct);
+                if (lyrics is { Count: > 0 })
+                    return lyrics;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, $"插件歌词异常, 回退联网搜索: {ex.Message}");
+            }
+            return null;
         }
 
         private static void FixEndMs(List<LyricLine> lyrics, double songDurationMs)
@@ -260,6 +347,10 @@ namespace WinUIMusicPlayer.Services
 
         private List<LyricLine>? ParseByFormat(string content, string? transContent, CancellationToken ct)
         {
+            // 修复单行 KRC(换行丢失, [start,dur] 段以空格分隔): 已持久化的关联歌词与部分插件
+            // 返回此形态, 不重建换行会被 LRC 解析整体跳过, 导致歌词区空白(页面消失)
+            content = QrcLyricDecryptor.NormalizeInlineKrc(content);
+
             List<LyricLine> lyrics;
 
             // KRC 优先（独立格式 ^[int,int]），其次增强型逐字 LRC（支持 <> 新版 + [] 旧版），再 QRC，最后回退普通 LRC
@@ -318,6 +409,8 @@ namespace WinUIMusicPlayer.Services
 
             if (string.IsNullOrWhiteSpace(krc)) return ([], krc, tKrc);
 
+            // 单行 KRC 修复(换行丢失的段以空格分隔)
+            krc = QrcLyricDecryptor.NormalizeInlineKrc(krc);
             var lyrics = IsQrcFormat(krc)
                 ? ParseQrcLyrics(krc, cancellationToken)
                 : ParseKrcLyrics(krc, cancellationToken);
@@ -493,10 +586,12 @@ namespace WinUIMusicPlayer.Services
                 if (dotRel < 0) continue;
                 int dot = colon + 1 + dotRel;
 
-                long lineStartMs = ParseQrcTimeToMs(
-                    timePart.Slice(0, colon),
-                    timePart.Slice(colon + 1, dot - colon - 1),
-                    timePart.Slice(dot + 1));
+                if (!TryParseQrcTimeToMs(
+                        timePart.Slice(0, colon),
+                        timePart.Slice(colon + 1, dot - colon - 1),
+                        timePart.Slice(dot + 1),
+                        out long lineStartMs))
+                    continue;
 
                 var content = trimmed.Slice(bracketClose + 1);
                 if (content.IsEmpty || content.IsWhiteSpace()) continue;
@@ -809,22 +904,26 @@ namespace WinUIMusicPlayer.Services
             if (sepRel < 0) sepRel = afterColon.IndexOf(':'); // 兼容 [mm:ss:xx]
             if (sepRel < 0) return false;
             int dot = colon + 1 + sepRel;
-            ms = ParseQrcTimeToMs(
+            return TryParseQrcTimeToMs(
                 tagSpan.Slice(0, colon),
                 tagSpan.Slice(colon + 1, dot - colon - 1),
-                tagSpan.Slice(dot + 1));
-            return true;
+                tagSpan.Slice(dot + 1),
+                out ms);
         }
 
         /// <summary>
-        /// QRC 时间转毫秒：接收 ReadOnlySpan&lt;char&gt;，全程无 string 分配
+        /// QRC 时间转毫秒：接收 ReadOnlySpan&lt;char&gt;，全程无 string 分配。
+        /// 非数字字段([re:xx.yy] 等头标签混入)返回 false, 防止 int.Parse 异常炸断歌词链路。
         /// </summary>
-        private static long ParseQrcTimeToMs(ReadOnlySpan<char> mm, ReadOnlySpan<char> ss, ReadOnlySpan<char> msSpan)
+        private static bool TryParseQrcTimeToMs(ReadOnlySpan<char> mm, ReadOnlySpan<char> ss, ReadOnlySpan<char> msSpan, out long ms)
         {
-            int minutes = int.Parse(mm);
-            int seconds = int.Parse(ss);
-            int milliseconds = msSpan.Length == 2 ? int.Parse(msSpan) * 10 : int.Parse(msSpan);
-            return minutes * 60000L + seconds * 1000L + milliseconds;
+            ms = 0;
+            if (!int.TryParse(mm, out int minutes)) return false;
+            if (!int.TryParse(ss, out int seconds)) return false;
+            if (!int.TryParse(msSpan, out int rawMs)) return false;
+            int milliseconds = msSpan.Length == 2 ? rawMs * 10 : rawMs;
+            ms = minutes * 60000L + seconds * 1000L + milliseconds;
+            return true;
         }
 
         // ──────────────────────────────────────────────────────────────
@@ -982,9 +1081,33 @@ namespace WinUIMusicPlayer.Services
         {
             lyrics.Clear();
 
-            // 1. 解析原文
+            // 1. 解析原文; 双语 LRC 同一时间戳成对出现(译文在前、原文在后),
+            //    靠下的句子才是主歌词(显示在上), 首句降级为其翻译(多句以 " / " 连接), 不再单独成句
+            var lineByTime = new Dictionary<double, (LyricLine Line, string RawText)>();
             ParseLrcToLines(lrcContent, (timeMs, text) =>
             {
+                if (lineByTime.TryGetValue(timeMs, out var first))
+                {
+                    // 同一时间戳的后续句子顶替为主歌词, 原主歌词文本降级为翻译
+                    var transText = string.IsNullOrEmpty(first.Line.TransLateText)
+                        ? first.RawText
+                        : string.Concat(first.Line.TransLateText, " / ", first.RawText);
+
+                    foreach (var w in first.Line.Words)
+                    {
+                        if (s_wordPool.Count < MaxPoolSize) s_wordPool.Add(w);
+                    }
+                    first.Line.Words.Clear();
+                    foreach (var w in SplitEverything(text))
+                    {
+                        var word = RentWord();
+                        word.Word = w;
+                        first.Line.Words.Add(word);
+                    }
+                    first.Line.TransLateText = transText;
+                    lineByTime[timeMs] = (first.Line, text);
+                    return;
+                }
                 var line = RentLine();
                 line.StartMs = timeMs;
                 foreach (var w in SplitEverything(text))
@@ -994,6 +1117,7 @@ namespace WinUIMusicPlayer.Services
                     line.Words.Add(word);
                 }
                 lyrics.Add(line);
+                lineByTime[timeMs] = (line, text);
             });
 
             if (!string.IsNullOrEmpty(transLrc))

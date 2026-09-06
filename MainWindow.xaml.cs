@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.WinUI;
+using CommunityToolkit.WinUI;
 using H.NotifyIcon;
 using H.NotifyIcon.EfficiencyMode;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +8,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Timers;
 using Windows.Graphics;
 using Windows.UI;
@@ -169,7 +170,7 @@ namespace WinUIMusicPlayer
             try
             {
                 //使用注册表
-                using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"SOFTWARE\SennpeiStudio\OriginalSoundHIFIPlayer"))
+                using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"SOFTWARE\XYMusic\XYMusic"))
                 {
                     key.SetValue("MainWindowHandle", handle.ToInt64());
                 }
@@ -252,10 +253,190 @@ namespace WinUIMusicPlayer
             {
                 themeStyleHelper.SetAppStyle();
                 themeStyleHelper.SetAppTheme();
+                UpdateCustomBackground();
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "应用主题初始化失败，可能是因为系统主题设置不受支持。");
+            }
+        }
+
+        /// <summary>背景应用版本号: 拖动滑杆时丢弃过期的异步应用结果。</summary>
+        private int _backgroundVersion;
+
+        /// <summary>应用/清除自定义图片背景(设置页选择图片/调节模糊度/启动恢复时调用)。</summary>
+        public void UpdateCustomBackground()
+        {
+            var version = ++_backgroundVersion;
+            _ = ApplyCustomBackgroundAsync(version);
+        }
+
+        private async Task ApplyCustomBackgroundAsync(int version)
+        {
+            try
+            {
+                var path = AppSettings.CustomBackgroundPath;
+                if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
+                {
+                    var blur = (int)Math.Round(Math.Clamp(AppSettings.CustomBackgroundBlur, 0, 50));
+                    // 模糊度>0 时生成/复用模糊缓存(后台线程, 防卡 UI)
+                    if (blur > 0)
+                    {
+                        var blurred = await Task.Run(() => GetOrCreateBlurredBackground(path, blur));
+                        if (version != _backgroundVersion) return; // 期间设置已变更, 丢弃
+                        if (blurred is null)
+                        {
+                            _logger.LogWarning("生成模糊背景失败, 回退原图");
+                        }
+                        else
+                        {
+                            path = blurred;
+                        }
+                    }
+                    CustomBackgroundImage.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(path));
+                    CustomBackgroundImage.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    CustomBackgroundImage.Source = null;
+                    CustomBackgroundImage.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "应用自定义背景失败");
+                CustomBackgroundImage.Source = null;
+                CustomBackgroundImage.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>生成模糊背景缓存(按模糊度命名, 已存在直接复用)。返回缓存文件路径, 失败返回 null。</summary>
+        private static async Task<string?> GetOrCreateBlurredBackground(string sourcePath, int blur)
+        {
+            try
+            {
+                var dir = System.IO.Path.GetDirectoryName(sourcePath)!;
+                var cache = System.IO.Path.Combine(dir, $"custom_background_blur{blur}.png");
+                if (System.IO.File.Exists(cache)) return cache;
+
+                var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(sourcePath);
+                using var fileStream = await file.OpenReadAsync();
+                var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(fileStream);
+                // 超大图缩到最长边 4096 再模糊, 控制内存与耗时
+                var transform = new Windows.Graphics.Imaging.BitmapTransform();
+                uint srcW = decoder.OrientedPixelWidth, srcH = decoder.OrientedPixelHeight;
+                if (Math.Max(srcW, srcH) > 4096)
+                {
+                    var scale = 4096.0 / Math.Max(srcW, srcH);
+                    transform.ScaledWidth = (uint)(srcW * scale);
+                    transform.ScaledHeight = (uint)(srcH * scale);
+                }
+                var width = (int)(transform.ScaledWidth != 0 ? transform.ScaledWidth : srcW);
+                var height = (int)(transform.ScaledHeight != 0 ? transform.ScaledHeight : srcH);
+                var provider = await decoder.GetPixelDataAsync(
+                    Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8,
+                    Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied,
+                    transform,
+                    Windows.Graphics.Imaging.ExifOrientationMode.RespectExifOrientation,
+                    Windows.Graphics.Imaging.ColorManagementMode.DoNotColorManage);
+                var pixels = provider.DetachPixelData();
+                if (pixels is null || width <= 0 || height <= 0 || pixels.Length < width * height * 4) return null;
+
+                BoxBlurBgra(pixels, width, height, blur);
+
+                // 先写临时文件再改名, 避免中途失败留下损坏缓存
+                var tmp = cache + ".tmp";
+                var folder = await Windows.Storage.StorageFolder.GetFolderFromPathAsync(dir);
+                var outFile = await folder.CreateFileAsync(
+                    System.IO.Path.GetFileName(tmp), Windows.Storage.CreationCollisionOption.ReplaceExisting);
+                using (var outStream = await outFile.OpenAsync(Windows.Storage.FileAccessMode.ReadWrite))
+                {
+                    var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(
+                        Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId, outStream);
+                    encoder.SetPixelData(
+                        Windows.Graphics.Imaging.BitmapPixelFormat.Bgra8,
+                        Windows.Graphics.Imaging.BitmapAlphaMode.Premultiplied,
+                        (uint)width, (uint)height, 96, 96, pixels);
+                    await encoder.FlushAsync();
+                }
+                if (System.IO.File.Exists(cache)) System.IO.File.Delete(cache);
+                System.IO.File.Move(tmp, cache);
+                return cache;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>BGRA 像素盒式模糊: 水平+垂直滑窗, 3 轮迭代逼近高斯模糊。</summary>
+        private static void BoxBlurBgra(byte[] pixels, int width, int height, int radius)
+        {
+            if (radius <= 0 || width <= 1 || height <= 1) return;
+            var temp = new byte[pixels.Length];
+            for (var iter = 0; iter < 3; iter++)
+            {
+                HorizontalBoxBlur(pixels, temp, width, height, radius);
+                VerticalBoxBlur(temp, pixels, width, height, radius);
+            }
+        }
+
+        private static void HorizontalBoxBlur(byte[] src, byte[] dst, int w, int h, int r)
+        {
+            var window = 2 * r + 1;
+            for (var y = 0; y < h; y++)
+            {
+                var row = y * w * 4;
+                int b = 0, g = 0, rr = 0, a = 0;
+                for (var i = -r; i <= r; i++)
+                {
+                    var p = row + Math.Clamp(i, 0, w - 1) * 4;
+                    b += src[p]; g += src[p + 1]; rr += src[p + 2]; a += src[p + 3];
+                }
+                for (var x = 0; x < w; x++)
+                {
+                    var d = row + x * 4;
+                    dst[d] = (byte)(b / window);
+                    dst[d + 1] = (byte)(g / window);
+                    dst[d + 2] = (byte)(rr / window);
+                    dst[d + 3] = (byte)(a / window);
+                    var addP = row + Math.Min(x + r + 1, w - 1) * 4;
+                    var remP = row + Math.Max(x - r, 0) * 4;
+                    b += src[addP] - src[remP];
+                    g += src[addP + 1] - src[remP + 1];
+                    rr += src[addP + 2] - src[remP + 2];
+                    a += src[addP + 3] - src[remP + 3];
+                }
+            }
+        }
+
+        private static void VerticalBoxBlur(byte[] src, byte[] dst, int w, int h, int r)
+        {
+            var window = 2 * r + 1;
+            var stride = w * 4;
+            for (var x = 0; x < w; x++)
+            {
+                var col = x * 4;
+                int b = 0, g = 0, rr = 0, a = 0;
+                for (var i = -r; i <= r; i++)
+                {
+                    var p = col + Math.Clamp(i, 0, h - 1) * stride;
+                    b += src[p]; g += src[p + 1]; rr += src[p + 2]; a += src[p + 3];
+                }
+                for (var y = 0; y < h; y++)
+                {
+                    var d = col + y * stride;
+                    dst[d] = (byte)(b / window);
+                    dst[d + 1] = (byte)(g / window);
+                    dst[d + 2] = (byte)(rr / window);
+                    dst[d + 3] = (byte)(a / window);
+                    var addP = col + Math.Min(y + r + 1, h - 1) * stride;
+                    var remP = col + Math.Max(y - r, 0) * stride;
+                    b += src[addP] - src[remP];
+                    g += src[addP + 1] - src[remP + 1];
+                    rr += src[addP + 2] - src[remP + 2];
+                    a += src[addP + 3] - src[remP + 3];
+                }
             }
         }
 

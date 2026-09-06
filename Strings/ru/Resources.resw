@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle.Text" xml:space="preserve">
-    <value>HQ-плеер Original Sound</value>
+    <value>XY Music</value>
   </data>
   <data name="LoadingText.Text" xml:space="preserve">
     <value>Загрузка данных, пожалуйста подождите...</value>
@@ -128,6 +128,15 @@
   </data>
   <data name="AlbumTab.Text" xml:space="preserve">
     <value>Альбомы</value>
+  </data>
+  <data name="Home.Text" xml:space="preserve">
+    <value>Главная</value>
+  </data>
+  <data name="HomeCombox.Content" xml:space="preserve">
+    <value>Главная</value>
+  </data>
+  <data name="HomePageGoMusicBrowse.Text" xml:space="preserve">
+    <value>Перейти к музыке</value>
   </data>
   <data name="AddFolder.Text" xml:space="preserve">
     <value>Добавить папку</value>
@@ -202,7 +211,7 @@
     <value>раз</value>
   </data>
   <data name="AppMainTitle" xml:space="preserve">
-    <value>HQ-плеер Original Sound</value>
+    <value>XY Music</value>
   </data>
   <data name="ArtistTab.Text" xml:space="preserve">
     <value>Артисты</value>
@@ -375,6 +384,21 @@
   </data>
   <data name="AppStyle.Text" xml:space="preserve">
     <value>Стиль приложения</value>
+  </data>
+  <data name="CustomBackground.Text" xml:space="preserve">
+    <value>Пользовательский фон</value>
+  </data>
+  <data name="CustomBackgroundDescription.Text" xml:space="preserve">
+    <value>Выберите локальное изображение в качестве фона приложения. Оно сохранится после перезапуска.</value>
+  </data>
+  <data name="ChooseBackgroundImage.Content" xml:space="preserve">
+    <value>Выбрать изображение</value>
+  </data>
+  <data name="ClearBackgroundImage.Content" xml:space="preserve">
+    <value>Убрать фон</value>
+  </data>
+  <data name="CustomBackgroundBlur.Text" xml:space="preserve">
+    <value>Размытие фона</value>
   </data>
   <data name="MicaStyle.Content" xml:space="preserve">
     <value>Mica</value>
@@ -632,7 +656,7 @@
     <value>Сохранить текст в базу данных</value>
   </data>
   <data name="AppMainTitleIcon.ToolTipText" xml:space="preserve">
-    <value>HQ-плеер Original Sound</value>
+    <value>XY Music</value>
   </data>
   <data name="IconDisplay.Text" xml:space="preserve">
     <value>Показать</value>
@@ -833,7 +857,7 @@
     <value>Кэш обложки страницы альбома</value>
   </data>
   <data name="AppTitleHeader.Header" xml:space="preserve">
-    <value>HQ-плеер Original Sound</value>
+    <value>XY Music</value>
   </data>
   <data name="CoverLoadThreadCount.Header" xml:space="preserve">
     <value>Количество потоков, загруженных на обложку</value>
@@ -980,7 +1004,7 @@
     <value>Папки музыки</value>
   </data>
   <data name="AddFolderPageWelcomeTitle.Text" xml:space="preserve">
-    <value>Добро пожаловать в HQ-плеер Original Sound</value>
+    <value>Добро пожаловать в XY Music</value>
   </data>
   <data name="AddFolderPageWelcomeSubtitle.Text" xml:space="preserve">
     <value>Добавьте локальные папки с музыкой, чтобы начать создавать свою библиотеку. Поддерживаются распространённые аудиоформаты с автоматическим поиском текстов и обложек.</value>
@@ -1134,6 +1158,60 @@
   </data>
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>Смещение времени текста песни</value>
+  </data>
+  <data name="LinkLyricsTitle" xml:space="preserve">
+    <value>Связать текст песни</value>
+  </data>
+  <data name="LinkLyrics.Content" xml:space="preserve">
+    <value>Связать текст песни</value>
+  </data>
+  <data name="LinkLyricsSearchPlaceholder" xml:space="preserve">
+    <value>Введите ключевые слова для поиска текста песни</value>
+  </data>
+  <data name="LinkLyricsSearching" xml:space="preserve">
+    <value>Поиск…</value>
+  </data>
+  <data name="LinkLyricsNoResults" xml:space="preserve">
+    <value>Подходящий текст песни не найден</value>
+  </data>
+  <data name="LinkLyricsSearchFailed" xml:space="preserve">
+    <value>Ошибка поиска, попробуйте ещё раз</value>
+  </data>
+  <data name="LinkLyricsLinking" xml:space="preserve">
+    <value>Получение текста песни…</value>
+  </data>
+  <data name="LinkLyricsLinkFailed" xml:space="preserve">
+    <value>Не удалось получить текст песни, попробуйте ещё раз или выберите другой</value>
+  </data>
+  <data name="LinkLyricsImportLocal" xml:space="preserve">
+    <value>Импортировать текст песни из локального файла</value>
+  </data>
+  <data name="LinkLyricsOnlineNotSupported" xml:space="preserve">
+    <value>Онлайн-песни не поддерживают привязку текста песни</value>
+  </data>
+  <data name="LinkLyricsLinkedTitle" xml:space="preserve">
+    <value>Привязанный текст песни</value>
+  </data>
+  <data name="LinkLyricsUnlink" xml:space="preserve">
+    <value>Отменить привязку</value>
+  </data>
+  <data name="LinkLyricsUnlinked" xml:space="preserve">
+    <value>Привязка текста песни отменена</value>
+  </data>
+  <data name="LinkLyricsPluginSource" xml:space="preserve">
+    <value>Текст из плагина</value>
+  </data>
+  <data name="LinkLyricsPluginSourceWith" xml:space="preserve">
+    <value>Плагин: {0}</value>
+  </data>
+  <data name="LinkLyricsLocalSource" xml:space="preserve">
+    <value>Локальный текст</value>
+  </data>
+  <data name="LinkLyricsCurrentSong" xml:space="preserve">
+    <value>Текст текущей песни</value>
+  </data>
+  <data name="LinkLyricsUnknownArtist" xml:space="preserve">
+    <value>Неизвестный исполнитель</value>
   </data>
   <data name="LyricsTimeOffsetTag.Text" xml:space="preserve">
     <value>Смещение времени текста песни</value>
@@ -1435,8 +1513,654 @@
   <data name="RtssWarningBody" xml:space="preserve">
     <value>RivaTuner Statistics Server (известная как RTSS, обычно устанавливается вместе с MSI Afterburner) — это D3D-утилита мониторинга FPS, которая внедряется в графический конвейер через DXGI. Когда в этом проигрывателе одновременно включены «Текст на рабочем столе» и фон с шейдером, параллельно работают две цепочки обмена Win2D, которые конфликтуют с DXGI-перехватчиками RTSS и могут привести к аварийному завершению приложения. Перед использованием закройте RTSS / MSI Afterburner или добавьте этот проигрыватель в список исключений перехватчиков RTSS.</value>
   </data>
+  <data name="OnlineSearch.Text" xml:space="preserve">
+    <value>Онлайн-поиск</value>
+  </data>
+  <data name="OnlineSearchButton.Text" xml:space="preserve">
+    <value>Поиск</value>
+  </data>
+  <data name="OnlineSearchLoading" xml:space="preserve">
+    <value>Поиск…</value>
+  </data>
+  <data name="OnlineSearchMore.Text" xml:space="preserve">
+    <value>Загрузить ещё</value>
+  </data>
+  <data name="OnlineSearchNoPlugins" xml:space="preserve">
+    <value>Нет доступных плагинов. Сначала установите один в разделе Плагины</value>
+  </data>
+  <data name="OnlineSearchNoResults" xml:space="preserve">
+    <value>Песни не найдены</value>
+  </data>
+  <data name="OnlineSearchPlaceholderText" xml:space="preserve">
+    <value>Введите ключевые слова</value>
+  </data>
+  <data name="OnlineSearchClearHistory.Content" xml:space="preserve">
+    <value>Очистить историю</value>
+  </data>
+  <data name="OnlineSearchHistory.Text" xml:space="preserve">
+    <value>История поиска</value>
+  </data>
+  <data name="OnlineSearchPlayFailed" xml:space="preserve">
+    <value>Ошибка воспроизведения</value>
+  </data>
+  <data name="OnlineSearchSearchFailed" xml:space="preserve">
+    <value>Ошибка поиска</value>
+  </data>
+  <data name="OnlineSearchSourceFailed" xml:space="preserve">
+    <value>Не удалось получить источник</value>
+  </data>
+  <data name="OnlineSearchTypeMusic" xml:space="preserve">
+    <value>Песни</value>
+  </data>
+  <data name="OnlineSearchTypeArtist" xml:space="preserve">
+    <value>Исполнители</value>
+  </data>
+  <data name="OnlineSearchTypeSheet" xml:space="preserve">
+    <value>Плейлисты</value>
+  </data>
+  <data name="OnlineSearchTypeAlbum" xml:space="preserve">
+    <value>Альбомы</value>
+  </data>
+  <data name="OnlineSearchNoCatalogResults" xml:space="preserve">
+    <value>Результаты не найдены</value>
+  <data name="OnlineSearchBack.Text" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  </data>
+  <data name="PluginInstall" xml:space="preserve">
+    <value>Установить плагин</value>
+  </data>
+  <data name="PluginInstallDownloading" xml:space="preserve">
+    <value>Загрузка плагина…</value>
+  </data>
+  <data name="PluginInstallFailed" xml:space="preserve">
+    <value>Не удалось установить плагин</value>
+  </data>
+  <data name="PluginInstallFromFile.Text" xml:space="preserve">
+    <value>Установить из файла</value>
+  </data>
+  <data name="PluginInstallFromUrlTitle" xml:space="preserve">
+    <value>Установить по URL</value>
+  </data>
+  <data name="PluginInstallFromUrl.Text" xml:space="preserve">
+    <value>Установить по URL</value>
+  </data>
+  <data name="PluginInstallReading" xml:space="preserve">
+    <value>Чтение плагина…</value>
+  </data>
+  <data name="PluginInstallSuccess" xml:space="preserve">
+    <value>Плагин установлен</value>
+  </data>
+  <data name="PluginManage.Text" xml:space="preserve">
+    <value>Плагины</value>
+  </data>
+  <data name="PluginManageEmpty" xml:space="preserve">
+    <value>Плагины не установлены</value>
+  </data>
+  <data name="PluginManageTitle.Text" xml:space="preserve">
+    <value>Плагины</value>
+  </data>
+  <data name="PluginUninstallTitle" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="PluginUninstall.Text" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="PluginUninstallConfirm" xml:space="preserve">
+    <value>Удалить этот плагин?</value>
+  </data>
+  <data name="PluginUninstallSuccess" xml:space="preserve">
+    <value>Плагин удалён</value>
+  </data>
+  <data name="TextCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="TextClose" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="TextSave" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="PluginInfoMenu.Text" xml:space="preserve">
+    <value>Сведения о плагине</value>
+  </data>
+  <data name="PluginInfoTitle" xml:space="preserve">
+    <value>Сведения о плагине</value>
+  </data>
+  <data name="PluginInfoPlatform" xml:space="preserve">
+    <value>Платформа</value>
+  </data>
+  <data name="PluginInfoVersion" xml:space="preserve">
+    <value>Версия</value>
+  </data>
+  <data name="PluginInfoAuthor" xml:space="preserve">
+    <value>Автор</value>
+  </data>
+  <data name="PluginInfoSource" xml:space="preserve">
+    <value>Источник обновлений</value>
+  </data>
+  <data name="PluginInfoFile" xml:space="preserve">
+    <value>Файл</value>
+  </data>
+  <data name="PluginInfoMethods" xml:space="preserve">
+    <value>Поддерживаемые методы</value>
+  </data>
+  <data name="PluginInfoSearchTypes" xml:space="preserve">
+    <value>Поддерживаемые типы поиска</value>
+  </data>
+  <data name="PluginInfoUserVariables" xml:space="preserve">
+    <value>Пользовательские переменные</value>
+  </data>
+  <data name="PluginUserVariablesMenu.Text" xml:space="preserve">
+    <value>Пользовательские переменные</value>
+  </data>
+  <data name="PluginUserVariablesTitle" xml:space="preserve">
+    <value>Пользовательские переменные</value>
+  </data>
+  <data name="PluginUserVariablesSaved" xml:space="preserve">
+    <value>Пользовательские переменные сохранены</value>
+  </data>
+  <data name="PluginCheckUpdateMenu.Text" xml:space="preserve">
+    <value>Проверить обновления</value>
+  </data>
+  <data name="PluginCheckUpdate" xml:space="preserve">
+    <value>Проверить обновления</value>
+  </data>
+  <data name="PluginCheckUpdateChecking" xml:space="preserve">
+    <value>Проверка обновлений…</value>
+  </data>
+  <data name="PluginCheckUpdateLatest" xml:space="preserve">
+    <value>Уже актуальная версия</value>
+  </data>
+  <data name="PluginCheckUpdateFailed" xml:space="preserve">
+    <value>Не удалось проверить обновления</value>
+  </data>
+  <data name="PluginUpdateAvailable" xml:space="preserve">
+    <value>Найдена новая версия: {0} → {1}. Обновить?</value>
+  </data>
+  <data name="PluginUpdateAvailableSameVersion" xml:space="preserve">
+    <value>Код плагина изменился (версия осталась {0}). Обновить?</value>
+  </data>
+  <data name="PluginUpdateNow" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="PluginUpdateSuccess" xml:space="preserve">
+    <value>Плагин обновлён</value>
+  </data>
+
+  <data name="DownloadChooseDir" xml:space="preserve">
+    <value>Выбрать</value>
+  </data>
+  <data name="DownloadConfirm" xml:space="preserve">
+    <value>Скачать</value>
+  </data>
+  <data name="DownloadCoverSavedNote" xml:space="preserve">
+    <value>Обложка сохранена</value>
+  </data>
+  <data name="DownloadDialogTitle" xml:space="preserve">
+    <value>Скачать онлайн-песню</value>
+  </data>
+  <data name="DownloadAlreadyExists" xml:space="preserve">
+    <value>Эта песня уже была скачана ранее. Скачать снова?</value>
+  </data>
+  <data name="DownloadRedownload" xml:space="preserve">
+    <value>Скачать снова</value>
+  </data>
+  <data name="DownloadDirLabel" xml:space="preserve">
+    <value>Папка</value>
+  </data>
+  <data name="DownloadEmbedNote" xml:space="preserve">
+    <value>Текст и обложка всегда встраиваются в файл песни</value>
+  </data>
+  <data name="DownloadFailedFormat" xml:space="preserve">
+    <value>Ошибка загрузки: {0}</value>
+  </data>
+  <data name="DownloadFileNotOnline" xml:space="preserve">
+    <value>Текущая песня не является онлайн-песней</value>
+  </data>
+  <data name="DownloadLrcSavedNote" xml:space="preserve">
+    <value>Файл текста сохранён</value>
+  </data>
+  <data name="DownloadProgressTitle" xml:space="preserve">
+    <value>Загрузка</value>
+  </data>
+  <data name="DownloadQuality" xml:space="preserve">
+    <value>Качество</value>
+  </data>
+  <data name="DownloadQuality128k" xml:space="preserve">
+    <value>Стандарт 128k</value>
+  </data>
+  <data name="DownloadQuality320k" xml:space="preserve">
+    <value>Высокое 320k</value>
+  </data>
+  <data name="DownloadQualityFlac" xml:space="preserve">
+    <value>Lossless FLAC</value>
+  </data>
+  <data name="DownloadQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="DownloadSaveCover" xml:space="preserve">
+    <value>Также сохранить обложку</value>
+  </data>
+  <data name="DownloadSaveLrc" xml:space="preserve">
+    <value>Также сохранить текст песни (.lrc)</value>
+  </data>
+  <data name="DownloadStatusDownloading" xml:space="preserve">
+    <value>Загрузка аудио...</value>
+  </data>
+  <data name="DownloadStatusEmbedding" xml:space="preserve">
+    <value>Встраивание метаданных...</value>
+  </data>
+  <data name="DownloadStatusFetchingExtras" xml:space="preserve">
+    <value>Получение текста и обложки...</value>
+  </data>
+  <data name="DownloadStatusResolving" xml:space="preserve">
+    <value>Получение ссылки...</value>
+  </data>
+  <data name="DownloadSuccessFormat" xml:space="preserve">
+    <value>Сохранено в: {0}</value>
+  </data>
+
+  <data name="DownloadDone" xml:space="preserve">
+    <value>Загрузка завершена</value>
+  </data>
+  <data name="DownloadFailedShort" xml:space="preserve">
+    <value>Ошибка загрузки</value>
+  </data>
+  <data name="DownloadHide" xml:space="preserve">
+    <value>Скрыть</value>
+  </data>
+  <data name="MyPlayListEmptySubtitle.Text" xml:space="preserve">
+    <value>Создайте плейлист или добавьте песни со страницы воспроизведения</value>
+  </data>
+  <data name="MyPlayListAlreadyAdded" xml:space="preserve">
+    <value>Эта песня уже есть в этом плейлисте</value>
+  </data>
+  <data name="MyPlayListDelete.Text" xml:space="preserve">
+    <value>Удалить плейлист</value>
+  </data>
+  <data name="MyPlayListNamePlaceholder" xml:space="preserve">
+    <value>Введите название плейлиста</value>
+  </data>
+  <data name="MyPlayListDialogTitle" xml:space="preserve">
+    <value>Выберите плейлист</value>
+  </data>
+  <data name="MyPlayListNoCurrentSong" xml:space="preserve">
+    <value>Сейчас ничего не воспроизводится</value>
+  </data>
+  <data name="MyPlayListRemoveSong.Text" xml:space="preserve">
+    <value>Удалить из плейлиста</value>
+  </data>
+  <data name="MyPlayListNewTitle" xml:space="preserve">
+    <value>Новый плейлист</value>
+  </data>
+  <data name="CreatePlayListTabCreate" xml:space="preserve">
+    <value>Новый плейлист</value>
+  </data>
+  <data name="CreatePlayListTabNetwork" xml:space="preserve">
+    <value>Импорт из сети</value>
+  </data>
+  <data name="CreatePlayListTabLocal" xml:space="preserve">
+    <value>Импорт локально</value>
+  </data>
+  <data name="CreatePlayListCreateButton" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="CreatePlayListNetworkSource" xml:space="preserve">
+    <value>Источник плейлиста</value>
+  </data>
+  <data name="CreatePlayListNoImportPlugin" xml:space="preserve">
+    <value>Нет плагина, поддерживающего импорт плейлистов. Сначала установите и включите плагин в управлении плагинами</value>
+  </data>
+  <data name="CreatePlayListNetworkUrlPlaceholder" xml:space="preserve">
+    <value>Вставьте ссылку на плейлист, напр. https://y.qq.com/n/ryqq/playlist/xxxx</value>
+  </data>
+  <data name="CreatePlayListImportButton" xml:space="preserve">
+    <value>Импортировать</value>
+  </data>
+  <data name="CreatePlayListLocalHint" xml:space="preserve">
+    <value>Поддерживаются плейлисты M3U/M3U8 и резервные JSON-копии MusicFree</value>
+  </data>
+  <data name="CreatePlayListSelectFileButton" xml:space="preserve">
+    <value>Выбрать файл и импортировать</value>
+  </data>
+  <data name="CreatePlayListImporting" xml:space="preserve">
+    <value>Импорт…</value>
+  </data>
+  <data name="CreatePlayListUrlRequired" xml:space="preserve">
+    <value>Введите ссылку на плейлист</value>
+  </data>
+  <data name="CreatePlayListImportFailedPlain" xml:space="preserve">
+    <value>Не удалось импортировать, попробуйте снова</value>
+  </data>
+  <data name="CreatePlayListImportFailedReason" xml:space="preserve">
+    <value>Ошибка импорта: {0}</value>
+  </data>
+  <data name="CreatePlayListImportSuccess" xml:space="preserve">
+    <value>Импортировано «{0}», треков: {1}</value>
+  </data>
+  <data name="CreatePlayListImportedDefaultName" xml:space="preserve">
+    <value>Импортированный плейлист</value>
+  </data>
+  <data name="CreatePlayListUnsupportedFile" xml:space="preserve">
+    <value>Неподдерживаемый тип файла</value>
+  </data>
+  <data name="CreatePlayListM3uEmpty" xml:space="preserve">
+    <value>В файле плейлиста нет локальных путей к аудио</value>
+  </data>
+  <data name="CreatePlayListLocalNoMatch" xml:space="preserve">
+    <value>Аудиофайлы из плейлиста не найдены в локальной музыкальной библиотеке</value>
+  </data>
+  <data name="CreatePlayListLocalImportedWithMissing" xml:space="preserve">
+    <value>Импортировано «{0}», треков: {1}, не найдено в локальной библиотеке: {2}</value>
+  </data>
+  <data name="CreatePlayListBackupInvalid" xml:space="preserve">
+    <value>Файл не является корректной JSON-копией MusicFree</value>
+  </data>
+  <data name="CreatePlayListBackupNoSong" xml:space="preserve">
+    <value>В резервной копии нет треков для импорта</value>
+  </data>
+  <data name="CreatePlayListBackupNoPlugin" xml:space="preserve">
+    <value>{0} треков не удалось связать из-за отсутствия плагинов</value>
+  </data>
+  <data name="CreatePlayListBackupImported" xml:space="preserve">
+    <value>Из резервной копии импортировано плейлистов: {0}, треков: {1}</value>
+  </data>
+  <data name="CreatePlayListBackupSkippedSuffix" xml:space="preserve">
+    <value>, пропущено треков с неполными данными: {0}</value>
+  </data>
+  <data name="CreatePlayListUnnamedSheet" xml:space="preserve">
+    <value>Безымянный плейлист {0}</value>
+  </data>
+  <data name="MyPlayListNew.Text" xml:space="preserve">
+    <value>Новый плейлист</value>
+  </data>
+  <data name="MyPlayListDialogEmptyHint" xml:space="preserve">
+    <value>Плейлистов пока нет — введите название, чтобы создать</value>
+  </data>
+  <data name="MyPlayListSongsSuffix" xml:space="preserve">
+    <value>песен</value>
+  </data>
+  <data name="AddToMyPlayList" xml:space="preserve">
+    <value>В плейлист</value>
+  </data>
+  <data name="MyPlayListEmptyTitle.Text" xml:space="preserve">
+    <value>Пока нет плейлистов</value>
+  </data>
+  <data name="MyPlayListCreateAndAdd" xml:space="preserve">
+    <value>Создать и добавить</value>
+  </data>
+  <data name="MyPlayLists.Text" xml:space="preserve">
+    <value>Мои плейлисты</value>
+  </data>
+  <data name="MyPlayListAddFailedOnline" xml:space="preserve">
+    <value>Не удалось распознать текущую песню. Воспроизведите её снова и повторите попытку.</value>
+  </data>
+  <data name="MyPlayListSongCountSuffix.Text" xml:space="preserve">
+    <value>песен</value>
+  </data>
+  <data name="AddToMyPlayListToolTip.Content" xml:space="preserve">
+    <value>В плейлист</value>
+  </data>
+  <data name="OnlineItemPlay.Text" xml:space="preserve">
+    <value>Воспроизвести</value>
+  </data>
+  <data name="OnlineItemAddToPlayList.Text" xml:space="preserve">
+    <value>В плейлист</value>
+  </data>
+  <data name="AccountTitle" xml:space="preserve">
+    <value>Аккаунт</value>
+  </data>
+  <data name="AccountMyTitle" xml:space="preserve">
+    <value>Мой аккаунт</value>
+  </data>
+  <data name="AccountBrandSubtitle" xml:space="preserve">
+    <value>Войдите в аккаунт XY Music, чтобы синхронизировать плейлисты, избранное и плагины</value>
+  </data>
+  <data name="AccountLoginTab" xml:space="preserve">
+    <value>Вход</value>
+  </data>
+  <data name="AccountRegisterTab" xml:space="preserve">
+    <value>Регистрация</value>
+  </data>
+  <data name="AccountIdLabel" xml:space="preserve">
+    <value>Аккаунт</value>
+  </data>
+  <data name="AccountPasswordLabel" xml:space="preserve">
+    <value>Пароль</value>
+  </data>
+  <data name="AccountLoginButton" xml:space="preserve">
+    <value>Войти</value>
+  </data>
+  <data name="AccountForgotPassword" xml:space="preserve">
+    <value>Забыли пароль?</value>
+  </data>
+  <data name="AccountNicknameLabel" xml:space="preserve">
+    <value>Никнейм</value>
+  </data>
+  <data name="AccountConfirmPasswordLabel" xml:space="preserve">
+    <value>Подтвердите пароль</value>
+  </data>
+  <data name="AccountEmailLabel" xml:space="preserve">
+    <value>Электронная почта</value>
+  </data>
+  <data name="AccountCodeLabel" xml:space="preserve">
+    <value>Код подтверждения</value>
+  </data>
+  <data name="AccountSendCode" xml:space="preserve">
+    <value>Отправить код</value>
+  </data>
+  <data name="AccountRegisterButton" xml:space="preserve">
+    <value>Зарегистрироваться</value>
+  </data>
+  <data name="AccountFormIncomplete" xml:space="preserve">
+    <value>Заполните все поля</value>
+  </data>
+  <data name="AccountPasswordMismatch" xml:space="preserve">
+    <value>Пароли не совпадают</value>
+  </data>
+  <data name="AccountLoginFailed" xml:space="preserve">
+    <value>Не удалось войти</value>
+  </data>
+  <data name="AccountRegisterFailed" xml:space="preserve">
+    <value>Не удалось зарегистрироваться</value>
+  </data>
+  <data name="AccountEmailInvalid" xml:space="preserve">
+    <value>Введите корректный адрес электронной почты</value>
+  </data>
+  <data name="AccountCodeSent" xml:space="preserve">
+    <value>Код отправлен, проверьте почту</value>
+  </data>
+  <data name="AccountCodeSendFailed" xml:space="preserve">
+    <value>Не удалось отправить код</value>
+  </data>
+  <data name="AccountCodeCountdown" xml:space="preserve">
+    <value>Повторная отправка через {0} с</value>
+  </data>
+  <data name="AccountRegisterCaptchaTitle" xml:space="preserve">
+    <value>Проверка</value>
+  </data>
+  <data name="AccountRegisterCaptchaDesc" xml:space="preserve">
+    <value>Пройдите проверку, чтобы продолжить</value>
+  </data>
+  <data name="AccountSendCodeCaptchaTitle" xml:space="preserve">
+    <value>Проверка</value>
+  </data>
+  <data name="AccountSendCodeCaptchaDesc" xml:space="preserve">
+    <value>Пройдите проверку перед отправкой кода</value>
+  </data>
+  <data name="AccountCaptchaConfirm" xml:space="preserve">
+    <value>Подтвердить</value>
+  </data>
+  <data name="AccountCaptchaRefresh" xml:space="preserve">
+    <value>Другой вопрос</value>
+  </data>
+  <data name="AccountCaptchaEmpty" xml:space="preserve">
+    <value>Введите ответ</value>
+  </data>
+  <data name="AccountForgotEmailLabel" xml:space="preserve">
+    <value>Введите почту, указанную при регистрации</value>
+  </data>
+  <data name="AccountForgotTitle" xml:space="preserve">
+    <value>Забыли пароль</value>
+  </data>
+  <data name="AccountForgotSendCode" xml:space="preserve">
+    <value>Отправить код</value>
+  </data>
+  <data name="AccountForgotCaptchaDesc" xml:space="preserve">
+    <value>Пройдите проверку перед отправкой кода</value>
+  </data>
+  <data name="AccountForgotCodeLabel" xml:space="preserve">
+    <value>Код из письма</value>
+  </data>
+  <data name="AccountForgotNewPassword" xml:space="preserve">
+    <value>Новый пароль</value>
+  </data>
+  <data name="AccountForgotConfirmPassword" xml:space="preserve">
+    <value>Подтвердите новый пароль</value>
+  </data>
+  <data name="AccountForgotResetTitle" xml:space="preserve">
+    <value>Сброс пароля</value>
+  </data>
+  <data name="AccountForgotResetButton" xml:space="preserve">
+    <value>Сбросить пароль</value>
+  </data>
+  <data name="AccountResetCaptchaTitle" xml:space="preserve">
+    <value>Проверка</value>
+  </data>
+  <data name="AccountResetCaptchaDesc" xml:space="preserve">
+    <value>Пройдите проверку для сброса пароля</value>
+  </data>
+  <data name="AccountAvatarHint" xml:space="preserve">
+    <value>Нажмите на аватар, чтобы изменить изображение</value>
+  </data>
+  <data name="AccountAvatarPending" xml:space="preserve">
+    <value>Аватар на проверке</value>
+  </data>
+  <data name="AccountAvatarRejected" xml:space="preserve">
+    <value>Аватар отклонён, нажмите для повторной загрузки</value>
+  </data>
+  <data name="AccountAvatarTooBig" xml:space="preserve">
+    <value>Изображение аватара не должно превышать 5 МБ</value>
+  </data>
+  <data name="AccountAvatarUploadFailed" xml:space="preserve">
+    <value>Не удалось загрузить аватар</value>
+  </data>
+  <data name="AccountIdFormat" xml:space="preserve">
+    <value>Аккаунт: {0}</value>
+  </data>
+  <data name="AccountRefreshProfile" xml:space="preserve">
+    <value>Обновить профиль</value>
+  </data>
+  <data name="AccountEditNickname" xml:space="preserve">
+    <value>Изменить никнейм</value>
+  </data>
+  <data name="AccountChangePassword" xml:space="preserve">
+    <value>Сменить пароль</value>
+  </data>
+  <data name="AccountLogoutButton" xml:space="preserve">
+    <value>Выйти</value>
+  </data>
+  <data name="AccountNicknameDialogTitle" xml:space="preserve">
+    <value>Изменить никнейм</value>
+  </data>
+  <data name="AccountNicknameDialogSubmit" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="AccountOldPassword" xml:space="preserve">
+    <value>Текущий пароль</value>
+  </data>
+  <data name="AccountNewPassword" xml:space="preserve">
+    <value>Новый пароль</value>
+  </data>
+  <data name="AccountNewPasswordConfirm" xml:space="preserve">
+    <value>Подтвердите новый пароль</value>
+  </data>
+  <data name="AccountChangePasswordTitle" xml:space="preserve">
+    <value>Сменить пароль</value>
+  </data>
+  <data name="AccountChangePasswordButton" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="AccountLogoutConfirmTitle" xml:space="preserve">
+    <value>Выход</value>
+  </data>
+  <data name="AccountLogoutConfirmText" xml:space="preserve">
+    <value>Выйти из аккаунта?</value>
+  </data>
+  <data name="AccountLogoutConfirmButton" xml:space="preserve">
+    <value>Выйти</value>
+  </data>
+  <data name="AccountProfileRefreshed" xml:space="preserve">
+    <value>Профиль обновлён</value>
+  </data>
+  <data name="AccountCloudSyncTitle" xml:space="preserve">
+    <value>Облачная синхронизация</value>
+  </data>
+  <data name="AccountCloudSyncEnable" xml:space="preserve">
+    <value>Включить синхронизацию (плейлисты / избранное / плагины)</value>
+  </data>
+  <data name="AccountCloudSyncFrequency" xml:space="preserve">
+    <value>Частота автозагрузки</value>
+  </data>
+  <data name="AccountFreqFiveMinutes" xml:space="preserve">
+    <value>Каждые 5 минут</value>
+  </data>
+  <data name="AccountFreqFifteenMinutes" xml:space="preserve">
+    <value>Каждые 15 минут</value>
+  </data>
+  <data name="AccountFreqThirtyMinutes" xml:space="preserve">
+    <value>Каждые 30 минут</value>
+  </data>
+  <data name="AccountFreqOneHour" xml:space="preserve">
+    <value>Каждый час</value>
+  </data>
+  <data name="AccountFreqSixHours" xml:space="preserve">
+    <value>Каждые 6 часов</value>
+  </data>
+  <data name="AccountFreqTwelveHours" xml:space="preserve">
+    <value>Каждые 12 часов</value>
+  </data>
+  <data name="AccountFreqOneDay" xml:space="preserve">
+    <value>Каждый день</value>
+  </data>
+  <data name="AccountFreqManual" xml:space="preserve">
+    <value>Только вручную</value>
+  </data>
+  <data name="AccountSyncNow" xml:space="preserve">
+    <value>Синхронизировать</value>
+  </data>
+  <data name="AccountNeverSynced" xml:space="preserve">
+    <value>Ещё не синхронизировано</value>
+  </data>
+  <data name="AccountLastSyncFormat" xml:space="preserve">
+    <value>Последняя синхронизация: {0}</value>
+  </data>
+  <data name="AccountSyncNoChange" xml:space="preserve">
+    <value>Нет изменений для синхронизации</value>
+  </data>
+  <data name="AccountSyncDone" xml:space="preserve">
+    <value>Синхронизация завершена: плагинов скачано {0}, загружено {1}, плейлистов загружено {2}, скачано {3}</value>
+  </data>
+  <data name="AccountSyncPluginErrorSuffix" xml:space="preserve">
+    <value>({0} плагинов не синхронизировано)</value>
+  </data>
+  <data name="AccountCloudSyncPromptTitle" xml:space="preserve">
+    <value>Включить облачную синхронизацию?</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine1" xml:space="preserve">
+    <value>Вход выполнен! Включить синхронизацию?</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine2" xml:space="preserve">
+    <value>Плейлисты, избранное и плагины будут автоматически синхронизироваться с облаком</value>
+  </data>
+  <data name="AccountCloudSyncPromptEnable" xml:space="preserve">
+    <value>Включить</value>
+  </data>
+  <data name="AccountCloudSyncPromptLater" xml:space="preserve">
+    <value>Позже</value>
+  </data>
+  <data name="AccountCloudSyncPromptWait" xml:space="preserve">
+    <value>Выбор будет доступен через {0} с</value>
+  </data>
 </root>
-
-
-
-

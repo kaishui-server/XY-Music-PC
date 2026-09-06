@@ -1,4 +1,4 @@
-﻿using H.NotifyIcon;
+using H.NotifyIcon;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -48,7 +48,7 @@ namespace WinUIMusicPlayer
             .ConfigureLogging((context, logging) =>
             {
                 logging.ClearProviders();
-                var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "OriginalSoundPlayer", "Logs");
+                var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XYMusic", "Logs");
                 if (!Directory.Exists(logDirectory))
                 {
                     Directory.CreateDirectory(logDirectory);
@@ -101,7 +101,34 @@ namespace WinUIMusicPlayer
                  services.AddSingleton<PlaybackStatsService>();
                  services.AddSingleton<MusicDatabaseService>();
                  services.AddSingleton<LrcService>();
+                services.AddSingleton<Services.Plugins.PluginManagerService>();
+                services.AddSingleton<ViewModel.Pages.PluginManageViewModel>();
+                services.AddSingleton<ViewModel.Pages.OnlineSearchViewModel>();
+                services.AddSingleton<ViewModel.Pages.OnlineArtistViewModel>();
+                services.AddSingleton<ViewModel.Pages.MyPlayListViewModel>();
+                services.AddSingleton<ViewModel.Pages.MyPlayListDetailViewModel>();
+                services.AddSingleton<ViewModel.Pages.AccountViewModel>();
+                services.AddSingleton<View.PluginManagePage>();
+                services.AddSingleton<View.OnlineSearchPage>();
+                services.AddSingleton<View.MyPlayListPage>();
+                services.AddSingleton<View.AccountPage>();
+                services.AddSingleton<Services.Account.AuthService>();
+                services.AddSingleton<Services.Account.AccountCloudSyncService>();
              }).Build();
+
+        public static string GetAppVersion()
+        {
+            try
+            {
+                var v = Windows.ApplicationModel.Package.Current.Id.Version;
+                return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+            }
+            catch (InvalidOperationException)
+            {
+                var v = typeof(App).Assembly.GetName().Version;
+                return $"{v.Major}.{v.Minor}.{v.Build}";
+            }
+        }
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -118,38 +145,43 @@ namespace WinUIMusicPlayer
             //AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             _logger.LogInformation("应用程序初始化开始");
-            var systemLanguages = GlobalizationPreferences.Languages;
-            if (systemLanguages[0].StartsWith("zh"))
+            ApplySystemLanguage();
+        }
+
+        /// <summary>
+        /// 按系统首选语言设置应用语言。
+        /// 非 MSIX 打包(无包标识)环境下 PrimaryLanguageOverride 可能抛 0x80073D54,
+        /// 失败时仅记录 AppData.SystemLanguage(供歌词翻译等逻辑使用), 资源加载回退系统默认语言。
+        /// </summary>
+        private static void ApplySystemLanguage()
+        {
+            string primaryLanguage;
+            try
             {
-                Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "zh-CN";
-                AppData.SystemLanguage = "zh";
+                var systemLanguages = GlobalizationPreferences.Languages;
+                primaryLanguage = systemLanguages.Count > 0 ? systemLanguages[0] : "en";
             }
-            else if (systemLanguages[0].StartsWith("es"))
+            catch (Exception)
             {
-                Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "es";
-                AppData.SystemLanguage = "es";
+                // 无包标识环境读取失败时回退系统 UI 文化
+                primaryLanguage = System.Globalization.CultureInfo.InstalledUICulture.TwoLetterISOLanguageName;
             }
-            else if (systemLanguages[0].StartsWith("ja"))
+
+            var shortLanguage = primaryLanguage.Length >= 2 ? primaryLanguage[..2].ToLowerInvariant() : "en";
+            shortLanguage = shortLanguage switch
             {
-                Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "ja";
-                AppData.SystemLanguage = "ja";
-            }
-            else if (systemLanguages[0].StartsWith("ru"))
+                "zh" or "es" or "ja" or "ru" or "de" => shortLanguage,
+                _ => "en",
+            };
+            AppData.SystemLanguage = shortLanguage;
+            try
             {
-                Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "ru";
-                AppData.SystemLanguage = "ru";
+                Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = shortLanguage == "zh" ? "zh-CN" : shortLanguage;
             }
-            else if (systemLanguages[0].StartsWith("de"))
+            catch (Exception)
             {
-                Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "de";
-                AppData.SystemLanguage = "de";
+                // 非 MSIX 环境忽略语言覆盖异常
             }
-            else
-            {
-                Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "en";
-                AppData.SystemLanguage = "en";
-            }
-            //Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "es";
         }
 
         private void CurrentDomain_FirstChanceException(object? sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
@@ -230,7 +262,7 @@ namespace WinUIMusicPlayer
 
         private static void ShowStartupErrorBox(Exception ex)
         {
-            var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "OriginalSoundPlayer", "Logs");
+            var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XYMusic", "Logs");
             string text = $"应用程序启动失败，即将退出。\r\n\r\n" +
                           $"异常：{ex.Message}\r\n\r\n" +
                           $"详细信息已记录到日志：{logDirectory}";

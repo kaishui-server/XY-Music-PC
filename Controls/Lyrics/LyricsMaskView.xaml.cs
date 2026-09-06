@@ -1,4 +1,4 @@
-// Copyright (c) OriginalSound HIFI Player project
+// Copyright (c) XY Music project
 // Forked from WinUI Gallery (Microsoft Corporation, MIT License):
 //   https://github.com/microsoft/WinUI-Gallery/blob/main/WinUIGallery/Controls/OpacityMaskView.xaml.cs
 // Originally derived from Windows Community Toolkit Labs PR #491.

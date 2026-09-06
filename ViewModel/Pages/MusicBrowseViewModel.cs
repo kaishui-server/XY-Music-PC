@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.WinUI;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +19,7 @@ using WinUIMusicPlayer.Helper;
 using WinUIMusicPlayer.Model;
 using WinUIMusicPlayer.Reader;
 using WinUIMusicPlayer.Services;
+using WinUIMusicPlayer.Services.Plugins;
 using WinUIMusicPlayer.Utils;
 using WinUIMusicPlayer.View;
 using WinUIMusicPlayer.View.SubView;
@@ -488,6 +489,7 @@ namespace WinUIMusicPlayer.ViewModel
                         AppViewModel.LyricPageBackgroundHash = music.ImageHash ?? "";
                         AppViewModel.LyricPagePalette = palette;
                         AppViewModel.LyricPageArtwork = artwork;
+                        AppViewModel.IsCurrentMusicOnline = music.Extension == "Online";
                         AppViewModel.MusicInfo = $"{music.Extension} {music.SampleRate}Hz {music.BitDepth}bit {music.BitRate}kbps";
                     }
                 });
@@ -663,10 +665,51 @@ namespace WinUIMusicPlayer.ViewModel
                 _musicUpdateCts?.Dispose();
                 _musicUpdateCts = new CancellationTokenSource();
                 var token = _musicUpdateCts.Token;
-                MusicPlaybackService.PlayMusic(music);
+                // 2. 先把歌曲上到底栏播放栏(歌名/封面/歌词/SMTC 立即切换), 在线音源解析放到之后进行
+                var previousMusic = AppViewModel.CurrentPlayingMusic;
+                var previousWasPlaying = previousMusic is not null && AppViewModel.IsPlaying;
                 await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
                 {
                     AppViewModel.CurrentPlayingMusic = music;
+                    AppViewModel.UILyrics = [];
+                    MusicBrowsePage?.UpdateViewList();
+                    // 上一首仍在播: 新歌进入底栏瞬间立即暂停上一首, 避免音源解析期间新旧两首混播;
+                    // 新歌起播后由播放子进程推送 PlayState 通知自动恢复播放状态
+                    if (previousWasPlaying) _ = MusicPlaybackService.PlayButton();
+                });
+                _ = UpdatePlayBar(music, token);
+                AppViewModel.LoadLyricsToUI(music);
+                MainPage?.UpdateCurrentPlayList();
+                AppViewModel.UpdateProgressTimerUI();
+                // 3. 在线队列歌曲: Path 仍是虚拟路径时解析音源并下载缓存(点击搜索列表/自动切歌共用)
+                var (ok, onlineError) = await OnlinePlaybackResolver.EnsurePlayableAsync(music);
+                if (!ok)
+                {
+                    if (onlineError is null) return; // 解析被更新的点击取代, 静默让位
+                    _logger.LogWarning("在线歌曲解析失败, 停止播放: {Title} - {Error}", music.Title, onlineError);
+                    await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
+                    {
+                        // 播放栏已先行切到本曲, 解析失败时回退到原曲, 避免栏上显示与实际播放不符;
+                        // 原曲已在切栏瞬间暂停, 回退后保持暂停, 由用户手动恢复播放
+                        if (previousMusic is not null && ReferenceEquals(AppViewModel.CurrentPlayingMusic, music))
+                        {
+                            AppViewModel.CurrentPlayingMusic = previousMusic;
+                            MusicBrowsePage?.UpdateViewList();
+                        }
+                        // 同步歌单插件缺失/不匹配时明确告知用户, 避免点击无反应
+                        ToastFlyout.ShowError($"{music.Title}\n{onlineError}");
+                    });
+                    if (previousMusic is not null && ReferenceEquals(AppViewModel.CurrentPlayingMusic, previousMusic))
+                    {
+                        AppViewModel.LoadLyricsToUI(previousMusic);
+                        _ = UpdatePlayBar(previousMusic, token);
+                    }
+                    return;
+                }
+                // 4. 音源就绪, 交给播放子进程真正开始播放
+                MusicPlaybackService.PlayMusic(music);
+                await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
+                {
                     try
                     {
                         App.Services.GetService<PlaybackStatsService>()?.StartSession(music);
@@ -675,13 +718,7 @@ namespace WinUIMusicPlayer.ViewModel
                     {
                         _logger.LogError(ex, "记录播放统计会话失败: {Message}", ex.Message);
                     }
-                    AppViewModel.UILyrics = [];
-                    MusicBrowsePage?.UpdateViewList();
                 });
-                _ = UpdatePlayBar(music, token);
-                AppViewModel.LoadLyricsToUI(music);
-                MainPage?.UpdateCurrentPlayList();
-                AppViewModel.UpdateProgressTimerUI();
                 TrimMemory();
             }
             catch (Exception ex)

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net11.0-windows10.0.26100.0</TargetFramework>
@@ -12,6 +12,7 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
 	<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+	<WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Assets\default_cover_black.png" />
@@ -119,6 +120,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="DevWinUI" Version="10.3.0" />
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.4.1" />
+    <PackageReference Include="Jint" Version="4.16.1" />
     <PackageReference Include="ManagedBass" Version="4.0.2" />
     <PackageReference Include="ManagedBass.Asio" Version="4.0.2" />
     <PackageReference Include="ManagedBass.Dsd" Version="4.0.2" />
@@ -128,7 +130,7 @@
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
     <PackageReference Include="Microsoft.PinYinConverter" Version="1.0.0" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.11" />
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.2-prerelease.260804.1" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.1" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2526" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
@@ -142,6 +144,9 @@
     <PackageReference Include="WinUIEx" Version="2.9.3" />
     <PackageReference Include="z440.atl.core" Version="7.16.0" />
     <PackageReference Include="ZLinq" Version="1.5.6" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Plugins\js-libs\*.js" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="View\SettingsPage.xaml">
@@ -327,7 +332,7 @@
     <PublishAot>False</PublishAot>
     <PlatformTarget>x64</PlatformTarget>
     <NuGetAuditMode>all</NuGetAuditMode>
-    <AssemblyName>OriginalSound HIFI Player</AssemblyName>
+    <AssemblyName>XY Music</AssemblyName>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <UserSecretsId>4aeb06b5-7bbb-4348-aff3-50338e7e8ffd</UserSecretsId>
 	<CETCompat>false</CETCompat>
@@ -383,6 +388,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Update="Assets\Fonts\UntamedFluentIcons.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\Fonts\materialdesignicons-webfont.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

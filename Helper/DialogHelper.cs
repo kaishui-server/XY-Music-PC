@@ -30,7 +30,7 @@ namespace WinUIMusicPlayer.Helper
             return await dialog.ShowAsync() == ContentDialogResult.Primary;
         }
 
-        public static async Task<string> ShowInputAsync(XamlRoot xamlRoot, string titleKey, string prefillText)
+        public static async Task<string> ShowInputAsync(XamlRoot xamlRoot, string titleKey, string prefillText, string? placeholderKey = null)
         {
             var dialog = s_inputCache.GetValue(xamlRoot, static root => new ContentDialog { XamlRoot = root });
             dialog.Title = ToolUtils.GetString(titleKey);
@@ -44,6 +44,8 @@ namespace WinUIMusicPlayer.Helper
                 dialog.Content = textBox;
             }
             textBox.Text = prefillText;
+            // 输入框提示词(可选): 未传 key 时清空, 避免残留上一次的提示
+            textBox.PlaceholderText = placeholderKey is null ? string.Empty : ToolUtils.GetString(placeholderKey);
 
             if (await dialog.ShowAsync() == ContentDialogResult.Primary)
                 return textBox.Text;

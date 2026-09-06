@@ -1,4 +1,4 @@
-﻿using ATL;
+using ATL;
 using ManagedBass;
 using ManagedBass.Dsd;
 using Microsoft.Extensions.DependencyInjection;
@@ -101,7 +101,7 @@ namespace WinUIMusicPlayer.Utils
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetString 获取资源字符串失败: {ex.Message}");
+                _logger.LogError(ex, $"GetString 获取资源字符串失败 key=[{key}]: {ex.Message}");
                 return key;
             }
         }
@@ -267,7 +267,9 @@ namespace WinUIMusicPlayer.Utils
                     var cachePath = GetRawCachePath(music.ImageHash);
                     if (File.Exists(cachePath))
                     {
-                        if (File.GetLastWriteTime(cachePath) > File.GetLastWriteTime(music.Path))
+                        // 在线歌曲: 缓存音频是播放时刚下载的, 必然晚于封面缓存写入,
+                        // 过期检查会永远误判并删缓存, 故跳过直接复用
+                        if (music.Extension == "Online" || File.GetLastWriteTime(cachePath) > File.GetLastWriteTime(music.Path))
                             return File.ReadAllBytes(cachePath);
 
                         // 缓存过期：清理该 hash 的所有旧格式缓存 (_raw.bin / .bmp / .bgra8 / .jpg)

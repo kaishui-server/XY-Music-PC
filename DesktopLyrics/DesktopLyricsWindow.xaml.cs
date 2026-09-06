@@ -29,8 +29,8 @@ namespace WinUIMusicPlayer.DesktopLyrics
     /// </summary>
     public sealed partial class DesktopLyricsWindow : WinUIEx.WindowEx, IDisposable
     {
-        private const int DefaultWidth = 1800;
-        private const int DefaultHeight = 280;
+        private const int DefaultWidth = 800;
+        private const int DefaultHeight = 200;
         private const int BottomMargin = 60;
         private const double HoverPollingIntervalMs = 50;
         private const double ControlPanelHoverMargin = 6.0;
@@ -56,6 +56,7 @@ namespace WinUIMusicPlayer.DesktopLyrics
         private PointInt32 _dragStartWindowPos;
         private RectInt32? _panelScreenRectCache;   // 按钮组屏幕矩形缓存（含悬停外扩）；窗口位置/尺寸变化时失效
         private DispatcherQueueTimer? _adaptiveColorTimer;
+        private DispatcherQueueTimer? _boundsPersistTimer;      // 边界变化防抖落盘（手动调整后即记忆）
         private bool? _adaptiveIsDarkBackground;    // 上次明暗判定（null=未判定），滞回切换的基准
         private Color? _lastAdaptiveTextColor;      // 当前应用的取色文字色（判定不变则跳过重绘）
 
@@ -484,7 +485,22 @@ namespace WinUIMusicPlayer.DesktopLyrics
                 bounds.Width = size.Width;
                 bounds.Height = size.Height;
             }
-            // 不在此处落盘：按约定仅在关闭窗口 / ApplyDefaultBounds（HasBounds 建立）/ 退出时记录
+            // 防抖落盘：用户拖动/缩放结束 600ms 后即写入，崩溃/强杀也不丢手动调整
+            ScheduleBoundsPersist();
+        }
+
+        /// <summary>边界变化防抖落盘（拖动过程中不写盘，静止 600ms 后写一次）。</summary>
+        private void ScheduleBoundsPersist()
+        {
+            if (_boundsPersistTimer is null)
+            {
+                _boundsPersistTimer = DispatcherQueue.CreateTimer();
+                _boundsPersistTimer.Interval = TimeSpan.FromMilliseconds(600);
+                _boundsPersistTimer.IsRepeating = false;
+                _boundsPersistTimer.Tick += (_, _) => ViewModel.PersistBounds();
+            }
+            _boundsPersistTimer.Stop();
+            _boundsPersistTimer.Start();
         }
 
         private void OnWindowClosed(object sender, WindowEventArgs args)
@@ -498,6 +514,7 @@ namespace WinUIMusicPlayer.DesktopLyrics
             Closed -= OnWindowClosed;
             StopHoverTimer();
             StopAdaptiveColorTimer();
+            _boundsPersistTimer?.Stop();
             ViewModel.PersistBounds();
             _renderer?.Dispose();
             _renderer = null;

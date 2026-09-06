@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <linker>
-	<assembly fullname="OriginalSound HIFI Player">
+	<assembly fullname="XY Music">
 		<type fullname="WinUIMusicPlayer.Model.PlayListMusic" preserve="all"/>
 		<type fullname="WinUIMusicPlayer.Model.PlayList" preserve="all"/>
 		<type fullname="WinUIMusicPlayer.Model.Music" preserve="all"/>

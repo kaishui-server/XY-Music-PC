@@ -1,4 +1,4 @@
-﻿using AnimatedWin2dControls.Messages;
+using AnimatedWin2dControls.Messages;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SQLite;
@@ -46,6 +46,9 @@ namespace WinUIMusicPlayer.Model
         public bool IsKrcSearched { get; set; } = false;
         [Ignore]
         public int IsExistOnDevice { get; set => SetProperty(ref field, value); } = 0;
+        /// <summary>在线歌曲原始虚拟路径(mfplugin://...), 播放时 Path 会被替换为缓存文件, 此字段保留插件音源信息。</summary>
+        [Ignore]
+        public string OnlineVirtualPath { get; set; } = string.Empty;
         public string ImageHash { get; set => SetProperty(ref field, value); } = string.Empty;
         public DateTime CreateTime { get; set => SetProperty(ref field, value); }
         public DateTime UpdateTime { get; set => SetProperty(ref field, value); }

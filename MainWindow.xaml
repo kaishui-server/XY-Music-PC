@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <winex:WindowEx
     x:Class="WinUIMusicPlayer.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,13 +9,18 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:view="using:WinUIMusicPlayer.View"
     xmlns:winex="using:WinUIEx"
-    Title="OriginalSound HQ Player"
+    Title="XY Music"
     MinWidth="960"
     MinHeight="720">
     <winex:WindowEx.SystemBackdrop>
         <DesktopAcrylicBackdrop />
     </winex:WindowEx.SystemBackdrop>
-    <Grid>
+    <Grid x:FieldModifier="public" x:Name="RootGrid">
+        <!--  自定义图片背景: 置于所有内容之下, 未设置时折叠  -->
+        <Image
+            x:Name="CustomBackgroundImage"
+            Stretch="UniformToFill"
+            Visibility="Collapsed" />
         <Frame x:Name="ShellFrame" />
         <!--  Loading 界面  -->
         <Grid x:Name="LoadingGrid" Visibility="Visible">

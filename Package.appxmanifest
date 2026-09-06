@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
@@ -8,7 +8,7 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="SennpaiStudio.528762A6196EF"
+    Name="XYMusic.528762A6196EF"
     Publisher="CN=CF259542-70C0-4852-9523-066A80212473"
     Version="1.1.99.0" />
 
@@ -16,10 +16,10 @@
     PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 
   <Properties>
-    <DisplayName>OriginalSound HI-FI Player</DisplayName>
-    <PublisherDisplayName>Sennpai Studio</PublisherDisplayName>
+    <DisplayName>XY Music</DisplayName>
+    <PublisherDisplayName>XYMusic</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
-	<Description>OriginalSound HI-FI Player</Description>
+	<Description>XY Music</Description>
   </Properties>
 
   <Dependencies>
@@ -49,7 +49,7 @@
       </uap:VisualElements>
       <Extensions>
         <uap:Extension Category="windows.protocol">
-          <uap:Protocol Name="originalsoundhqplayer"/>
+          <uap:Protocol Name="xymusic"/>
         </uap:Extension>
       </Extensions>
     </Application>

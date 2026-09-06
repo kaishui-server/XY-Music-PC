@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using WinUIMusicPlayer.Controls;
@@ -38,6 +38,18 @@ namespace WinUIMusicPlayer.Model
         public static float CustomAcrylicOpacity { get; set; } = 0.5f;
         public static uint CustomColorArgb { get; set; } = 0xFF808080u;
         public static uint LyricsCustomColorRgb { get; set; } = 0x00FFFFFFu;
+        /// <summary>自定义图片背景: 已复制的本地持久文件路径(LocalFolder\Backgrounds)。</summary>
+        public static string CustomBackgroundPath { get; set; } = string.Empty;
+        /// <summary>自定义图片背景模糊度(0-50, 0=不模糊)。</summary>
+        public static double CustomBackgroundBlur { get; set; } = 0;
+        /// <summary>在线歌曲下载目录(空=默认"音乐\XY Music"文件夹)。</summary>
+        public static string DownloadPath { get; set; } = string.Empty;
+        /// <summary>在线歌曲下载音质(128k/320k/flac/flac24bit)。</summary>
+        public static string DownloadQuality { get; set; } = "320k";
+        /// <summary>下载时额外保存独立 LRC 歌词文件(歌词始终内嵌歌曲文件)。</summary>
+        public static bool DownloadSaveLrc { get; set; } = true;
+        /// <summary>下载时额外保存独立封面图片(封面始终内嵌歌曲文件)。</summary>
+        public static bool DownloadSaveCover { get; set; } = true;
         public static string AppTheme { get; set; } = "Default";
         public static ElementTheme ElementTheme { get; set; } = ElementTheme.Default;
         public static bool IsRunningBackend { get; set; } = true;
@@ -87,7 +99,7 @@ namespace WinUIMusicPlayer.Model
         //public static double GlobalFontSize { get; set; } = 32;
         public static bool IsUpdateBackDrop { get; set; } = false;
         //public static CanvasHorizontalAlignment LyricsAlignment { get; set; } = CanvasHorizontalAlignment.Left;
-        public static string MusicCoverCache { get; set; } = System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "MusicCoverCache");
+        public static string MusicCoverCache { get; set; } = System.IO.Path.Combine(WinUIMusicPlayer.Utils.AppPaths.LocalFolder, "MusicCoverCache");
         public static ImageSwitchType ImageSwitchType = ImageSwitchType.ScaleInOut;
         public static bool EnableGlobalHotKey { get; set; } = false;
         public static bool IsTrimOnHideEnabled { get; set; } = false;

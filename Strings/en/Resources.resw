@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle.Text" xml:space="preserve">
-    <value>OriginalSound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="LoadingText.Text" xml:space="preserve">
     <value>Loading data...</value>
@@ -128,6 +128,15 @@
   </data>
   <data name="AlbumTab.Text" xml:space="preserve">
     <value>Albums</value>
+  </data>
+  <data name="Home.Text" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="HomeCombox.Content" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="HomePageGoMusicBrowse.Text" xml:space="preserve">
+    <value>Go to Music Library</value>
   </data>
   <data name="AddFolder.Text" xml:space="preserve">
     <value>Add Folder</value>
@@ -202,7 +211,7 @@
     <value>times</value>
   </data>
   <data name="AppMainTitle" xml:space="preserve">
-    <value>OriginalSound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="ArtistTab.Text" xml:space="preserve">
     <value>Artists</value>
@@ -375,6 +384,21 @@
   </data>
   <data name="AppStyle.Text" xml:space="preserve">
     <value>App Style</value>
+  </data>
+  <data name="CustomBackground.Text" xml:space="preserve">
+    <value>Custom Image Background</value>
+  </data>
+  <data name="CustomBackgroundDescription.Text" xml:space="preserve">
+    <value>Choose a local image as the app background. It will be kept after restart.</value>
+  </data>
+  <data name="ChooseBackgroundImage.Content" xml:space="preserve">
+    <value>Choose Image</value>
+  </data>
+  <data name="ClearBackgroundImage.Content" xml:space="preserve">
+    <value>Clear Background</value>
+  </data>
+  <data name="CustomBackgroundBlur.Text" xml:space="preserve">
+    <value>Background Blur</value>
   </data>
   <data name="MicaStyle.Content" xml:space="preserve">
     <value>Mica</value>
@@ -632,7 +656,7 @@
     <value>Save lyrics to database</value>
   </data>
   <data name="AppMainTitleIcon.ToolTipText" xml:space="preserve">
-    <value>OriginalSound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="IconDisplay.Text" xml:space="preserve">
     <value>Display</value>
@@ -833,7 +857,7 @@
     <value>Album Cover Original Image Cache</value>
   </data>
   <data name="AppTitleHeader.Header" xml:space="preserve">
-    <value>OriginalSound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="CoverLoadThreadCount.Header" xml:space="preserve">
     <value>Number of cover loading threads</value>
@@ -980,7 +1004,7 @@
     <value>Music Folders</value>
   </data>
   <data name="AddFolderPageWelcomeTitle.Text" xml:space="preserve">
-    <value>Welcome to OriginalSound HQ Player</value>
+    <value>Welcome to XY Music</value>
   </data>
   <data name="AddFolderPageWelcomeSubtitle.Text" xml:space="preserve">
     <value>Add local music folders to start building your library. Supports common audio formats with automatic lyrics and cover art matching.</value>
@@ -1134,6 +1158,60 @@
   </data>
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>Lyric time offset</value>
+  </data>
+  <data name="LinkLyricsTitle" xml:space="preserve">
+    <value>Link lyrics</value>
+  </data>
+  <data name="LinkLyrics.Content" xml:space="preserve">
+    <value>Link lyrics</value>
+  </data>
+  <data name="LinkLyricsSearchPlaceholder" xml:space="preserve">
+    <value>Enter keywords to search lyrics</value>
+  </data>
+  <data name="LinkLyricsSearching" xml:space="preserve">
+    <value>Searching…</value>
+  </data>
+  <data name="LinkLyricsNoResults" xml:space="preserve">
+    <value>No matching lyrics found</value>
+  </data>
+  <data name="LinkLyricsSearchFailed" xml:space="preserve">
+    <value>Search failed, please retry</value>
+  </data>
+  <data name="LinkLyricsLinking" xml:space="preserve">
+    <value>Fetching lyrics…</value>
+  </data>
+  <data name="LinkLyricsLinkFailed" xml:space="preserve">
+    <value>Failed to fetch lyrics, please retry or pick another</value>
+  </data>
+  <data name="LinkLyricsImportLocal" xml:space="preserve">
+    <value>Import lyrics from local file</value>
+  </data>
+  <data name="LinkLyricsOnlineNotSupported" xml:space="preserve">
+    <value>Online songs do not support linking lyrics</value>
+  </data>
+  <data name="LinkLyricsLinkedTitle" xml:space="preserve">
+    <value>Linked Lyrics</value>
+  </data>
+  <data name="LinkLyricsUnlink" xml:space="preserve">
+    <value>Unlink</value>
+  </data>
+  <data name="LinkLyricsUnlinked" xml:space="preserve">
+    <value>Lyrics link removed</value>
+  </data>
+  <data name="LinkLyricsPluginSource" xml:space="preserve">
+    <value>Plugin lyrics</value>
+  </data>
+  <data name="LinkLyricsPluginSourceWith" xml:space="preserve">
+    <value>Plugin: {0}</value>
+  </data>
+  <data name="LinkLyricsLocalSource" xml:space="preserve">
+    <value>Local lyrics</value>
+  </data>
+  <data name="LinkLyricsCurrentSong" xml:space="preserve">
+    <value>Current song lyrics</value>
+  </data>
+  <data name="LinkLyricsUnknownArtist" xml:space="preserve">
+    <value>Unknown artist</value>
   </data>
   <data name="LyricsTimeOffsetTag.Text" xml:space="preserve">
     <value>Lyric time offset</value>
@@ -1438,7 +1516,654 @@
   <data name="RtssWarningBody" xml:space="preserve">
     <value>RivaTuner Statistics Server (commonly known as RTSS, usually bundled with MSI Afterburner) is a D3D FPS-monitoring tool that injects itself into the graphics pipeline via DXGI. When this player's "Desktop Lyrics" and shader background are both enabled, two Win2D swap chains are presented concurrently and clash with the RTSS DXGI hooks, which can crash the app. Please close RTSS / MSI Afterburner, or add this player to RTSS's hook exclusion list, before use.</value>
   </data>
+  <data name="OnlineSearch.Text" xml:space="preserve">
+    <value>Online Search</value>
+  </data>
+  <data name="OnlineSearchButton.Text" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="OnlineSearchLoading" xml:space="preserve">
+    <value>Searching…</value>
+  </data>
+  <data name="OnlineSearchMore.Text" xml:space="preserve">
+    <value>Load More</value>
+  </data>
+  <data name="OnlineSearchNoPlugins" xml:space="preserve">
+    <value>No plugins available. Install one in Plugins first</value>
+  </data>
+  <data name="OnlineSearchNoResults" xml:space="preserve">
+    <value>No songs found</value>
+  </data>
+  <data name="OnlineSearchPlaceholderText" xml:space="preserve">
+    <value>Enter keywords to search songs</value>
+  </data>
+  <data name="OnlineSearchClearHistory.Content" xml:space="preserve">
+    <value>Clear history</value>
+  </data>
+  <data name="OnlineSearchHistory.Text" xml:space="preserve">
+    <value>Search history</value>
+  </data>
+  <data name="OnlineSearchPlayFailed" xml:space="preserve">
+    <value>Playback failed</value>
+  </data>
+  <data name="OnlineSearchSearchFailed" xml:space="preserve">
+    <value>Search failed</value>
+  </data>
+  <data name="OnlineSearchSourceFailed" xml:space="preserve">
+    <value>Failed to resolve media source</value>
+  </data>
+  <data name="OnlineSearchTypeMusic" xml:space="preserve">
+    <value>Songs</value>
+  </data>
+  <data name="OnlineSearchTypeArtist" xml:space="preserve">
+    <value>Artists</value>
+  </data>
+  <data name="OnlineSearchTypeSheet" xml:space="preserve">
+    <value>Playlists</value>
+  </data>
+  <data name="OnlineSearchTypeAlbum" xml:space="preserve">
+    <value>Albums</value>
+  </data>
+  <data name="OnlineSearchNoCatalogResults" xml:space="preserve">
+    <value>No results found</value>
+  <data name="OnlineSearchBack.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  </data>
+  <data name="PluginInstall" xml:space="preserve">
+    <value>Install Plugin</value>
+  </data>
+  <data name="PluginInstallDownloading" xml:space="preserve">
+    <value>Downloading plugin…</value>
+  </data>
+  <data name="PluginInstallFailed" xml:space="preserve">
+    <value>Plugin installation failed</value>
+  </data>
+  <data name="PluginInstallFromFile.Text" xml:space="preserve">
+    <value>Install from File</value>
+  </data>
+  <data name="PluginInstallFromUrlTitle" xml:space="preserve">
+    <value>Install from URL</value>
+  </data>
+  <data name="PluginInstallFromUrl.Text" xml:space="preserve">
+    <value>Install from URL</value>
+  </data>
+  <data name="PluginInstallReading" xml:space="preserve">
+    <value>Reading plugin…</value>
+  </data>
+  <data name="PluginInstallSuccess" xml:space="preserve">
+    <value>Plugin installed</value>
+  </data>
+  <data name="PluginManage.Text" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="PluginManageEmpty" xml:space="preserve">
+    <value>No plugins installed</value>
+  </data>
+  <data name="PluginManageTitle.Text" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="PluginUninstallTitle" xml:space="preserve">
+    <value>Uninstall</value>
+  </data>
+  <data name="PluginUninstall.Text" xml:space="preserve">
+    <value>Uninstall</value>
+  </data>
+  <data name="PluginUninstallConfirm" xml:space="preserve">
+    <value>Uninstall this plugin?</value>
+  </data>
+  <data name="PluginUninstallSuccess" xml:space="preserve">
+    <value>Plugin uninstalled</value>
+  </data>
+  <data name="TextCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="TextClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="TextSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="PluginInfoMenu.Text" xml:space="preserve">
+    <value>Plugin Info</value>
+  </data>
+  <data name="PluginInfoTitle" xml:space="preserve">
+    <value>Plugin Info</value>
+  </data>
+  <data name="PluginInfoPlatform" xml:space="preserve">
+    <value>Platform</value>
+  </data>
+  <data name="PluginInfoVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="PluginInfoAuthor" xml:space="preserve">
+    <value>Author</value>
+  </data>
+  <data name="PluginInfoSource" xml:space="preserve">
+    <value>Update Source</value>
+  </data>
+  <data name="PluginInfoFile" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="PluginInfoMethods" xml:space="preserve">
+    <value>Supported Methods</value>
+  </data>
+  <data name="PluginInfoSearchTypes" xml:space="preserve">
+    <value>Supported Search Types</value>
+  </data>
+  <data name="PluginInfoUserVariables" xml:space="preserve">
+    <value>User Variables</value>
+  </data>
+  <data name="PluginUserVariablesMenu.Text" xml:space="preserve">
+    <value>User Variables</value>
+  </data>
+  <data name="PluginUserVariablesTitle" xml:space="preserve">
+    <value>User Variables</value>
+  </data>
+  <data name="PluginUserVariablesSaved" xml:space="preserve">
+    <value>User variables saved</value>
+  </data>
+  <data name="PluginCheckUpdateMenu.Text" xml:space="preserve">
+    <value>Check for Updates</value>
+  </data>
+  <data name="PluginCheckUpdate" xml:space="preserve">
+    <value>Check for Updates</value>
+  </data>
+  <data name="PluginCheckUpdateChecking" xml:space="preserve">
+    <value>Checking for updates…</value>
+  </data>
+  <data name="PluginCheckUpdateLatest" xml:space="preserve">
+    <value>Already up to date</value>
+  </data>
+  <data name="PluginCheckUpdateFailed" xml:space="preserve">
+    <value>Failed to check for updates</value>
+  </data>
+  <data name="PluginUpdateAvailable" xml:space="preserve">
+    <value>New version found: {0} → {1}. Update now?</value>
+  </data>
+  <data name="PluginUpdateAvailableSameVersion" xml:space="preserve">
+    <value>Plugin code has changed (version stays {0}). Update now?</value>
+  </data>
+  <data name="PluginUpdateNow" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="PluginUpdateSuccess" xml:space="preserve">
+    <value>Plugin updated</value>
+  </data>
+
+  <data name="DownloadChooseDir" xml:space="preserve">
+    <value>Choose</value>
+  </data>
+  <data name="DownloadConfirm" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="DownloadCoverSavedNote" xml:space="preserve">
+    <value>Cover image saved</value>
+  </data>
+  <data name="DownloadDialogTitle" xml:space="preserve">
+    <value>Download Online Song</value>
+  </data>
+  <data name="DownloadAlreadyExists" xml:space="preserve">
+    <value>This song has been downloaded before. Download it again?</value>
+  </data>
+  <data name="DownloadRedownload" xml:space="preserve">
+    <value>Download again</value>
+  </data>
+  <data name="DownloadDirLabel" xml:space="preserve">
+    <value>Save to</value>
+  </data>
+  <data name="DownloadEmbedNote" xml:space="preserve">
+    <value>Lyrics and cover are always embedded into the song file</value>
+  </data>
+  <data name="DownloadFailedFormat" xml:space="preserve">
+    <value>Download failed: {0}</value>
+  </data>
+  <data name="DownloadFileNotOnline" xml:space="preserve">
+    <value>The current song is not an online song</value>
+  </data>
+  <data name="DownloadLrcSavedNote" xml:space="preserve">
+    <value>Lyrics file saved</value>
+  </data>
+  <data name="DownloadProgressTitle" xml:space="preserve">
+    <value>Downloading</value>
+  </data>
+  <data name="DownloadQuality" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="DownloadQuality128k" xml:space="preserve">
+    <value>Standard 128k</value>
+  </data>
+  <data name="DownloadQuality320k" xml:space="preserve">
+    <value>High 320k</value>
+  </data>
+  <data name="DownloadQualityFlac" xml:space="preserve">
+    <value>Lossless FLAC</value>
+  </data>
+  <data name="DownloadQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="DownloadSaveCover" xml:space="preserve">
+    <value>Also save cover image</value>
+  </data>
+  <data name="DownloadSaveLrc" xml:space="preserve">
+    <value>Also save lyrics file (.lrc)</value>
+  </data>
+  <data name="DownloadStatusDownloading" xml:space="preserve">
+    <value>Downloading audio...</value>
+  </data>
+  <data name="DownloadStatusEmbedding" xml:space="preserve">
+    <value>Embedding metadata...</value>
+  </data>
+  <data name="DownloadStatusFetchingExtras" xml:space="preserve">
+    <value>Fetching lyrics and cover...</value>
+  </data>
+  <data name="DownloadStatusResolving" xml:space="preserve">
+    <value>Resolving audio source...</value>
+  </data>
+  <data name="DownloadSuccessFormat" xml:space="preserve">
+    <value>Saved to: {0}</value>
+  </data>
+
+  <data name="DownloadDone" xml:space="preserve">
+    <value>Download complete</value>
+  </data>
+  <data name="DownloadFailedShort" xml:space="preserve">
+    <value>Download failed</value>
+  </data>
+  <data name="DownloadHide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="MyPlayListEmptySubtitle.Text" xml:space="preserve">
+    <value>Create one, or add songs from the playing page</value>
+  </data>
+  <data name="MyPlayListAlreadyAdded" xml:space="preserve">
+    <value>This song is already in this playlist</value>
+  </data>
+  <data name="MyPlayListDelete.Text" xml:space="preserve">
+    <value>Delete playlist</value>
+  </data>
+  <data name="MyPlayListNamePlaceholder" xml:space="preserve">
+    <value>Enter playlist name</value>
+  </data>
+  <data name="MyPlayListDialogTitle" xml:space="preserve">
+    <value>Choose a playlist</value>
+  </data>
+  <data name="MyPlayListNoCurrentSong" xml:space="preserve">
+    <value>Nothing is playing right now</value>
+  </data>
+  <data name="MyPlayListRemoveSong.Text" xml:space="preserve">
+    <value>Remove from playlist</value>
+  </data>
+  <data name="MyPlayListNewTitle" xml:space="preserve">
+    <value>New Playlist</value>
+  </data>
+  <data name="CreatePlayListTabCreate" xml:space="preserve">
+    <value>New Playlist</value>
+  </data>
+  <data name="CreatePlayListTabNetwork" xml:space="preserve">
+    <value>Import from Web</value>
+  </data>
+  <data name="CreatePlayListTabLocal" xml:space="preserve">
+    <value>Import from Local</value>
+  </data>
+  <data name="CreatePlayListCreateButton" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="CreatePlayListNetworkSource" xml:space="preserve">
+    <value>Playlist Source</value>
+  </data>
+  <data name="CreatePlayListNoImportPlugin" xml:space="preserve">
+    <value>No plugin supports importing playlists. Install and enable one in Plugin Management first</value>
+  </data>
+  <data name="CreatePlayListNetworkUrlPlaceholder" xml:space="preserve">
+    <value>Paste a playlist link, e.g. https://y.qq.com/n/ryqq/playlist/xxxx</value>
+  </data>
+  <data name="CreatePlayListImportButton" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="CreatePlayListLocalHint" xml:space="preserve">
+    <value>Supports M3U/M3U8 playlists and MusicFree backup JSON files</value>
+  </data>
+  <data name="CreatePlayListSelectFileButton" xml:space="preserve">
+    <value>Choose File and Import</value>
+  </data>
+  <data name="CreatePlayListImporting" xml:space="preserve">
+    <value>Importing…</value>
+  </data>
+  <data name="CreatePlayListUrlRequired" xml:space="preserve">
+    <value>Please enter a playlist link</value>
+  </data>
+  <data name="CreatePlayListImportFailedPlain" xml:space="preserve">
+    <value>Import failed, please try again</value>
+  </data>
+  <data name="CreatePlayListImportFailedReason" xml:space="preserve">
+    <value>Import failed: {0}</value>
+  </data>
+  <data name="CreatePlayListImportSuccess" xml:space="preserve">
+    <value>Imported "{0}", {1} songs</value>
+  </data>
+  <data name="CreatePlayListImportedDefaultName" xml:space="preserve">
+    <value>Imported Playlist</value>
+  </data>
+  <data name="CreatePlayListUnsupportedFile" xml:space="preserve">
+    <value>Unsupported file type</value>
+  </data>
+  <data name="CreatePlayListM3uEmpty" xml:space="preserve">
+    <value>No local audio paths in the playlist file</value>
+  </data>
+  <data name="CreatePlayListLocalNoMatch" xml:space="preserve">
+    <value>The audio files in the playlist are not in the local music library</value>
+  </data>
+  <data name="CreatePlayListLocalImportedWithMissing" xml:space="preserve">
+    <value>Imported "{0}", {1} songs, {2} not found in the local music library</value>
+  </data>
+  <data name="CreatePlayListBackupInvalid" xml:space="preserve">
+    <value>The file is not a valid MusicFree JSON backup</value>
+  </data>
+  <data name="CreatePlayListBackupNoSong" xml:space="preserve">
+    <value>No importable songs found in the backup</value>
+  </data>
+  <data name="CreatePlayListBackupNoPlugin" xml:space="preserve">
+    <value>{0} songs could not be linked due to missing plugins</value>
+  </data>
+  <data name="CreatePlayListBackupImported" xml:space="preserve">
+    <value>Imported {0} playlists and {1} songs from the backup</value>
+  </data>
+  <data name="CreatePlayListBackupSkippedSuffix" xml:space="preserve">
+    <value>, skipped {0} songs with incomplete data</value>
+  </data>
+  <data name="CreatePlayListUnnamedSheet" xml:space="preserve">
+    <value>Unnamed Playlist {0}</value>
+  </data>
+  <data name="MyPlayListNew.Text" xml:space="preserve">
+    <value>New Playlist</value>
+  </data>
+  <data name="MyPlayListDialogEmptyHint" xml:space="preserve">
+    <value>No playlists yet — enter a name to create one</value>
+  </data>
+  <data name="MyPlayListSongsSuffix" xml:space="preserve">
+    <value>songs</value>
+  </data>
+  <data name="AddToMyPlayList" xml:space="preserve">
+    <value>Add to playlist</value>
+  </data>
+  <data name="MyPlayListEmptyTitle.Text" xml:space="preserve">
+    <value>No playlists yet</value>
+  </data>
+  <data name="MyPlayListCreateAndAdd" xml:space="preserve">
+    <value>Create &amp; Add</value>
+  </data>
+  <data name="MyPlayLists.Text" xml:space="preserve">
+    <value>My Playlists</value>
+  </data>
+  <data name="MyPlayListAddFailedOnline" xml:space="preserve">
+    <value>Cannot resolve the current song. Play it again and retry.</value>
+  </data>
+  <data name="MyPlayListSongCountSuffix.Text" xml:space="preserve">
+    <value>songs</value>
+  </data>
+  <data name="AddToMyPlayListToolTip.Content" xml:space="preserve">
+    <value>Add to playlist</value>
+  </data>
+  <data name="OnlineItemPlay.Text" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="OnlineItemAddToPlayList.Text" xml:space="preserve">
+    <value>Add to playlist</value>
+  </data>
+  <data name="AccountTitle" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="AccountMyTitle" xml:space="preserve">
+    <value>My Account</value>
+  </data>
+  <data name="AccountBrandSubtitle" xml:space="preserve">
+    <value>Sign in to your XY Music account to sync playlists, favorites and plugins</value>
+  </data>
+  <data name="AccountLoginTab" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+  <data name="AccountRegisterTab" xml:space="preserve">
+    <value>Sign Up</value>
+  </data>
+  <data name="AccountIdLabel" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="AccountPasswordLabel" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="AccountLoginButton" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+  <data name="AccountForgotPassword" xml:space="preserve">
+    <value>Forgot password?</value>
+  </data>
+  <data name="AccountNicknameLabel" xml:space="preserve">
+    <value>Nickname</value>
+  </data>
+  <data name="AccountConfirmPasswordLabel" xml:space="preserve">
+    <value>Confirm password</value>
+  </data>
+  <data name="AccountEmailLabel" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="AccountCodeLabel" xml:space="preserve">
+    <value>Verification code</value>
+  </data>
+  <data name="AccountSendCode" xml:space="preserve">
+    <value>Send code</value>
+  </data>
+  <data name="AccountRegisterButton" xml:space="preserve">
+    <value>Sign Up</value>
+  </data>
+  <data name="AccountFormIncomplete" xml:space="preserve">
+    <value>Please fill in all required fields</value>
+  </data>
+  <data name="AccountPasswordMismatch" xml:space="preserve">
+    <value>The two passwords do not match</value>
+  </data>
+  <data name="AccountLoginFailed" xml:space="preserve">
+    <value>Sign-in failed</value>
+  </data>
+  <data name="AccountRegisterFailed" xml:space="preserve">
+    <value>Sign-up failed</value>
+  </data>
+  <data name="AccountEmailInvalid" xml:space="preserve">
+    <value>Please enter a valid email address</value>
+  </data>
+  <data name="AccountCodeSent" xml:space="preserve">
+    <value>Verification code sent, please check your inbox</value>
+  </data>
+  <data name="AccountCodeSendFailed" xml:space="preserve">
+    <value>Failed to send verification code</value>
+  </data>
+  <data name="AccountCodeCountdown" xml:space="preserve">
+    <value>Resend in {0}s</value>
+  </data>
+  <data name="AccountRegisterCaptchaTitle" xml:space="preserve">
+    <value>Human verification</value>
+  </data>
+  <data name="AccountRegisterCaptchaDesc" xml:space="preserve">
+    <value>Please complete verification to continue</value>
+  </data>
+  <data name="AccountSendCodeCaptchaTitle" xml:space="preserve">
+    <value>Human verification</value>
+  </data>
+  <data name="AccountSendCodeCaptchaDesc" xml:space="preserve">
+    <value>Please complete verification before sending the code</value>
+  </data>
+  <data name="AccountCaptchaConfirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="AccountCaptchaRefresh" xml:space="preserve">
+    <value>New question</value>
+  </data>
+  <data name="AccountCaptchaEmpty" xml:space="preserve">
+    <value>Please enter an answer</value>
+  </data>
+  <data name="AccountForgotEmailLabel" xml:space="preserve">
+    <value>Enter the email used for registration</value>
+  </data>
+  <data name="AccountForgotTitle" xml:space="preserve">
+    <value>Forgot password</value>
+  </data>
+  <data name="AccountForgotSendCode" xml:space="preserve">
+    <value>Send code</value>
+  </data>
+  <data name="AccountForgotCaptchaDesc" xml:space="preserve">
+    <value>Please complete verification before sending the code</value>
+  </data>
+  <data name="AccountForgotCodeLabel" xml:space="preserve">
+    <value>Email verification code</value>
+  </data>
+  <data name="AccountForgotNewPassword" xml:space="preserve">
+    <value>New password</value>
+  </data>
+  <data name="AccountForgotConfirmPassword" xml:space="preserve">
+    <value>Confirm new password</value>
+  </data>
+  <data name="AccountForgotResetTitle" xml:space="preserve">
+    <value>Reset password</value>
+  </data>
+  <data name="AccountForgotResetButton" xml:space="preserve">
+    <value>Reset password</value>
+  </data>
+  <data name="AccountResetCaptchaTitle" xml:space="preserve">
+    <value>Human verification</value>
+  </data>
+  <data name="AccountResetCaptchaDesc" xml:space="preserve">
+    <value>Please complete verification to reset your password</value>
+  </data>
+  <data name="AccountAvatarHint" xml:space="preserve">
+    <value>Click the avatar to change the picture</value>
+  </data>
+  <data name="AccountAvatarPending" xml:space="preserve">
+    <value>Avatar under review</value>
+  </data>
+  <data name="AccountAvatarRejected" xml:space="preserve">
+    <value>Avatar rejected, click to upload again</value>
+  </data>
+  <data name="AccountAvatarTooBig" xml:space="preserve">
+    <value>Avatar image cannot exceed 5 MB</value>
+  </data>
+  <data name="AccountAvatarUploadFailed" xml:space="preserve">
+    <value>Avatar upload failed</value>
+  </data>
+  <data name="AccountIdFormat" xml:space="preserve">
+    <value>Account: {0}</value>
+  </data>
+  <data name="AccountRefreshProfile" xml:space="preserve">
+    <value>Refresh profile</value>
+  </data>
+  <data name="AccountEditNickname" xml:space="preserve">
+    <value>Edit nickname</value>
+  </data>
+  <data name="AccountChangePassword" xml:space="preserve">
+    <value>Change password</value>
+  </data>
+  <data name="AccountLogoutButton" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="AccountNicknameDialogTitle" xml:space="preserve">
+    <value>Edit nickname</value>
+  </data>
+  <data name="AccountNicknameDialogSubmit" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="AccountOldPassword" xml:space="preserve">
+    <value>Current password</value>
+  </data>
+  <data name="AccountNewPassword" xml:space="preserve">
+    <value>New password</value>
+  </data>
+  <data name="AccountNewPasswordConfirm" xml:space="preserve">
+    <value>Confirm new password</value>
+  </data>
+  <data name="AccountChangePasswordTitle" xml:space="preserve">
+    <value>Change password</value>
+  </data>
+  <data name="AccountChangePasswordButton" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="AccountLogoutConfirmTitle" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="AccountLogoutConfirmText" xml:space="preserve">
+    <value>Are you sure you want to sign out?</value>
+  </data>
+  <data name="AccountLogoutConfirmButton" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="AccountProfileRefreshed" xml:space="preserve">
+    <value>Profile refreshed</value>
+  </data>
+  <data name="AccountCloudSyncTitle" xml:space="preserve">
+    <value>Cloud Sync</value>
+  </data>
+  <data name="AccountCloudSyncEnable" xml:space="preserve">
+    <value>Enable cloud sync (playlists / favorites / plugins)</value>
+  </data>
+  <data name="AccountCloudSyncFrequency" xml:space="preserve">
+    <value>Auto upload frequency</value>
+  </data>
+  <data name="AccountFreqFiveMinutes" xml:space="preserve">
+    <value>Every 5 minutes</value>
+  </data>
+  <data name="AccountFreqFifteenMinutes" xml:space="preserve">
+    <value>Every 15 minutes</value>
+  </data>
+  <data name="AccountFreqThirtyMinutes" xml:space="preserve">
+    <value>Every 30 minutes</value>
+  </data>
+  <data name="AccountFreqOneHour" xml:space="preserve">
+    <value>Every hour</value>
+  </data>
+  <data name="AccountFreqSixHours" xml:space="preserve">
+    <value>Every 6 hours</value>
+  </data>
+  <data name="AccountFreqTwelveHours" xml:space="preserve">
+    <value>Every 12 hours</value>
+  </data>
+  <data name="AccountFreqOneDay" xml:space="preserve">
+    <value>Every day</value>
+  </data>
+  <data name="AccountFreqManual" xml:space="preserve">
+    <value>Manual only</value>
+  </data>
+  <data name="AccountSyncNow" xml:space="preserve">
+    <value>Sync now</value>
+  </data>
+  <data name="AccountNeverSynced" xml:space="preserve">
+    <value>Never synced</value>
+  </data>
+  <data name="AccountLastSyncFormat" xml:space="preserve">
+    <value>Last sync: {0}</value>
+  </data>
+  <data name="AccountSyncNoChange" xml:space="preserve">
+    <value>Nothing to sync</value>
+  </data>
+  <data name="AccountSyncDone" xml:space="preserve">
+    <value>Sync finished: {0} plugins downloaded, {1} uploaded, {2} playlists uploaded, {3} downloaded</value>
+  </data>
+  <data name="AccountSyncPluginErrorSuffix" xml:space="preserve">
+    <value>({0} plugins failed to sync)</value>
+  </data>
+  <data name="AccountCloudSyncPromptTitle" xml:space="preserve">
+    <value>Enable cloud sync?</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine1" xml:space="preserve">
+    <value>Signed in! Enable cloud sync now?</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine2" xml:space="preserve">
+    <value>Playlists, favorites and plugins will sync to the cloud automatically</value>
+  </data>
+  <data name="AccountCloudSyncPromptEnable" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="AccountCloudSyncPromptLater" xml:space="preserve">
+    <value>Not now</value>
+  </data>
+  <data name="AccountCloudSyncPromptWait" xml:space="preserve">
+    <value>You can choose in {0}s</value>
+  </data>
 </root>
-
-
-

@@ -1,4 +1,4 @@
-﻿using AnimatedWin2dControls.Controls.AnimatedLyricsLineControl.Advance;
+using AnimatedWin2dControls.Controls.AnimatedLyricsLineControl.Advance;
 using AnimatedWin2dControls.Controls.AnimatedTextBlock.Enums;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -285,7 +285,7 @@ namespace WinUIMusicPlayer.ViewModel
                     OnDefaultEntryComboBoxTagChanged(value);
                 }
             }
-        } = "AddFolder";
+        } = "Home";
 
         public string DefaultPlayListComboBoxTag
         {
@@ -1797,7 +1797,7 @@ namespace WinUIMusicPlayer.ViewModel
         [RelayCommand]
         private async Task OpenLogPath()
         {
-            var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "OriginalSoundPlayer", "Logs");
+            var logDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XYMusic", "Logs");
             var folder = await StorageFolder.GetFolderFromPathAsync(logDirectory);
             var options = new FolderLauncherOptions
             {
@@ -1814,6 +1814,125 @@ namespace WinUIMusicPlayer.ViewModel
             if (folder is not null)
             {
                 MusicCoverCache = folder.Path;
+            }
+        }
+
+        /// <summary>自定义图片背景: 当前背景文件名(设置页展示)。</summary>
+        public string CustomBackgroundFileName
+        {
+            get => field;
+            set => SetProperty(ref field, value);
+        } = string.Empty;
+
+        /// <summary>自定义图片背景模糊度(0-50, 拖动滑杆停止 400ms 后应用)。</summary>
+        public double CustomBackgroundBlur
+        {
+            get => field;
+            set
+            {
+                if (SetProperty(ref field, Math.Clamp(value, 0, 50)))
+                {
+                    AppSettings.CustomBackgroundBlur = field;
+                    ScheduleBackgroundApply();
+                }
+            }
+        } = 0;
+
+        /// <summary>背景应用防抖计时器: 拖动滑杆期间只在停顿后触发一次重新渲染。</summary>
+        private Microsoft.UI.Dispatching.DispatcherQueueTimer? _backgroundApplyTimer;
+
+        private void ScheduleBackgroundApply()
+        {
+            var dispatcher = App.MainWindow?.DispatcherQueue;
+            if (dispatcher is null) return; // 启动加载阶段无窗口, 无需应用
+            if (_backgroundApplyTimer is null)
+            {
+                _backgroundApplyTimer = dispatcher.CreateTimer();
+                _backgroundApplyTimer.IsRepeating = false;
+                _backgroundApplyTimer.Tick += (_, _) =>
+                {
+                    App.MainWindow?.UpdateCustomBackground();
+                    if (IsInitialized)
+                    {
+                        _ = _musicDatabaseService.SaveSettingAsync();
+                    }
+                };
+            }
+            _backgroundApplyTimer.Stop();
+            _backgroundApplyTimer.Start();
+        }
+
+        /// <summary>删除背景目录下的全部模糊缓存(换图/清除背景时调用, 防止残留脏缓存)。</summary>
+        private static void DeleteBackgroundBlurCaches()
+        {
+            try
+            {
+                var dir = Path.Combine(AppPaths.LocalFolder, "Backgrounds");
+                if (!Directory.Exists(dir)) return;
+                foreach (var f in Directory.GetFiles(dir, "custom_background_blur*"))
+                {
+                    try { File.Delete(f); } catch { /* 被占用时忽略 */ }
+                }
+            }
+            catch { /* 清理失败不影响主流程 */ }
+        }
+
+        [RelayCommand]
+        private async Task ChooseCustomBackground()
+        {
+            try
+            {
+                var picker = new Microsoft.Windows.Storage.Pickers.FileOpenPicker(App.MainWindow.AppWindow.Id);
+                picker.FileTypeFilter.Add(".jpg");
+                picker.FileTypeFilter.Add(".jpeg");
+                picker.FileTypeFilter.Add(".png");
+                picker.FileTypeFilter.Add(".bmp");
+                picker.FileTypeFilter.Add(".webp");
+                var result = await picker.PickSingleFileAsync();
+                if (result is null || string.IsNullOrEmpty(result.Path)) return;
+                // 复制到 LocalFolder\Backgrounds 持久化: 源文件被移动/删除后背景依然有效
+                var dir = Path.Combine(AppPaths.LocalFolder, "Backgrounds");
+                Directory.CreateDirectory(dir);
+                var dest = Path.Combine(dir, "custom_background" + Path.GetExtension(result.Path));
+                File.Copy(result.Path, dest, true);
+                // 原图已更换, 旧模糊缓存全部失效
+                DeleteBackgroundBlurCaches();
+                AppSettings.CustomBackgroundPath = dest;
+                CustomBackgroundFileName = Path.GetFileName(dest);
+                App.MainWindow?.UpdateCustomBackground();
+                if (IsInitialized)
+                {
+                    _ = _musicDatabaseService.SaveSettingAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "选择自定义背景图片失败");
+            }
+        }
+
+        [RelayCommand]
+        private void ClearCustomBackground()
+        {
+            try
+            {
+                var path = AppSettings.CustomBackgroundPath;
+                if (!string.IsNullOrEmpty(path))
+                {
+                    try { File.Delete(path); } catch { /* 文件被占用/已删除时忽略 */ }
+                }
+                DeleteBackgroundBlurCaches();
+                AppSettings.CustomBackgroundPath = string.Empty;
+                CustomBackgroundFileName = string.Empty;
+                App.MainWindow?.UpdateCustomBackground();
+                if (IsInitialized)
+                {
+                    _ = _musicDatabaseService.SaveSettingAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "清除自定义背景失败");
             }
         }
 

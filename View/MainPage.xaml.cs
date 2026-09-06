@@ -6,8 +6,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
@@ -18,6 +21,7 @@ using WinUIMusicPlayer.Helper;
 using WinUIMusicPlayer.Model;
 using WinUIMusicPlayer.Services;
 using WinUIMusicPlayer.Services.NavigationService;
+using WinUIMusicPlayer.Services.Plugins;
 using WinUIMusicPlayer.Utils;
 using WinUIMusicPlayer.View.SubView;
 using WinUIMusicPlayer.ViewModel;
@@ -46,11 +50,16 @@ namespace WinUIMusicPlayer.View
 
         public bool IsPlayingDetailVisible => PlayingFrame.Visibility == Visibility.Visible;
         //private ToolTip _progressToolTip = new();
+        private readonly Services.Account.AuthService _authService;
+
         public MainPage(MainViewModel viewModel)
         {
             InitializeComponent();
             ViewModel = viewModel;
             DataContext = this;
+            _authService = App.Services.GetRequiredService<Services.Account.AuthService>();
+            _authService.LoginStateChanged += OnAuthLoginStateChanged;
+            Loaded += (_, _) => _ = UpdateAccountAvatarAsync();
             var navigationServiceFactory = App.Services.GetRequiredService<INavigationServiceFactory>();
             _playingNavigation = navigationServiceFactory.CreateNavigationService(PlayingFrame);
             _playingNavigation.RegisterPage<PlayingDetailPage>();
@@ -64,9 +73,20 @@ namespace WinUIMusicPlayer.View
             ViewModel.DesktopLyrics.IsEnabled = !ViewModel.DesktopLyrics.IsEnabled;
         }
 
+        /// <summary>底栏下载按钮: 当前歌曲为在线歌曲时弹出下载对话框(音质/目录/独立歌词封面), 确认后下载并内嵌元数据。</summary>
+        private void DownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            DownloadFlowHelper.Start(XamlRoot, ViewModel.AppViewModel.CurrentPlayingMusic);
+        }
+
+        private void PlayBarAddToPlayListButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new SubView.AddToMyPlayListDialog(ViewModel.AppViewModel);
+            _ = dialog.ShowThemedAsync(XamlRoot);
+        }
+
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
-            NavigationViewControl.IsPaneOpen = false;
             NavigateToDefaultPage();
             InitiaizeEqualizerDialog();
             SetSettingsDialog();
@@ -227,6 +247,9 @@ namespace WinUIMusicPlayer.View
             }
             switch (ViewModel.AppViewModel.DefaultEntryComboBoxTag)
             {
+                case "Home":
+                    NavigateTo(typeof(HomePage), null, new EntranceNavigationTransitionInfo());
+                    break;
                 case "AddFolder":
                     NavigateTo(typeof(AddFolderPage), null, new EntranceNavigationTransitionInfo());
                     break;
@@ -240,7 +263,7 @@ namespace WinUIMusicPlayer.View
                     NavigateTo(typeof(StatsPage), null, new EntranceNavigationTransitionInfo());
                     break;
                 default:
-                    NavigateTo(typeof(MusicBrowsePage), null, new EntranceNavigationTransitionInfo());
+                    NavigateTo(typeof(HomePage), null, new EntranceNavigationTransitionInfo());
                     break;
             }
         }
@@ -261,6 +284,82 @@ namespace WinUIMusicPlayer.View
             }
         }
 
+        // ─── 顶栏账号入口 ─────────────────────────────
+
+        private void OnAuthLoginStateChanged()
+        {
+            DispatcherQueue.TryEnqueue(() => _ = UpdateAccountAvatarAsync());
+        }
+
+        private async Task UpdateAccountAvatarAsync()
+        {
+            var user = _authService.CurrentUser;
+            var avatar = user?.Avatar;
+            if (AccountAvatarToolTipText is not null)
+            {
+                AccountAvatarToolTipText.Text = _authService.IsLoggedIn
+                    ? user!.Nickname
+                    : GetString("AccountTitle");
+            }
+            if (string.IsNullOrWhiteSpace(avatar) || AccountAvatarEllipse is null)
+            {
+                if (AccountAvatarEllipse is not null) AccountAvatarEllipse.Visibility = Visibility.Collapsed;
+                if (AccountAvatarPlaceholderIcon is not null) AccountAvatarPlaceholderIcon.Visibility = Visibility.Visible;
+                return;
+            }
+            var source = await AvatarToImageAsync(avatar);
+            if (source is null)
+            {
+                AccountAvatarEllipse.Visibility = Visibility.Collapsed;
+                AccountAvatarPlaceholderIcon.Visibility = Visibility.Visible;
+                return;
+            }
+            AccountAvatarBrush.ImageSource = source;
+            AccountAvatarEllipse.Visibility = Visibility.Visible;
+            AccountAvatarPlaceholderIcon.Visibility = Visibility.Collapsed;
+        }
+
+        /// <summary>头像 data URI(base64)或 URL → ImageSource。</summary>
+        private static async Task<ImageSource?> AvatarToImageAsync(string avatar)
+        {
+            try
+            {
+                if (avatar.StartsWith("data:image/", StringComparison.Ordinal))
+                {
+                    var comma = avatar.IndexOf(',');
+                    if (comma <= 0 || comma >= avatar.Length - 1) return null;
+                    var bytes = Convert.FromBase64String(avatar[(comma + 1)..]);
+                    using var ms = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+                    await ms.WriteAsync(bytes.AsBuffer());
+                    ms.Seek(0);
+                    var bmp = new BitmapImage();
+                    await bmp.SetSourceAsync(ms);
+                    return bmp;
+                }
+                if (Uri.TryCreate(avatar, UriKind.Absolute, out var uri))
+                    return new BitmapImage { UriSource = uri };
+            }
+            catch { }
+            return null;
+        }
+
+        private void AccountAvatarButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (PlayingFrame.Visibility is Visibility.Visible)
+            {
+                NavigationViewControl.Visibility = Visibility.Visible;
+                _playingNavigation.Dismiss(300);
+                ViewModel.AppViewModel.IsPlayingDetailVisible = false;
+                ViewModel.AppViewModel.IsPointerOverTitleBar = true;
+            }
+            if (MainFrame.Content is not AccountPage)
+            {
+                // 账号页不在侧边栏菜单中, 取消侧边栏选中态
+                NavigationViewControl.SelectedItem = null;
+                NavigateTo(typeof(AccountPage), null, new EntranceNavigationTransitionInfo());
+            }
+        }
+
         private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
             Type? targetType = null;
@@ -273,9 +372,13 @@ namespace WinUIMusicPlayer.View
             {
                 targetType = args.InvokedItemContainer.Tag.ToString() switch
                 {
+                    "Home" => typeof(HomePage),
                     "AddFolder" => typeof(AddFolderPage),
                     "MusicBrowse" => typeof(MusicBrowsePage),
                     "PlayLists" => typeof(PlayListPage),
+                    "MyPlayLists" => typeof(MyPlayListPage),
+                    "OnlineSearch" => typeof(OnlineSearchPage),
+                    "PluginManage" => typeof(PluginManagePage),
                     "Stats" => typeof(StatsPage),
                     _ => null
                 };
@@ -291,7 +394,7 @@ namespace WinUIMusicPlayer.View
         {
             if (MainFrame.Content is not MusicBrowsePage)
             {
-                NavigationViewControl.SelectedItem = NavigationViewControl.MenuItems[1];
+                NavigationViewControl.SelectedItem = NavigationViewControl.MenuItems[2];
                 NavigateTo(typeof(MusicBrowsePage), null, new EntranceNavigationTransitionInfo());
             }
         }
@@ -479,15 +582,83 @@ namespace WinUIMusicPlayer.View
             }
         }
 
+        /// <summary>播放列表面板是否展开(防重复动画)。</summary>
+        private bool _isPlayListPanelOpen;
+
         private void CurrentPlayListButton_Click(object sender, RoutedEventArgs e)
         {
-            CurrentPlayListTeachingTip.IsOpen = true;
-            UpdateCurrentPlayList();
+            if (_isPlayListPanelOpen)
+            {
+                ClosePlayListPanel();
+            }
+            else
+            {
+                OpenPlayListPanel();
+            }
         }
 
-        private void CurrentPlayListTeachingTipCloseButton_Click(object sender, RoutedEventArgs e)
+        private void OpenPlayListPanel()
         {
-            CurrentPlayListTeachingTip.IsOpen = false;
+            _isPlayListPanelOpen = true;
+            CurrentPlayListOverlay.Visibility = Visibility.Visible;
+            CurrentPlayListPanel.Visibility = Visibility.Visible;
+            // 先归位到右侧边缘再滑入, 保证每次都有滑入动画
+            ((TranslateTransform)CurrentPlayListPanel.RenderTransform).X = CurrentPlayListPanel.Width;
+            UpdateCurrentPlayList();
+            AnimatePlayListPanel(0);
+        }
+
+        private void ClosePlayListPanel()
+        {
+            if (!_isPlayListPanelOpen) return;
+            _isPlayListPanelOpen = false;
+            AnimatePlayListPanel(CurrentPlayListPanel.Width, () =>
+            {
+                // 动画完成前面板被重新打开时不收起
+                if (!_isPlayListPanelOpen)
+                {
+                    CurrentPlayListPanel.Visibility = Visibility.Collapsed;
+                    CurrentPlayListOverlay.Visibility = Visibility.Collapsed;
+                }
+            });
+        }
+
+        /// <summary>面板横向滑动动画(220ms EaseOut)。</summary>
+        private void AnimatePlayListPanel(double to, Action? onCompleted = null)
+        {
+            var translate = (TranslateTransform)CurrentPlayListPanel.RenderTransform;
+            var anim = new DoubleAnimation
+            {
+                To = to,
+                Duration = new Duration(TimeSpan.FromMilliseconds(220)),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(anim, translate);
+            Storyboard.SetTargetProperty(anim, "X");
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(anim);
+            if (onCompleted is not null)
+            {
+                storyboard.Completed += (_, _) => onCompleted();
+            }
+            storyboard.Begin();
+        }
+
+        /// <summary>点击面板外区域(遮罩层)关闭。</summary>
+        private void CurrentPlayListOverlay_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            ClosePlayListPanel();
+        }
+
+        /// <summary>点击面板内部: 阻止冒泡到遮罩层导致误关闭。</summary>
+        private void CurrentPlayListPanel_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void CurrentPlayListPanelCloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            ClosePlayListPanel();
         }
 
         public void UpdateCurrentPlayList()

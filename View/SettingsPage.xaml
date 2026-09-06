@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="WinUIMusicPlayer.View.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -201,7 +201,7 @@
                         x:Uid="SpectrumVisualization"
                         Margin="10,0,10,0"
                         Click="SpectrumVisualization_Click"
-                        Description="© 2026 Sennpei Studio"
+                        Description="© 2026 XYMusic"
                         HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/SpectrumVisualization.png}"
                         IsClickEnabled="True" />
                 </StackPanel>
@@ -244,6 +244,7 @@
                                     VerticalAlignment="Center"
                                     SelectedValue="{x:Bind ViewModel.AppViewModel.DefaultEntryComboBoxTag, Mode=TwoWay}"
                                     SelectedValuePath="Tag">
+                                    <ComboBoxItem x:Uid="HomeCombox" Tag="Home" />
                                     <ComboBoxItem x:Uid="AddFolderCombox" Tag="AddFolder" />
                                     <ComboBoxItem x:Uid="MusicBrowseCombox" Tag="MusicBrowse" />
                                     <ComboBoxItem x:Uid="PlayListsCombox" Tag="PlayLists" />
@@ -1972,6 +1973,93 @@
                     </Expander.Content>
                 </Expander>
 
+                <!--  自定义图片背景  -->
+                <Expander
+                    MinHeight="69"
+                    Margin="10,0,10,0"
+                    Padding="0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    CornerRadius="{ThemeResource ControlCornerRadius}">
+                    <Expander.Header>
+                        <Grid Padding="16,16,4,16">
+                            <TextBlock
+                                x:Uid="CustomBackground"
+                                VerticalAlignment="Center"
+                                FontSize="14" />
+                        </Grid>
+                    </Expander.Header>
+                    <Expander.Content>
+                        <StackPanel>
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock
+                                        x:Uid="CustomBackgroundDescription"
+                                        FontSize="14"
+                                        TextWrapping="Wrap" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind ViewModel.AppViewModel.CustomBackgroundFileName, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <StackPanel
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <Button
+                                        x:Uid="ChooseBackgroundImage"
+                                        MinWidth="0"
+                                        Command="{x:Bind ViewModel.AppViewModel.ChooseCustomBackgroundCommand, Mode=OneWay}" />
+                                    <Button
+                                        x:Uid="ClearBackgroundImage"
+                                        MinWidth="0"
+                                        Command="{x:Bind ViewModel.AppViewModel.ClearCustomBackgroundCommand, Mode=OneWay}" />
+                                </StackPanel>
+                            </Grid>
+                            <!--  壁纸模糊度  -->
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <TextBlock
+                                    x:Uid="CustomBackgroundBlur"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    FontSize="14" />
+                                <Grid
+                                    Grid.Column="1"
+                                    Width="300"
+                                    ColumnDefinitions="Auto,*">
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Margin="5,0"
+                                        MinWidth="26"
+                                        VerticalAlignment="Center"
+                                        FontSize="14"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind ViewModel.AppViewModel.CustomBackgroundBlur, Mode=OneWay}" />
+                                    <Slider
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Maximum="50"
+                                        Minimum="0"
+                                        SnapsTo="Ticks"
+                                        TickFrequency="1"
+                                        TickPlacement="Outside"
+                                        Value="{x:Bind ViewModel.AppViewModel.CustomBackgroundBlur, Mode=TwoWay}" />
+                                </Grid>
+                            </Grid>
+                        </StackPanel>
+                    </Expander.Content>
+                </Expander>
+
                 <!--  应用主题  -->
                 <Expander
                     MinHeight="69"
@@ -2046,7 +2134,7 @@
                 <controls:SettingsExpander
                     x:Uid="AppTitleHeader"
                     Margin="10,0,10,0"
-                    Description="© 2026 Sennpei Studio"
+                    Description="© 2026 XYMusic"
                     HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/Square44x44Logo.altform-unplated_targetsize-32.png}">
                     <TextBlock
                         x:Name="Version"

@@ -6,7 +6,7 @@ namespace WinUIMusicPlayer.Model
         public bool HasBounds { get; set; } = false;
         public int X { get; set; } = -1;
         public int Y { get; set; } = -1;
-        public int Width { get; set; } = 1800;
-        public int Height { get; set; } = 280;
+        public int Width { get; set; } = 800;
+        public int Height { get; set; } = 200;
     }
 }

@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.WinUI;
+using CommunityToolkit.WinUI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
+using WinUIMusicPlayer.Services.Plugins;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -30,7 +31,7 @@ namespace WinUIMusicPlayer.Services
     public class MusicDatabaseService
     {
         private SQLiteAsyncConnection _dbConnection;
-        private string DbPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "MusicDatabase.db");
+        private string DbPath = Path.Combine(AppPaths.LocalFolder, "MusicDatabase.db");
         private string SettingsPath => GetSettingsFilePath();
         private string PlayStatePath => GetPlayStateFilePath();
         private string VersionRecordPath => GetVersionRecordFilePath();
@@ -69,9 +70,30 @@ namespace WinUIMusicPlayer.Services
                 await _dbConnection.CreateTableAsync<SaveEqualizer>();
                 await _dbConnection.CreateTableAsync<PlayList>();
                 await _dbConnection.CreateTableAsync<PlayListMusic>();
+                await _dbConnection.CreateTableAsync<OnlinePlayListMusic>();
+                try
+                {
+                    // PlayList.IsOnline 列迁移(老库补列, 在线歌单=1)
+                    var playListColumns = await _dbConnection.QueryAsync<TableColumnInfo>("PRAGMA table_info(PlayList)");
+                    if (playListColumns.All(c => c.Name != "IsOnline"))
+                        await _dbConnection.ExecuteAsync("ALTER TABLE PlayList ADD COLUMN IsOnline INTEGER DEFAULT 0");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "PlayList.IsOnline 列迁移失败: {Message}", ex.Message);
+                }
                 await _dbConnection.CreateTableAsync<LastPlayListState>();
                 await _dbConnection.CreateTableAsync<SubFolder>();
                 await _dbConnection.CreateTableAsync<UsbDeviceMusic>();
+                try
+                {
+                    // 清理为在线歌曲(负数临时 Id)误存的歌词行: 该类 Id 跨会话重复分配, 会读到别的歌的歌词
+                    await _dbConnection.ExecuteAsync("DELETE FROM MusicLyrics WHERE MusicId < 0");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "清理在线歌曲遗留歌词行失败: {Message}", ex.Message);
+                }
                 try
                 {
                     await _dbConnection.CreateTableAsync<PlaybackHistory>();
@@ -93,9 +115,9 @@ namespace WinUIMusicPlayer.Services
                 string userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                 if (userProfilePath is not null)
                 {
-                    string appFolderPath = Path.Combine(userProfilePath, "OriginalSoundPlayer", "DataBase");
+                    string appFolderPath = Path.Combine(userProfilePath, "XYMusic", "DataBase");
                     string dbFilePath = Path.Combine(appFolderPath, "MusicDatabase.db");
-                    string sourceDbPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "MusicDatabase.db");
+                    string sourceDbPath = Path.Combine(AppPaths.LocalFolder, "MusicDatabase.db");
                     if (!Directory.Exists(appFolderPath))
                     {
                         Directory.CreateDirectory(appFolderPath);
@@ -115,7 +137,7 @@ namespace WinUIMusicPlayer.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"InitalizeDbPath 初始化数据库路径失败: {ex.Message}");
-                DbPath = System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "MusicDatabase.db");
+                DbPath = System.IO.Path.Combine(AppPaths.LocalFolder, "MusicDatabase.db");
             }
         }
 
@@ -124,7 +146,7 @@ namespace WinUIMusicPlayer.Services
             try
             {
                 string userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string appFolderPath = Path.Combine(userProfilePath, "OriginalSoundPlayer", "Settings");
+                string appFolderPath = Path.Combine(userProfilePath, "XYMusic", "Settings");
                 if (!Directory.Exists(appFolderPath))
                 {
                     Directory.CreateDirectory(appFolderPath);
@@ -133,7 +155,7 @@ namespace WinUIMusicPlayer.Services
             }
             catch
             {
-                return Path.Combine(ApplicationData.Current.LocalFolder.Path, "Settings.json");
+                return Path.Combine(AppPaths.LocalFolder, "Settings.json");
             }
         }
 
@@ -142,7 +164,7 @@ namespace WinUIMusicPlayer.Services
             try
             {
                 string userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string appFolderPath = Path.Combine(userProfilePath, "OriginalSoundPlayer", "Settings");
+                string appFolderPath = Path.Combine(userProfilePath, "XYMusic", "Settings");
                 if (!Directory.Exists(appFolderPath))
                 {
                     Directory.CreateDirectory(appFolderPath);
@@ -151,7 +173,7 @@ namespace WinUIMusicPlayer.Services
             }
             catch
             {
-                return Path.Combine(ApplicationData.Current.LocalFolder.Path, "PlayState.json");
+                return Path.Combine(AppPaths.LocalFolder, "PlayState.json");
             }
         }
 
@@ -160,7 +182,7 @@ namespace WinUIMusicPlayer.Services
             try
             {
                 string userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string appFolderPath = Path.Combine(userProfilePath, "OriginalSoundPlayer", "Settings");
+                string appFolderPath = Path.Combine(userProfilePath, "XYMusic", "Settings");
                 if (!Directory.Exists(appFolderPath))
                 {
                     Directory.CreateDirectory(appFolderPath);
@@ -169,7 +191,7 @@ namespace WinUIMusicPlayer.Services
             }
             catch
             {
-                return Path.Combine(ApplicationData.Current.LocalFolder.Path, "DesktopLyricsState.json");
+                return Path.Combine(AppPaths.LocalFolder, "DesktopLyricsState.json");
             }
         }
 
@@ -221,7 +243,7 @@ namespace WinUIMusicPlayer.Services
             try
             {
                 string userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string appFolderPath = Path.Combine(userProfilePath, "OriginalSoundPlayer", "Settings");
+                string appFolderPath = Path.Combine(userProfilePath, "XYMusic", "Settings");
                 if (!Directory.Exists(appFolderPath))
                 {
                     Directory.CreateDirectory(appFolderPath);
@@ -230,7 +252,7 @@ namespace WinUIMusicPlayer.Services
             }
             catch
             {
-                return Path.Combine(ApplicationData.Current.LocalFolder.Path, "VersionRecord.json");
+                return Path.Combine(AppPaths.LocalFolder, "VersionRecord.json");
             }
         }
 
@@ -363,9 +385,167 @@ namespace WinUIMusicPlayer.Services
             try
             {
                 var list = await _dbConnection.Table<PlayList>().ToListAsync();
-                await AppViewModel.AllPlayList.AddRangeAsync(list);
+                // 本地歌单与在线歌单分集合维护: AllPlayList 仅本地(右键"添加到播放列表"菜单不受影响)
+                await AppViewModel.AllPlayList.AddRangeAsync(list.Where(p => p.IsOnline == 0));
+                await AppViewModel.OnlinePlayLists.AddRangeAsync(list.Where(p => p.IsOnline == 1));
+                await RefreshOnlinePlayListCounts();
             }
             catch (Exception ex) { _logger.LogError(ex, $"InitalPlayListAsync 初始化播放列表失败: {ex.Message}"); }
+        }
+
+        private async Task RefreshOnlinePlayListCounts()
+        {
+            try
+            {
+                var counts = new Dictionary<int, int>();
+                var entries = await _dbConnection.Table<OnlinePlayListMusic>().ToListAsync();
+                foreach (var e in entries)
+                    counts[e.PlayListId] = counts.GetValueOrDefault(e.PlayListId) + 1;
+                foreach (var pl in AppViewModel.OnlinePlayLists)
+                    pl.SongCount = counts.GetValueOrDefault(pl.Id, 0);
+            }
+            catch (Exception ex) { _logger.LogWarning(ex, "统计在线歌单曲目数失败: {Message}", ex.Message); }
+        }
+
+        // ────────────────────────────────────────────────────────────
+        //  在线歌单: 歌单 CRUD + 歌曲条目(在线存 OnlineSong JSON / 本地存 MusicId)
+        // ────────────────────────────────────────────────────────────
+
+        private static readonly System.Text.Json.JsonSerializerOptions OnlineSongJsonOpts = new() { PropertyNameCaseInsensitive = true };
+
+        /// <summary>全部歌单(本地+在线), 云同步读取快照用。</summary>
+        public Task<List<PlayList>> GetAllPlayListsAsync()
+            => _dbConnection.Table<PlayList>().ToListAsync();
+
+        /// <summary>本地歌单(PlayListMusic)条目, 云同步读取快照用。</summary>
+        public Task<List<PlayListMusic>> GetPlayListMusicsAsync(int playListId)
+            => _dbConnection.Table<PlayListMusic>()
+                .Where(m => m.PlayListId == playListId).OrderBy(m => m.Order).ToListAsync();
+
+        /// <summary>原始 Music 表数据(不做本地化替换), 云同步用。</summary>
+        public Task<List<Music>> GetAllMusicsRawAsync()
+            => _dbConnection.Table<Music>().ToListAsync();
+
+        public async Task<int> CreateOnlinePlayListAsync(string name)
+        {
+            var pl = new PlayList { Name = name, SongCount = 0, IsOnline = 1 };
+            await _dbConnection.InsertAsync(pl);
+            return pl.Id;
+        }
+
+        /// <summary>添加在线歌曲到歌单(仅存插件链接 JSON, 不下载), 虚拟路径重复时跳过。返回是否实际添加。</summary>
+        public async Task<bool> AddOnlineSongToPlayListAsync(int playListId, Services.Plugins.OnlineSong song)
+        {
+            var entries = await _dbConnection.Table<OnlinePlayListMusic>()
+                .Where(e => e.PlayListId == playListId).ToListAsync();
+            foreach (var e in entries)
+            {
+                if (e.MusicId > 0 || string.IsNullOrEmpty(e.SongJson)) continue;
+                try
+                {
+                    var existing = System.Text.Json.JsonSerializer.Deserialize<Services.Plugins.OnlineSong>(e.SongJson, OnlineSongJsonOpts);
+                    if (existing is null) continue;
+                    if (existing.VirtualPath == song.VirtualPath) return false;
+                    // 云端损坏条目(无 id)与本地已修复条目(有 id)同名同歌手 → 同一首, 跳过避免同步出重复
+                    if (!string.IsNullOrEmpty(existing.Id) && string.IsNullOrEmpty(song.Id)
+                        && Services.Plugins.OnlinePlaybackResolver.NormalizeText(existing.Title ?? "") == Services.Plugins.OnlinePlaybackResolver.NormalizeText(song.Title ?? ""))
+                        return false;
+                }
+                catch { /* 损坏条目按不存在处理 */ }
+            }
+            int newOrder = (entries.Count == 0 ? 0 : entries.Max(e => e.Order)) + 1;
+            await _dbConnection.InsertAsync(new OnlinePlayListMusic
+            {
+                PlayListId = playListId,
+                Order = newOrder,
+                MusicId = 0,
+                SongJson = System.Text.Json.JsonSerializer.Serialize(song, OnlineSongJsonOpts),
+            });
+            return true;
+        }
+
+        /// <summary>把歌单库中损坏的在线条目(无歌曲 id)按 标题+歌手 匹配替换为修复后的完整歌曲数据, 返回修复条数。</summary>
+        public async Task<int> RepairOnlineSongJsonAsync(string title, string artist, Services.Plugins.OnlineSong repaired)
+        {
+            var normTitle = Services.Plugins.OnlinePlaybackResolver.NormalizeText(title ?? string.Empty);
+            if (normTitle.Length == 0) return 0;
+            var wantArtists = Services.Plugins.OnlinePlaybackResolver.SplitArtists(artist ?? string.Empty);
+            int count = 0;
+            var entries = await _dbConnection.Table<OnlinePlayListMusic>().ToListAsync();
+            foreach (var e in entries)
+            {
+                if (e.MusicId > 0 || string.IsNullOrEmpty(e.SongJson)) continue;
+                try
+                {
+                    var existing = System.Text.Json.JsonSerializer.Deserialize<Services.Plugins.OnlineSong>(e.SongJson, OnlineSongJsonOpts);
+                    // 仅修复无 id 的损坏条目, 且标题归一化一致 + 歌手有交集
+                    if (existing is null || !string.IsNullOrEmpty(existing.Id)) continue;
+                    if (Services.Plugins.OnlinePlaybackResolver.NormalizeText(existing.Title ?? "") != normTitle) continue;
+                    if (wantArtists.Count > 0)
+                    {
+                        var got = Services.Plugins.OnlinePlaybackResolver.SplitArtists(existing.Artist ?? "");
+                        if (got.Count > 0 && !got.Overlaps(wantArtists)) continue;
+                    }
+                    e.SongJson = System.Text.Json.JsonSerializer.Serialize(repaired, OnlineSongJsonOpts);
+                    await _dbConnection.UpdateAsync(e);
+                    count++;
+                }
+                catch { /* 损坏条目跳过 */ }
+            }
+            return count;
+        }
+
+        /// <summary>删除在线歌单中损坏的在线条目(跨端同步遗留: 歌曲 id 或 RawJson 为空, 播放必失败), 返回删除数。</summary>
+        public async Task<int> RemoveBrokenOnlineSongsAsync(int playListId)
+        {
+            var entries = await _dbConnection.Table<OnlinePlayListMusic>()
+                .Where(e => e.PlayListId == playListId).ToListAsync();
+            var broken = new List<int>();
+            foreach (var e in entries)
+            {
+                if (e.MusicId > 0 || string.IsNullOrEmpty(e.SongJson)) continue;
+                try
+                {
+                    var existing = System.Text.Json.JsonSerializer.Deserialize<Services.Plugins.OnlineSong>(e.SongJson, OnlineSongJsonOpts);
+                    // 歌曲 id 或原始数据缺失 → 无法解析音源(手机端旧版同步数据), 清除后由本次合并重建
+                    if (existing is null || string.IsNullOrEmpty(existing.Id) || string.IsNullOrEmpty(existing.RawJson))
+                        broken.Add(e.Id);
+                }
+                catch { broken.Add(e.Id); }
+            }
+            if (broken.Count > 0)
+                await _dbConnection.ExecuteAsync($"DELETE FROM OnlinePlayListMusic WHERE Id IN ({string.Join(',', broken)})");
+            return broken.Count;
+        }
+
+        /// <summary>添加本地歌曲到在线歌单(MusicId 引用), 已存在时跳过。</summary>
+        public async Task<bool> AddLocalMusicToOnlinePlayListAsync(int playListId, int musicId)
+        {
+            var entries = await _dbConnection.Table<OnlinePlayListMusic>()
+                .Where(e => e.PlayListId == playListId).ToListAsync();
+            if (entries.Any(e => e.MusicId == musicId)) return false;
+            int newOrder = (entries.Count == 0 ? 0 : entries.Max(e => e.Order)) + 1;
+            await _dbConnection.InsertAsync(new OnlinePlayListMusic
+            {
+                PlayListId = playListId,
+                Order = newOrder,
+                MusicId = musicId,
+                SongJson = string.Empty,
+            });
+            return true;
+        }
+
+        public async Task<List<OnlinePlayListMusic>> GetOnlinePlayListMusicsAsync(int playListId)
+            => await _dbConnection.Table<OnlinePlayListMusic>()
+                .Where(e => e.PlayListId == playListId).OrderBy(e => e.Order).ToListAsync();
+
+        public async Task RemoveOnlinePlayListMusicAsync(int entryId)
+            => await _dbConnection.ExecuteAsync("DELETE FROM OnlinePlayListMusic WHERE Id = ?", entryId);
+
+        public async Task DeleteOnlinePlayListAsync(PlayList playList)
+        {
+            await _dbConnection.ExecuteAsync("DELETE FROM OnlinePlayListMusic WHERE PlayListId = ?", playList.Id);
+            await _dbConnection.DeleteAsync(playList);
         }
 
         public async Task UpdateMusicInfo(Music music)
@@ -395,6 +575,12 @@ namespace WinUIMusicPlayer.Services
                 Krc = krc ?? "",
                 TKrc = tKrc ?? ""
             });
+        }
+
+        /// <summary>删除指定歌曲的歌词库条目(取消关联歌词时调用, 之后自动联网搜索可重新探测)。</summary>
+        public async Task ClearLyricsAsync(int musicId)
+        {
+            await _dbConnection.DeleteAsync<MusicLyrics>(musicId);
         }
 
         private async Task SaveEmbeddedLyricsAsync(IEnumerable<(Music Music, string Lyrics)> results)
@@ -830,8 +1016,14 @@ namespace WinUIMusicPlayer.Services
             AppViewModel.SongsSource.AddRange(await GetMusicListAsync());
             await InitalPlayListAsync();
             await GetPlayListMusic();
-            AppViewModel.SequentialPlayingList = new(await LoadPlayList(AppViewModel.SongsSource));
-            AppViewModel.NotifySongsSourceChanged();
+            var newList = new BulkObservableCollection<Music>(await LoadPlayList(AppViewModel.SongsSource));
+            // 本方法在后台线程执行, 直接赋值会触发 NotifyIconControl 等 x:Bind 在非 UI 线程
+            // 更新 XAML 对象(RPC_E_WRONG_THREAD 0x8001010E), 需调度到 UI 线程
+            await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
+            {
+                AppViewModel.SequentialPlayingList = newList;
+                AppViewModel.NotifySongsSourceChanged();
+            });
         }
 
         public async Task<IReadOnlyCollection<Music>> GetMusicListAsync()
@@ -991,7 +1183,7 @@ namespace WinUIMusicPlayer.Services
             {
                 settings = new SaveSettings
                 {
-                    MusicCoverCache = Path.Combine(ApplicationData.Current.LocalFolder.Path, "MusicCoverCache")
+                    MusicCoverCache = Path.Combine(AppPaths.LocalFolder, "MusicCoverCache")
                 };
                 await InsertSettings(settings);
             }
@@ -1069,11 +1261,21 @@ namespace WinUIMusicPlayer.Services
                     (byte)((settings.LyricsCustomColorRgb >> 8) & 0xFF),
                     (byte)(settings.LyricsCustomColorRgb & 0xFF));
                 AppViewModel.IsUpdateBackDrop = settings.IsUpdateBackDrop;
+                // 自定义图片背景: 仅在持久文件仍存在时恢复(防止误删目录后启动异常)
+                AppSettings.CustomBackgroundPath = settings.CustomBackgroundPath;
+                AppViewModel.CustomBackgroundFileName = !string.IsNullOrEmpty(settings.CustomBackgroundPath) && File.Exists(settings.CustomBackgroundPath)
+                    ? Path.GetFileName(settings.CustomBackgroundPath) : string.Empty;
+                AppSettings.CustomBackgroundBlur = Math.Clamp(settings.CustomBackgroundBlur, 0, 50);
+                AppViewModel.CustomBackgroundBlur = AppSettings.CustomBackgroundBlur;
+                AppSettings.DownloadPath = settings.DownloadPath ?? string.Empty;
+                AppSettings.DownloadQuality = LxSources.NormalizeQuality(settings.DownloadQuality) is { Length: > 0 } q ? q : "320k";
+                AppSettings.DownloadSaveLrc = settings.DownloadSaveLrc;
+                AppSettings.DownloadSaveCover = settings.DownloadSaveCover;
                 AppViewModel.LyricsAlignment = settings.LyricsAlignment;
                 AppViewModel.LyricsMargin = new Thickness(settings.LyricsMargin, 0, settings.LyricsMargin, 0);
                 AppViewModel.GlobalFontSize = settings.GlobalFontSize;
                 AppViewModel.IsGlobalFontSizeEnabled = settings.IsGlobalFontSizeEnabled;
-                AppViewModel.MusicCoverCache = string.IsNullOrEmpty(settings.MusicCoverCache) ? Path.Combine(ApplicationData.Current.LocalFolder.Path, "MusicCoverCache") : settings.MusicCoverCache;
+                AppViewModel.MusicCoverCache = string.IsNullOrEmpty(settings.MusicCoverCache) ? Path.Combine(AppPaths.LocalFolder, "MusicCoverCache") : settings.MusicCoverCache;
                 AppViewModel.IsDopEnabled = settings.IsDopEnabled;
                 AppViewModel.IsFadeEnabled = settings.IsFadeEnabled;
                 AppViewModel.LyricsBlurAmount = settings.LyricsBlurAmount;
@@ -1127,8 +1329,25 @@ namespace WinUIMusicPlayer.Services
             {
                 AppViewModel.IsColorPickerVisible = true;
             }
-            AppViewModel.Version = $"{Windows.ApplicationModel.Package.Current.Id.Version.Major}.{Windows.ApplicationModel.Package.Current.Id.Version.Minor}.{Windows.ApplicationModel.Package.Current.Id.Version.Build}.{Windows.ApplicationModel.Package.Current.Id.Version.Revision}";
+            AppViewModel.Version = GetAppVersion();
             _ = AppViewModel.GetWasapiDeviceAsync();
+        }
+
+        /// <summary>
+        /// 获取应用版本号。非 MSIX 打包(无包标识)进程访问 Package.Current 会抛 0x80073D54,回退到程序集版本
+        /// </summary>
+        private static string GetAppVersion()
+        {
+            try
+            {
+                var v = Windows.ApplicationModel.Package.Current.Id.Version;
+                return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+            }
+            catch (InvalidOperationException)
+            {
+                var v = typeof(MusicDatabaseService).Assembly.GetName().Version;
+                return $"{v.Major}.{v.Minor}.{v.Build}";
+            }
         }
 
         public async Task SaveSettingAsync()
@@ -1202,6 +1421,12 @@ namespace WinUIMusicPlayer.Services
             newSettings.IsCustomLyricsColorEnabled = AppViewModel.IsCustomLyricsColorEnabled;
             newSettings.LyricsCustomColorRgb = (uint)((AppViewModel.LyricsCustomColor.R << 16) | (AppViewModel.LyricsCustomColor.G << 8) | AppViewModel.LyricsCustomColor.B);
             newSettings.IsUpdateBackDrop = AppViewModel.IsUpdateBackDrop;
+            newSettings.CustomBackgroundPath = AppSettings.CustomBackgroundPath;
+            newSettings.CustomBackgroundBlur = AppSettings.CustomBackgroundBlur;
+            newSettings.DownloadPath = AppSettings.DownloadPath;
+            newSettings.DownloadQuality = AppSettings.DownloadQuality;
+            newSettings.DownloadSaveLrc = AppSettings.DownloadSaveLrc;
+            newSettings.DownloadSaveCover = AppSettings.DownloadSaveCover;
             newSettings.LyricsAlignment = AppViewModel.LyricsAlignment;
             newSettings.LyricsMargin = (int)AppViewModel.LyricsMargin.Left;
             newSettings.GlobalFontSize = AppViewModel.GlobalFontSize;

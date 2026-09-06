@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading;
 
@@ -34,7 +34,7 @@ namespace WinUIMusicPlayer.Helper
                 IntPtr mainWindowHandle = IntPtr.Zero;
                 try
                 {
-                    using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\SennpeiStudio\OriginalSoundHIFIPlayer"))
+                    using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\XYMusic\XYMusic"))
                     {
                         if (key is not null)
                         {

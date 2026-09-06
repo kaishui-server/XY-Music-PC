@@ -154,7 +154,7 @@ namespace WinUIMusicPlayer.View.Controls
             e.Handled = true;
         }
 
-        private async void AddToPlayListBtn_Click(object sender, RoutedEventArgs e)
+        private void AddToPlayListBtn_Click(object sender, RoutedEventArgs e)
         {
             PlayList.Items.Clear();
             var db = App.Services.GetRequiredService<MusicDatabaseService>();
@@ -170,6 +170,29 @@ namespace WinUIMusicPlayer.View.Controls
                     await db.AddMusicListToPlayList(list, playlist.Id);
                 };
                 PlayList.Items.Add(menuItem);
+            }
+            // 在线歌单: 本地歌曲以 MusicId 引用收录
+            if (ViewModel.AppViewModel.OnlinePlayLists.Count > 0)
+            {
+                PlayList.Items.Add(new MenuFlyoutSeparator());
+                foreach (var playlist in ViewModel.AppViewModel.OnlinePlayLists)
+                {
+                    var menuItem = new MenuFlyoutItem
+                    {
+                        Text = playlist.Name
+                    };
+                    menuItem.Click += async (s, args) =>
+                    {
+                        foreach (var music in list)
+                        {
+                            if (music.Id > 0 && await db.AddLocalMusicToOnlinePlayListAsync(playlist.Id, music.Id))
+                            {
+                                playlist.SongCount++;
+                            }
+                        }
+                    };
+                    PlayList.Items.Add(menuItem);
+                }
             }
         }
 

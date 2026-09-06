@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle.Text" xml:space="preserve">
-    <value>原音HQプレイヤー</value>
+    <value>XY Music</value>
   </data>
   <data name="LoadingText.Text" xml:space="preserve">
     <value>データを読み込んでいます、しばらくお待ちください...</value>
@@ -128,6 +128,15 @@
   </data>
   <data name="AlbumTab.Text" xml:space="preserve">
     <value>アルバム</value>
+  </data>
+  <data name="Home.Text" xml:space="preserve">
+    <value>ホーム</value>
+  </data>
+  <data name="HomeCombox.Content" xml:space="preserve">
+    <value>ホーム</value>
+  </data>
+  <data name="HomePageGoMusicBrowse.Text" xml:space="preserve">
+    <value>ミュージックライブラリへ</value>
   </data>
   <data name="AddFolder.Text" xml:space="preserve">
     <value>フォルダを追加</value>
@@ -202,7 +211,7 @@
     <value>回</value>
   </data>
   <data name="AppMainTitle" xml:space="preserve">
-    <value>原音HQプレイヤー</value>
+    <value>XY Music</value>
   </data>
   <data name="ArtistTab.Text" xml:space="preserve">
     <value>アーティスト</value>
@@ -375,6 +384,21 @@
   </data>
   <data name="AppStyle.Text" xml:space="preserve">
     <value>アプリのスタイル</value>
+  </data>
+  <data name="CustomBackground.Text" xml:space="preserve">
+    <value>カスタム画像背景</value>
+  </data>
+  <data name="CustomBackgroundDescription.Text" xml:space="preserve">
+    <value>ローカルの画像をアプリの背景として選択します。再起動後も保持されます。</value>
+  </data>
+  <data name="ChooseBackgroundImage.Content" xml:space="preserve">
+    <value>画像を選択</value>
+  </data>
+  <data name="ClearBackgroundImage.Content" xml:space="preserve">
+    <value>背景をクリア</value>
+  </data>
+  <data name="CustomBackgroundBlur.Text" xml:space="preserve">
+    <value>背景のぼかし</value>
   </data>
   <data name="MicaStyle.Content" xml:space="preserve">
     <value>マイカ</value>
@@ -632,7 +656,7 @@
     <value>歌詞をデータベースに保存</value>
   </data>
   <data name="AppMainTitleIcon.ToolTipText" xml:space="preserve">
-    <value>原音HQプレイヤー</value>
+    <value>XY Music</value>
   </data>
   <data name="IconDisplay.Text" xml:space="preserve">
     <value>表示</value>
@@ -833,7 +857,7 @@
     <value>アルバムジャケットオリジナル画像キャッシュ</value>
   </data>
   <data name="AppTitleHeader.Header" xml:space="preserve">
-    <value>原音HQプレイヤー</value>
+    <value>XY Music</value>
   </data>
   <data name="CoverLoadThreadCount.Header" xml:space="preserve">
     <value>カバーロードスレッド数</value>
@@ -980,7 +1004,7 @@
     <value>音楽フォルダー</value>
   </data>
   <data name="AddFolderPageWelcomeTitle.Text" xml:space="preserve">
-    <value>原音HQプレイヤーへようこそ</value>
+    <value>XY Music へようこそ</value>
   </data>
   <data name="AddFolderPageWelcomeSubtitle.Text" xml:space="preserve">
     <value>ローカルの音楽フォルダーを追加してライブラリを構築しましょう。一般的な音声フォーマットに対応し、歌詞とジャケットを自動で取得します。</value>
@@ -1134,6 +1158,60 @@
   </data>
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>歌詞タイムオフセット</value>
+  </data>
+  <data name="LinkLyricsTitle" xml:space="preserve">
+    <value>歌詞を関連付ける</value>
+  </data>
+  <data name="LinkLyrics.Content" xml:space="preserve">
+    <value>歌詞を関連付ける</value>
+  </data>
+  <data name="LinkLyricsSearchPlaceholder" xml:space="preserve">
+    <value>キーワードを入力して歌詞を検索</value>
+  </data>
+  <data name="LinkLyricsSearching" xml:space="preserve">
+    <value>検索中…</value>
+  </data>
+  <data name="LinkLyricsNoResults" xml:space="preserve">
+    <value>一致する歌詞が見つかりません</value>
+  </data>
+  <data name="LinkLyricsSearchFailed" xml:space="preserve">
+    <value>検索に失敗しました。再試行してください</value>
+  </data>
+  <data name="LinkLyricsLinking" xml:space="preserve">
+    <value>歌詞を取得中…</value>
+  </data>
+  <data name="LinkLyricsLinkFailed" xml:space="preserve">
+    <value>歌詞の取得に失敗しました。再試行するか別の結果を選んでください</value>
+  </data>
+  <data name="LinkLyricsImportLocal" xml:space="preserve">
+    <value>ローカルファイルから歌詞をインポート</value>
+  </data>
+  <data name="LinkLyricsOnlineNotSupported" xml:space="preserve">
+    <value>オンライン楽曲は歌詞の関連付けに対応していません</value>
+  </data>
+  <data name="LinkLyricsLinkedTitle" xml:space="preserve">
+    <value>関連付け済み歌詞</value>
+  </data>
+  <data name="LinkLyricsUnlink" xml:space="preserve">
+    <value>関連を解除</value>
+  </data>
+  <data name="LinkLyricsUnlinked" xml:space="preserve">
+    <value>歌詞の関連付けを解除しました</value>
+  </data>
+  <data name="LinkLyricsPluginSource" xml:space="preserve">
+    <value>プラグイン歌詞</value>
+  </data>
+  <data name="LinkLyricsPluginSourceWith" xml:space="preserve">
+    <value>プラグイン：{0}</value>
+  </data>
+  <data name="LinkLyricsLocalSource" xml:space="preserve">
+    <value>ローカル歌詞</value>
+  </data>
+  <data name="LinkLyricsCurrentSong" xml:space="preserve">
+    <value>現在の曲の歌詞</value>
+  </data>
+  <data name="LinkLyricsUnknownArtist" xml:space="preserve">
+    <value>不明なアーティスト</value>
   </data>
   <data name="LyricsTimeOffsetTag.Text" xml:space="preserve">
     <value>歌詞タイムオフセット</value>
@@ -1435,8 +1513,654 @@
   <data name="RtssWarningBody" xml:space="preserve">
     <value>RivaTuner Statistics Server（通称 RTSS、通常は MSI Afterburner と一緒にインストールされます）は、D3D 経由でグラフィックスパイプラインにフックする FPS 計測ソフトウェアです。本プレイヤーの「デスクトップ歌詞」とシェーダ背景を同時に有効にすると、Win2D のスワップチェーンが 2 つ並行して動作し、RTSS の DXGI フックと衝突してアプリがクラッシュする可能性があります。使用前に RTSS / MSI Afterburner を終了するか、RTSS のフック除外リストに本プレイヤーを追加してください。</value>
   </data>
+  <data name="OnlineSearch.Text" xml:space="preserve">
+    <value>オンライン検索</value>
+  </data>
+  <data name="OnlineSearchButton.Text" xml:space="preserve">
+    <value>検索</value>
+  </data>
+  <data name="OnlineSearchLoading" xml:space="preserve">
+    <value>検索中…</value>
+  </data>
+  <data name="OnlineSearchMore.Text" xml:space="preserve">
+    <value>さらに読み込む</value>
+  </data>
+  <data name="OnlineSearchNoPlugins" xml:space="preserve">
+    <value>利用可能なプラグインがありません。先にプラグイン管理でインストールしてください</value>
+  </data>
+  <data name="OnlineSearchNoResults" xml:space="preserve">
+    <value>曲が見つかりませんでした</value>
+  </data>
+  <data name="OnlineSearchPlaceholderText" xml:space="preserve">
+    <value>キーワードを入力して検索</value>
+  </data>
+  <data name="OnlineSearchClearHistory.Content" xml:space="preserve">
+    <value>履歴を消去</value>
+  </data>
+  <data name="OnlineSearchHistory.Text" xml:space="preserve">
+    <value>検索履歴</value>
+  </data>
+  <data name="OnlineSearchPlayFailed" xml:space="preserve">
+    <value>再生に失敗しました</value>
+  </data>
+  <data name="OnlineSearchSearchFailed" xml:space="preserve">
+    <value>検索に失敗しました</value>
+  </data>
+  <data name="OnlineSearchSourceFailed" xml:space="preserve">
+    <value>音源の解決に失敗しました</value>
+  </data>
+  <data name="OnlineSearchTypeMusic" xml:space="preserve">
+    <value>楽曲</value>
+  </data>
+  <data name="OnlineSearchTypeArtist" xml:space="preserve">
+    <value>アーティスト</value>
+  </data>
+  <data name="OnlineSearchTypeSheet" xml:space="preserve">
+    <value>プレイリスト</value>
+  </data>
+  <data name="OnlineSearchTypeAlbum" xml:space="preserve">
+    <value>アルバム</value>
+  </data>
+  <data name="OnlineSearchNoCatalogResults" xml:space="preserve">
+    <value>結果が見つかりませんでした</value>
+  <data name="OnlineSearchBack.Text" xml:space="preserve">
+    <value>戻る</value>
+  </data>
+  </data>
+  <data name="PluginInstall" xml:space="preserve">
+    <value>プラグインをインストール</value>
+  </data>
+  <data name="PluginInstallDownloading" xml:space="preserve">
+    <value>プラグインをダウンロード中…</value>
+  </data>
+  <data name="PluginInstallFailed" xml:space="preserve">
+    <value>プラグインのインストールに失敗しました</value>
+  </data>
+  <data name="PluginInstallFromFile.Text" xml:space="preserve">
+    <value>ファイルからインストール</value>
+  </data>
+  <data name="PluginInstallFromUrlTitle" xml:space="preserve">
+    <value>URLからインストール</value>
+  </data>
+  <data name="PluginInstallFromUrl.Text" xml:space="preserve">
+    <value>URLからインストール</value>
+  </data>
+  <data name="PluginInstallReading" xml:space="preserve">
+    <value>プラグインを読み込み中…</value>
+  </data>
+  <data name="PluginInstallSuccess" xml:space="preserve">
+    <value>プラグインをインストールしました</value>
+  </data>
+  <data name="PluginManage.Text" xml:space="preserve">
+    <value>プラグイン管理</value>
+  </data>
+  <data name="PluginManageEmpty" xml:space="preserve">
+    <value>プラグインが未インストールです</value>
+  </data>
+  <data name="PluginManageTitle.Text" xml:space="preserve">
+    <value>プラグイン管理</value>
+  </data>
+  <data name="PluginUninstallTitle" xml:space="preserve">
+    <value>アンインストール</value>
+  </data>
+  <data name="PluginUninstall.Text" xml:space="preserve">
+    <value>アンインストール</value>
+  </data>
+  <data name="PluginUninstallConfirm" xml:space="preserve">
+    <value>このプラグインをアンインストールしますか？</value>
+  </data>
+  <data name="PluginUninstallSuccess" xml:space="preserve">
+    <value>プラグインをアンインストールしました</value>
+  </data>
+  <data name="TextCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="TextClose" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="TextSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="PluginInfoMenu.Text" xml:space="preserve">
+    <value>プラグイン情報</value>
+  </data>
+  <data name="PluginInfoTitle" xml:space="preserve">
+    <value>プラグイン情報</value>
+  </data>
+  <data name="PluginInfoPlatform" xml:space="preserve">
+    <value>プラットフォーム</value>
+  </data>
+  <data name="PluginInfoVersion" xml:space="preserve">
+    <value>バージョン</value>
+  </data>
+  <data name="PluginInfoAuthor" xml:space="preserve">
+    <value>作者</value>
+  </data>
+  <data name="PluginInfoSource" xml:space="preserve">
+    <value>更新ソース</value>
+  </data>
+  <data name="PluginInfoFile" xml:space="preserve">
+    <value>ファイル</value>
+  </data>
+  <data name="PluginInfoMethods" xml:space="preserve">
+    <value>対応メソッド</value>
+  </data>
+  <data name="PluginInfoSearchTypes" xml:space="preserve">
+    <value>対応検索タイプ</value>
+  </data>
+  <data name="PluginInfoUserVariables" xml:space="preserve">
+    <value>ユーザー変数</value>
+  </data>
+  <data name="PluginUserVariablesMenu.Text" xml:space="preserve">
+    <value>ユーザー変数</value>
+  </data>
+  <data name="PluginUserVariablesTitle" xml:space="preserve">
+    <value>ユーザー変数</value>
+  </data>
+  <data name="PluginUserVariablesSaved" xml:space="preserve">
+    <value>ユーザー変数を保存しました</value>
+  </data>
+  <data name="PluginCheckUpdateMenu.Text" xml:space="preserve">
+    <value>更新を確認</value>
+  </data>
+  <data name="PluginCheckUpdate" xml:space="preserve">
+    <value>更新を確認</value>
+  </data>
+  <data name="PluginCheckUpdateChecking" xml:space="preserve">
+    <value>更新を確認しています…</value>
+  </data>
+  <data name="PluginCheckUpdateLatest" xml:space="preserve">
+    <value>最新バージョンです</value>
+  </data>
+  <data name="PluginCheckUpdateFailed" xml:space="preserve">
+    <value>更新の確認に失敗しました</value>
+  </data>
+  <data name="PluginUpdateAvailable" xml:space="preserve">
+    <value>新しいバージョンがあります: {0} → {1}。更新しますか？</value>
+  </data>
+  <data name="PluginUpdateAvailableSameVersion" xml:space="preserve">
+    <value>プラグインのコードが更新されています（バージョンは {0} のまま）。更新しますか？</value>
+  </data>
+  <data name="PluginUpdateNow" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="PluginUpdateSuccess" xml:space="preserve">
+    <value>プラグインを更新しました</value>
+  </data>
+
+  <data name="DownloadChooseDir" xml:space="preserve">
+    <value>選択</value>
+  </data>
+  <data name="DownloadConfirm" xml:space="preserve">
+    <value>ダウンロード</value>
+  </data>
+  <data name="DownloadCoverSavedNote" xml:space="preserve">
+    <value>カバーファイルを保存しました</value>
+  </data>
+  <data name="DownloadDialogTitle" xml:space="preserve">
+    <value>オンライン楽曲をダウンロード</value>
+  </data>
+  <data name="DownloadAlreadyExists" xml:space="preserve">
+    <value>この楽曲は以前にダウンロード済みです。再度ダウンロードしますか？</value>
+  </data>
+  <data name="DownloadRedownload" xml:space="preserve">
+    <value>再度ダウンロード</value>
+  </data>
+  <data name="DownloadDirLabel" xml:space="preserve">
+    <value>保存先</value>
+  </data>
+  <data name="DownloadEmbedNote" xml:space="preserve">
+    <value>歌詞とカバーは常に楽曲ファイルに埋め込まれます</value>
+  </data>
+  <data name="DownloadFailedFormat" xml:space="preserve">
+    <value>ダウンロードに失敗：{0}</value>
+  </data>
+  <data name="DownloadFileNotOnline" xml:space="preserve">
+    <value>現在の楽曲はオンライン楽曲ではありません</value>
+  </data>
+  <data name="DownloadLrcSavedNote" xml:space="preserve">
+    <value>歌詞ファイルを保存しました</value>
+  </data>
+  <data name="DownloadProgressTitle" xml:space="preserve">
+    <value>ダウンロード中</value>
+  </data>
+  <data name="DownloadQuality" xml:space="preserve">
+    <value>音質</value>
+  </data>
+  <data name="DownloadQuality128k" xml:space="preserve">
+    <value>標準 128k</value>
+  </data>
+  <data name="DownloadQuality320k" xml:space="preserve">
+    <value>高音質 320k</value>
+  </data>
+  <data name="DownloadQualityFlac" xml:space="preserve">
+    <value>ロスレス FLAC</value>
+  </data>
+  <data name="DownloadQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="DownloadSaveCover" xml:space="preserve">
+    <value>カバーアートも保存</value>
+  </data>
+  <data name="DownloadSaveLrc" xml:space="preserve">
+    <value>歌詞ファイル（LRC）も保存</value>
+  </data>
+  <data name="DownloadStatusDownloading" xml:space="preserve">
+    <value>音声をダウンロード中…</value>
+  </data>
+  <data name="DownloadStatusEmbedding" xml:space="preserve">
+    <value>メタデータを埋め込み中…</value>
+  </data>
+  <data name="DownloadStatusFetchingExtras" xml:space="preserve">
+    <value>歌詞とカバーを取得中…</value>
+  </data>
+  <data name="DownloadStatusResolving" xml:space="preserve">
+    <value>音源を解決中…</value>
+  </data>
+  <data name="DownloadSuccessFormat" xml:space="preserve">
+    <value>保存しました：{0}</value>
+  </data>
+
+  <data name="DownloadDone" xml:space="preserve">
+    <value>ダウンロード完了</value>
+  </data>
+  <data name="DownloadFailedShort" xml:space="preserve">
+    <value>ダウンロード失敗</value>
+  </data>
+  <data name="DownloadHide" xml:space="preserve">
+    <value>非表示</value>
+  </data>
+  <data name="MyPlayListEmptySubtitle.Text" xml:space="preserve">
+    <value>新規作成するか、再生ページから曲を追加できます</value>
+  </data>
+  <data name="MyPlayListAlreadyAdded" xml:space="preserve">
+    <value>この曲は既にこのプレイリストに追加されています</value>
+  </data>
+  <data name="MyPlayListDelete.Text" xml:space="preserve">
+    <value>プレイリストを削除</value>
+  </data>
+  <data name="MyPlayListNamePlaceholder" xml:space="preserve">
+    <value>プレイリスト名を入力</value>
+  </data>
+  <data name="MyPlayListDialogTitle" xml:space="preserve">
+    <value>プレイリストを選択</value>
+  </data>
+  <data name="MyPlayListNoCurrentSong" xml:space="preserve">
+    <value>再生中の曲はありません</value>
+  </data>
+  <data name="MyPlayListRemoveSong.Text" xml:space="preserve">
+    <value>プレイリストから削除</value>
+  </data>
+  <data name="MyPlayListNewTitle" xml:space="preserve">
+    <value>新規プレイリスト</value>
+  </data>
+  <data name="CreatePlayListTabCreate" xml:space="preserve">
+    <value>新規プレイリスト</value>
+  </data>
+  <data name="CreatePlayListTabNetwork" xml:space="preserve">
+    <value>Webからインポート</value>
+  </data>
+  <data name="CreatePlayListTabLocal" xml:space="preserve">
+    <value>ローカルからインポート</value>
+  </data>
+  <data name="CreatePlayListCreateButton" xml:space="preserve">
+    <value>作成</value>
+  </data>
+  <data name="CreatePlayListNetworkSource" xml:space="preserve">
+    <value>プレイリストのソース</value>
+  </data>
+  <data name="CreatePlayListNoImportPlugin" xml:space="preserve">
+    <value>プレイリストのインポートに対応したプラグインがありません。先にプラグイン管理でインストールして有効化してください</value>
+  </data>
+  <data name="CreatePlayListNetworkUrlPlaceholder" xml:space="preserve">
+    <value>プレイリストのリンクを貼り付け（例: https://y.qq.com/n/ryqq/playlist/xxxx）</value>
+  </data>
+  <data name="CreatePlayListImportButton" xml:space="preserve">
+    <value>インポート</value>
+  </data>
+  <data name="CreatePlayListLocalHint" xml:space="preserve">
+    <value>M3U/M3U8 プレイリストと MusicFree バックアップ JSON に対応</value>
+  </data>
+  <data name="CreatePlayListSelectFileButton" xml:space="preserve">
+    <value>ファイルを選択してインポート</value>
+  </data>
+  <data name="CreatePlayListImporting" xml:space="preserve">
+    <value>インポート中…</value>
+  </data>
+  <data name="CreatePlayListUrlRequired" xml:space="preserve">
+    <value>プレイリストのリンクを入力してください</value>
+  </data>
+  <data name="CreatePlayListImportFailedPlain" xml:space="preserve">
+    <value>インポートに失敗しました。もう一度お試しください</value>
+  </data>
+  <data name="CreatePlayListImportFailedReason" xml:space="preserve">
+    <value>インポート失敗: {0}</value>
+  </data>
+  <data name="CreatePlayListImportSuccess" xml:space="preserve">
+    <value>「{0}」をインポートしました（{1} 曲）</value>
+  </data>
+  <data name="CreatePlayListImportedDefaultName" xml:space="preserve">
+    <value>インポートしたプレイリスト</value>
+  </data>
+  <data name="CreatePlayListUnsupportedFile" xml:space="preserve">
+    <value>サポートされていないファイル形式です</value>
+  </data>
+  <data name="CreatePlayListM3uEmpty" xml:space="preserve">
+    <value>プレイリストファイルにローカル音声のパスがありません</value>
+  </data>
+  <data name="CreatePlayListLocalNoMatch" xml:space="preserve">
+    <value>プレイリスト内の音声ファイルがローカルの音楽ライブラリにありません</value>
+  </data>
+  <data name="CreatePlayListLocalImportedWithMissing" xml:space="preserve">
+    <value>「{0}」をインポートしました（{1} 曲、{2} 曲はローカルライブラリに見つかりません）</value>
+  </data>
+  <data name="CreatePlayListBackupInvalid" xml:space="preserve">
+    <value>このファイルは有効な MusicFree JSON バックアップではありません</value>
+  </data>
+  <data name="CreatePlayListBackupNoSong" xml:space="preserve">
+    <value>バックアップにインポート可能な曲がありません</value>
+  </data>
+  <data name="CreatePlayListBackupNoPlugin" xml:space="preserve">
+    <value>プラグインが見つからず {0} 曲を関連付けできませんでした</value>
+  </data>
+  <data name="CreatePlayListBackupImported" xml:space="preserve">
+    <value>バックアップから {0} 個のプレイリストと {1} 曲をインポートしました</value>
+  </data>
+  <data name="CreatePlayListBackupSkippedSuffix" xml:space="preserve">
+    <value>、データが不完全な {0} 曲をスキップしました</value>
+  </data>
+  <data name="CreatePlayListUnnamedSheet" xml:space="preserve">
+    <value>無題のプレイリスト {0}</value>
+  </data>
+  <data name="MyPlayListNew.Text" xml:space="preserve">
+    <value>新規プレイリスト</value>
+  </data>
+  <data name="MyPlayListDialogEmptyHint" xml:space="preserve">
+    <value>プレイリストがありません。名前を入力して作成してください</value>
+  </data>
+  <data name="MyPlayListSongsSuffix" xml:space="preserve">
+    <value>曲</value>
+  </data>
+  <data name="AddToMyPlayList" xml:space="preserve">
+    <value>プレイリストに追加</value>
+  </data>
+  <data name="MyPlayListEmptyTitle.Text" xml:space="preserve">
+    <value>プレイリストはまだありません</value>
+  </data>
+  <data name="MyPlayListCreateAndAdd" xml:space="preserve">
+    <value>作成して追加</value>
+  </data>
+  <data name="MyPlayLists.Text" xml:space="preserve">
+    <value>マイプレイリスト</value>
+  </data>
+  <data name="MyPlayListAddFailedOnline" xml:space="preserve">
+    <value>現在の曲を識別できません。もう一度再生してからお試しください。</value>
+  </data>
+  <data name="MyPlayListSongCountSuffix.Text" xml:space="preserve">
+    <value>曲</value>
+  </data>
+  <data name="AddToMyPlayListToolTip.Content" xml:space="preserve">
+    <value>プレイリストに追加</value>
+  </data>
+  <data name="OnlineItemPlay.Text" xml:space="preserve">
+    <value>再生</value>
+  </data>
+  <data name="OnlineItemAddToPlayList.Text" xml:space="preserve">
+    <value>プレイリストに追加</value>
+  </data>
+  <data name="AccountTitle" xml:space="preserve">
+    <value>アカウント</value>
+  </data>
+  <data name="AccountMyTitle" xml:space="preserve">
+    <value>マイアカウント</value>
+  </data>
+  <data name="AccountBrandSubtitle" xml:space="preserve">
+    <value>XY Music アカウントにログインしてプレイリスト・お気に入り・プラグインを同期</value>
+  </data>
+  <data name="AccountLoginTab" xml:space="preserve">
+    <value>ログイン</value>
+  </data>
+  <data name="AccountRegisterTab" xml:space="preserve">
+    <value>新規登録</value>
+  </data>
+  <data name="AccountIdLabel" xml:space="preserve">
+    <value>アカウント</value>
+  </data>
+  <data name="AccountPasswordLabel" xml:space="preserve">
+    <value>パスワード</value>
+  </data>
+  <data name="AccountLoginButton" xml:space="preserve">
+    <value>ログイン</value>
+  </data>
+  <data name="AccountForgotPassword" xml:space="preserve">
+    <value>パスワードを忘れた？</value>
+  </data>
+  <data name="AccountNicknameLabel" xml:space="preserve">
+    <value>ニックネーム</value>
+  </data>
+  <data name="AccountConfirmPasswordLabel" xml:space="preserve">
+    <value>パスワード（確認）</value>
+  </data>
+  <data name="AccountEmailLabel" xml:space="preserve">
+    <value>メールアドレス</value>
+  </data>
+  <data name="AccountCodeLabel" xml:space="preserve">
+    <value>認証コード</value>
+  </data>
+  <data name="AccountSendCode" xml:space="preserve">
+    <value>認証コードを送信</value>
+  </data>
+  <data name="AccountRegisterButton" xml:space="preserve">
+    <value>新規登録</value>
+  </data>
+  <data name="AccountFormIncomplete" xml:space="preserve">
+    <value>すべての項目を入力してください</value>
+  </data>
+  <data name="AccountPasswordMismatch" xml:space="preserve">
+    <value>パスワードが一致しません</value>
+  </data>
+  <data name="AccountLoginFailed" xml:space="preserve">
+    <value>ログインに失敗しました</value>
+  </data>
+  <data name="AccountRegisterFailed" xml:space="preserve">
+    <value>登録に失敗しました</value>
+  </data>
+  <data name="AccountEmailInvalid" xml:space="preserve">
+    <value>有効なメールアドレスを入力してください</value>
+  </data>
+  <data name="AccountCodeSent" xml:space="preserve">
+    <value>認証コードを送信しました。メールをご確認ください</value>
+  </data>
+  <data name="AccountCodeSendFailed" xml:space="preserve">
+    <value>認証コードの送信に失敗しました</value>
+  </data>
+  <data name="AccountCodeCountdown" xml:space="preserve">
+    <value>{0} 秒後に再送信できます</value>
+  </data>
+  <data name="AccountRegisterCaptchaTitle" xml:space="preserve">
+    <value>ロボット確認</value>
+  </data>
+  <data name="AccountRegisterCaptchaDesc" xml:space="preserve">
+    <value>登録を続けるには確認を完了してください</value>
+  </data>
+  <data name="AccountSendCodeCaptchaTitle" xml:space="preserve">
+    <value>ロボット確認</value>
+  </data>
+  <data name="AccountSendCodeCaptchaDesc" xml:space="preserve">
+    <value>確認を完了してからコードを送信してください</value>
+  </data>
+  <data name="AccountCaptchaConfirm" xml:space="preserve">
+    <value>確認</value>
+  </data>
+  <data name="AccountCaptchaRefresh" xml:space="preserve">
+    <value>別の問題に変更</value>
+  </data>
+  <data name="AccountCaptchaEmpty" xml:space="preserve">
+    <value>答えを入力してください</value>
+  </data>
+  <data name="AccountForgotEmailLabel" xml:space="preserve">
+    <value>登録に使用したメールアドレスを入力</value>
+  </data>
+  <data name="AccountForgotTitle" xml:space="preserve">
+    <value>パスワードを忘れた</value>
+  </data>
+  <data name="AccountForgotSendCode" xml:space="preserve">
+    <value>認証コードを送信</value>
+  </data>
+  <data name="AccountForgotCaptchaDesc" xml:space="preserve">
+    <value>確認を完了してからコードを送信してください</value>
+  </data>
+  <data name="AccountForgotCodeLabel" xml:space="preserve">
+    <value>メール認証コード</value>
+  </data>
+  <data name="AccountForgotNewPassword" xml:space="preserve">
+    <value>新しいパスワード</value>
+  </data>
+  <data name="AccountForgotConfirmPassword" xml:space="preserve">
+    <value>新しいパスワード（確認）</value>
+  </data>
+  <data name="AccountForgotResetTitle" xml:space="preserve">
+    <value>パスワードのリセット</value>
+  </data>
+  <data name="AccountForgotResetButton" xml:space="preserve">
+    <value>パスワードをリセット</value>
+  </data>
+  <data name="AccountResetCaptchaTitle" xml:space="preserve">
+    <value>ロボット確認</value>
+  </data>
+  <data name="AccountResetCaptchaDesc" xml:space="preserve">
+    <value>パスワードをリセットするには確認を完了してください</value>
+  </data>
+  <data name="AccountAvatarHint" xml:space="preserve">
+    <value>アバターをクリックして画像を変更</value>
+  </data>
+  <data name="AccountAvatarPending" xml:space="preserve">
+    <value>アバター審査中</value>
+  </data>
+  <data name="AccountAvatarRejected" xml:space="preserve">
+    <value>アバターが承認されませんでした。クリックして再アップロード</value>
+  </data>
+  <data name="AccountAvatarTooBig" xml:space="preserve">
+    <value>アバター画像は 5MB を超えられません</value>
+  </data>
+  <data name="AccountAvatarUploadFailed" xml:space="preserve">
+    <value>アバターのアップロードに失敗しました</value>
+  </data>
+  <data name="AccountIdFormat" xml:space="preserve">
+    <value>アカウント：{0}</value>
+  </data>
+  <data name="AccountRefreshProfile" xml:space="preserve">
+    <value>プロフィールを更新</value>
+  </data>
+  <data name="AccountEditNickname" xml:space="preserve">
+    <value>ニックネームを変更</value>
+  </data>
+  <data name="AccountChangePassword" xml:space="preserve">
+    <value>パスワードを変更</value>
+  </data>
+  <data name="AccountLogoutButton" xml:space="preserve">
+    <value>ログアウト</value>
+  </data>
+  <data name="AccountNicknameDialogTitle" xml:space="preserve">
+    <value>ニックネームを変更</value>
+  </data>
+  <data name="AccountNicknameDialogSubmit" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="AccountOldPassword" xml:space="preserve">
+    <value>現在のパスワード</value>
+  </data>
+  <data name="AccountNewPassword" xml:space="preserve">
+    <value>新しいパスワード</value>
+  </data>
+  <data name="AccountNewPasswordConfirm" xml:space="preserve">
+    <value>新しいパスワード（確認）</value>
+  </data>
+  <data name="AccountChangePasswordTitle" xml:space="preserve">
+    <value>パスワードを変更</value>
+  </data>
+  <data name="AccountChangePasswordButton" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="AccountLogoutConfirmTitle" xml:space="preserve">
+    <value>ログアウト</value>
+  </data>
+  <data name="AccountLogoutConfirmText" xml:space="preserve">
+    <value>このアカウントからログアウトしますか？</value>
+  </data>
+  <data name="AccountLogoutConfirmButton" xml:space="preserve">
+    <value>ログアウト</value>
+  </data>
+  <data name="AccountProfileRefreshed" xml:space="preserve">
+    <value>プロフィールを更新しました</value>
+  </data>
+  <data name="AccountCloudSyncTitle" xml:space="preserve">
+    <value>クラウド同期</value>
+  </data>
+  <data name="AccountCloudSyncEnable" xml:space="preserve">
+    <value>クラウド同期を有効化（プレイリスト / お気に入り / プラグイン）</value>
+  </data>
+  <data name="AccountCloudSyncFrequency" xml:space="preserve">
+    <value>自動アップロード頻度</value>
+  </data>
+  <data name="AccountFreqFiveMinutes" xml:space="preserve">
+    <value>5 分ごと</value>
+  </data>
+  <data name="AccountFreqFifteenMinutes" xml:space="preserve">
+    <value>15 分ごと</value>
+  </data>
+  <data name="AccountFreqThirtyMinutes" xml:space="preserve">
+    <value>30 分ごと</value>
+  </data>
+  <data name="AccountFreqOneHour" xml:space="preserve">
+    <value>1 時間ごと</value>
+  </data>
+  <data name="AccountFreqSixHours" xml:space="preserve">
+    <value>6 時間ごと</value>
+  </data>
+  <data name="AccountFreqTwelveHours" xml:space="preserve">
+    <value>12 時間ごと</value>
+  </data>
+  <data name="AccountFreqOneDay" xml:space="preserve">
+    <value>毎日</value>
+  </data>
+  <data name="AccountFreqManual" xml:space="preserve">
+    <value>手動のみ</value>
+  </data>
+  <data name="AccountSyncNow" xml:space="preserve">
+    <value>今すぐ同期</value>
+  </data>
+  <data name="AccountNeverSynced" xml:space="preserve">
+    <value>未同期</value>
+  </data>
+  <data name="AccountLastSyncFormat" xml:space="preserve">
+    <value>前回の同期：{0}</value>
+  </data>
+  <data name="AccountSyncNoChange" xml:space="preserve">
+    <value>同期する変更はありません</value>
+  </data>
+  <data name="AccountSyncDone" xml:space="preserve">
+    <value>同期完了：プラグイン {0} 件ダウンロード、{1} 件アップロード、プレイリスト {2} 件アップロード、{3} 件ダウンロード</value>
+  </data>
+  <data name="AccountSyncPluginErrorSuffix" xml:space="preserve">
+    <value>（{0} 件のプラグイン同期に失敗）</value>
+  </data>
+  <data name="AccountCloudSyncPromptTitle" xml:space="preserve">
+    <value>クラウド同期を有効にしますか？</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine1" xml:space="preserve">
+    <value>ログインしました！クラウド同期を有効にしますか？</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine2" xml:space="preserve">
+    <value>プレイリスト・お気に入り・プラグインが自動的にクラウドへ同期されます</value>
+  </data>
+  <data name="AccountCloudSyncPromptEnable" xml:space="preserve">
+    <value>有効にする</value>
+  </data>
+  <data name="AccountCloudSyncPromptLater" xml:space="preserve">
+    <value>後で</value>
+  </data>
+  <data name="AccountCloudSyncPromptWait" xml:space="preserve">
+    <value>{0} 秒後に選択できます</value>
+  </data>
 </root>
-
-
-
-

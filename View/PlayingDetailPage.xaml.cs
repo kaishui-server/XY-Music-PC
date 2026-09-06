@@ -8,6 +8,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Windowing;
 using System;
 using System.Diagnostics;
@@ -18,6 +20,7 @@ using WinUIMusicPlayer.Services;
 using WinUIMusicPlayer.Utils;
 using WinUIMusicPlayer.ViewModel;
 using WinUIMusicPlayer.ViewModel.Pages;
+using WinUIMusicPlayer.View.SubView;
 using ZLinq;
 using CommunityToolkit.WinUI;
 
@@ -345,10 +348,117 @@ namespace WinUIMusicPlayer.View
             _ = App.Services.GetRequiredService<MainPage>().EqualizerDialog.ShowThemedAsync(this.XamlRoot);
         }
 
+        /// <summary>添加到歌单: 弹出在线歌单选择弹窗, 可选已有歌单或新建(自动收入当前歌曲)。</summary>
+        private void TitleAddToPlayListButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new SubView.AddToMyPlayListDialog(ViewModel.AppViewModel);
+            _ = dialog.ShowThemedAsync(this.XamlRoot);
+        }
+
+        /// <summary>播放列表面板是否展开(防重复动画)。</summary>
+        private bool _isPlayListPanelOpenPlayingDetail;
+
         private void CurrentPlayListButtonPlayingDetail_Click(object sender, RoutedEventArgs e)
         {
-            CurrentPlayListTeachingTipPlayingDetail.IsOpen = true;
+            if (_isPlayListPanelOpenPlayingDetail)
+            {
+                ClosePlayListPanelPlayingDetail();
+            }
+            else
+            {
+                OpenPlayListPanelPlayingDetail();
+            }
+        }
+
+        private void OpenPlayListPanelPlayingDetail()
+        {
+            _isPlayListPanelOpenPlayingDetail = true;
+            CurrentPlayListOverlayPlayingDetail.Visibility = Visibility.Visible;
+            CurrentPlayListPanelPlayingDetail.Visibility = Visibility.Visible;
+            // 先归位到右侧边缘再滑入, 保证每次都有滑入动画
+            ((TranslateTransform)CurrentPlayListPanelPlayingDetail.RenderTransform).X = CurrentPlayListPanelPlayingDetail.Width;
             UpdateCurrentPlayList();
+            AnimatePlayListPanelPlayingDetail(0);
+        }
+
+        private void ClosePlayListPanelPlayingDetail()
+        {
+            if (!_isPlayListPanelOpenPlayingDetail) return;
+            _isPlayListPanelOpenPlayingDetail = false;
+            AnimatePlayListPanelPlayingDetail(CurrentPlayListPanelPlayingDetail.Width, () =>
+            {
+                // 动画完成前面板被重新打开时不收起
+                if (!_isPlayListPanelOpenPlayingDetail)
+                {
+                    CurrentPlayListPanelPlayingDetail.Visibility = Visibility.Collapsed;
+                    CurrentPlayListOverlayPlayingDetail.Visibility = Visibility.Collapsed;
+                }
+            });
+        }
+
+        /// <summary>面板横向滑动动画(220ms EaseOut)。</summary>
+        private void AnimatePlayListPanelPlayingDetail(double to, Action? onCompleted = null)
+        {
+            var translate = (TranslateTransform)CurrentPlayListPanelPlayingDetail.RenderTransform;
+            var anim = new DoubleAnimation
+            {
+                To = to,
+                Duration = new Duration(TimeSpan.FromMilliseconds(220)),
+                EasingFunction = new CubicEase { EasingMode = Microsoft.UI.Xaml.Media.Animation.EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(anim, translate);
+            Storyboard.SetTargetProperty(anim, "X");
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(anim);
+            if (onCompleted is not null)
+            {
+                storyboard.Completed += (_, _) => onCompleted();
+            }
+            storyboard.Begin();
+        }
+
+        /// <summary>点击面板外区域(遮罩层)关闭。</summary>
+        private void CurrentPlayListOverlayPlayingDetail_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            ClosePlayListPanelPlayingDetail();
+        }
+
+        /// <summary>点击面板内部: 阻止冒泡到遮罩层导致误关闭。</summary>
+        private void CurrentPlayListPanelPlayingDetail_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void CurrentPlayListPanelPlayingDetailCloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            ClosePlayListPanelPlayingDetail();
+        }
+
+        /// <summary>底栏下载按钮: 与主页共用下载流程。</summary>
+        private void DownloadButtonPlayingDetail_Click(object sender, RoutedEventArgs e)
+        {
+            DownloadFlowHelper.Start(XamlRoot, ViewModel.AppViewModel.CurrentPlayingMusic);
+        }
+
+        /// <summary>关联歌词: 打开搜索对话框(插件搜索歌词候选); 本地歌曲写歌词库, 在线歌曲会话级关联。</summary>
+        private async void LinkLyricsButtonPlayingDetail_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var music = ViewModel.AppViewModel.CurrentPlayingMusic;
+                if (music is null) return;
+
+                var dialog = new LyricsLinkDialog(music)
+                {
+                    XamlRoot = XamlRoot,
+                    RequestedTheme = AppSettings.ElementTheme,
+                };
+                _ = await dialog.ShowAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "关联歌词流程异常");
+            }
         }
         private void UpdateCurrentPlayList()
         {
@@ -404,11 +514,6 @@ namespace WinUIMusicPlayer.View
         private void VolumeSlider_PointerExited(object sender, PointerRoutedEventArgs e)
         {
             ViewModel.AppViewModel.IsMouseOverVolumeSlider = false;
-        }
-
-        private void CurrentPlayListTeachingTipPlayingDetailCloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            CurrentPlayListTeachingTipPlayingDetail.IsOpen = false;
         }
 
         private void AutoScrollHover_PointerEntered(object sender, PointerRoutedEventArgs e)

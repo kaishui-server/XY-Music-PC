@@ -134,6 +134,8 @@ namespace WinUIMusicPlayer.ViewModel
         public BulkObservableCollection<Music> FavoriteSongs { get; set => SetProperty(ref field, value); } = [];
         public BulkObservableCollection<PlayListMusicItem> PlayListSongs { get; set => SetProperty(ref field, value); } = [];
         public BulkObservableCollection<PlayList> AllPlayList { get; set => SetProperty(ref field, value); } = [];
+        /// <summary>在线歌单(仅存插件链接, 无需下载歌曲), 侧边栏"我的歌单"页展示。</summary>
+        public BulkObservableCollection<PlayList> OnlinePlayLists { get; set => SetProperty(ref field, value); } = [];
         public PlayList CurrentPlayList { get; set => SetProperty(ref field, value); }
         public int CurrentPlayListId { get; set; }
         public CollectionViewSource AlbumPageSource { get; set => SetProperty(ref field, value); } = new CollectionViewSource() { IsSourceGrouped = true };
@@ -196,6 +198,8 @@ namespace WinUIMusicPlayer.ViewModel
             new SortOption("UpdateTimeDESC", "SortOrderUpdateTimeDESC")
         ];
         public string MusicInfo { get; set => SetProperty(ref field, value); }
+        /// <summary>当前播放是否为插件在线歌曲(无采样率/位深/码率等音频规格, 详情页隐藏规格信息行)。</summary>
+        public bool IsCurrentMusicOnline { get; set => SetProperty(ref field, value); } = false;
         public bool IsMuted { get; set; } = false;
         public double TempVolume { get; set; } = 50;
         public string PlayTimeText { get; set => SetProperty(ref field, value); } = "00:00/00:00";
@@ -634,6 +638,9 @@ namespace WinUIMusicPlayer.ViewModel
         public void LoadLyricsToUI(Music music)
         {
             _loadingMusicId = music.Id;
+            // 切歌入口立即清空并解绑旧歌词: SetLyrics 内对象池回收(ReturnLyrics 会 Words.Clear)
+            // 会篡改仍被 UI 引用的上一首歌词行, 先解绑保证切歌瞬间歌词区即时切换
+            UILyrics = [];
             _ = Task.Run(() => LoadLyricsCore(music));
         }
 
@@ -641,7 +648,16 @@ namespace WinUIMusicPlayer.ViewModel
         {
             var vm = App.Services.GetRequiredService<AppViewModel>();
             vm.LastLyricIndex = -1;
-            var parsedLyrics = await App.Services.GetRequiredService<LyricsRefreshService>().SetLyrics(music);
+            List<LyricLine> parsedLyrics;
+            try
+            {
+                parsedLyrics = await App.Services.GetRequiredService<LyricsRefreshService>().SetLyrics(music);
+            }
+            catch
+            {
+                // 兜底: 任何异常不得让 UILyrics 停留在上一首歌的歌词
+                parsedLyrics = [];
+            }
             App.MainWindow.DispatcherQueue.TryEnqueue(() =>
             {
                 if (vm._loadingMusicId == music.Id)

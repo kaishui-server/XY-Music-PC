@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Application
     x:Class="WinUIMusicPlayer.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -19,6 +19,7 @@
                 <ResourceDictionary Source="/Controls/Lyrics/LyricsMaskView.xaml" />
                 <ResourceDictionary>
                     <FontFamily x:Key="UntamedFontFamily">ms-appx:///Assets/Fonts/UntamedFluentIcons.ttf#Untamed Fluent Icons</FontFamily>
+                    <FontFamily x:Key="MaterialDesignIconsFontFamily">ms-appx:///Assets/Fonts/materialdesignicons-webfont.ttf#Material Design Icons</FontFamily>
                 </ResourceDictionary>
                 <!--  Other merged dictionaries here  -->
             </ResourceDictionary.MergedDictionaries>

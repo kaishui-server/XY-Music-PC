@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="WinUIMusicPlayer.View.SubView.ToastFlyout"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Margin="0,52,0,0"
+    HorizontalAlignment="Center"
+    VerticalAlignment="Top"
+    Visibility="Collapsed"
+    mc:Ignorable="d">
+
+    <!--  通用顶部提示小卡片: 与下载进度弹窗同款视觉(背景实时模糊 + 半透明彩色 tint), 1.8 秒后自动向上滑出消失  -->
+    <Grid MaxWidth="380">
+        <!--  模糊宿主: 空元素, 模糊 visual 注入这里, 位于卡片所有内容之下  -->
+        <Border x:Name="blurHost" CornerRadius="10" />
+        <!--  彩色半透明 tint(Info=白/Success=绿/Warning=黄/Error=红): 叠在模糊层之上、边框与内容之下  -->
+        <Border
+            x:Name="tintBorder"
+            Background="#73FFFFFF"
+            CornerRadius="10" />
+        <!--  卡片主体: 边框 + 内容  -->
+        <Border
+            x:Name="cardBorder"
+            Padding="16,10"
+            BorderBrush="#59FFFFFF"
+            BorderThickness="1"
+            CornerRadius="10">
+            <TextBlock
+                x:Name="messageText"
+                FontSize="13"
+                FontWeight="SemiBold"
+                Foreground="#E5202020"
+                TextWrapping="Wrap" />
+        </Border>
+    </Grid>
+</UserControl>

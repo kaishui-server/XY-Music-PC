@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -27,6 +27,7 @@ namespace WinUIMusicPlayer.Services
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await MusicDatabaseService.Initialize();
+            _ = App.Services.GetRequiredService<Services.Plugins.PluginManagerService>().InitializeAsync();
             var ipcService = App.Services.GetRequiredService<IpcService>();
             var musicBrowseViewModel = App.Services.GetRequiredService<MusicBrowseViewModel>();
             var appViewModel = App.Services.GetRequiredService<AppViewModel>();
@@ -45,7 +46,28 @@ namespace WinUIMusicPlayer.Services
             appViewModel.IsInitialized = true;
             DesktopLyricsManager.RestoreFromSettings();
             appViewModel.InitHotKeys();
+            RestoreLoginState();
             await CheckVersionUpdateAsync();
+        }
+
+        /// <summary>
+        /// 启动时恢复账号登录态; 已登录且开启云同步时启动定时自动上传。
+        /// </summary>
+        private static void RestoreLoginState()
+        {
+            try
+            {
+                var auth = App.Services.GetRequiredService<Services.Account.AuthService>();
+                auth.RestoreFromDisk();
+                if (!auth.IsLoggedIn) return;
+                var cloudSync = App.Services.GetRequiredService<Services.Account.AccountCloudSyncService>();
+                if (cloudSync.IsEnabled(auth.AccountId))
+                    cloudSync.StartAutoUpload();
+            }
+            catch (Exception ex)
+            {
+                App.GetLogger<AppInitializerService>().LogWarning(ex, "恢复账号登录态失败: {Message}", ex.Message);
+            }
         }
 
         // 应用关闭时执行清理

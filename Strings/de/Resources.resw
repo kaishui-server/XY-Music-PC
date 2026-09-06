@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle.Text" xml:space="preserve">
-    <value>Original-Sound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="LoadingText.Text" xml:space="preserve">
     <value>Daten werden geladen, bitte warten...</value>
@@ -128,6 +128,15 @@
   </data>
   <data name="AlbumTab.Text" xml:space="preserve">
     <value>Alben</value>
+  </data>
+  <data name="Home.Text" xml:space="preserve">
+    <value>Startseite</value>
+  </data>
+  <data name="HomeCombox.Content" xml:space="preserve">
+    <value>Startseite</value>
+  </data>
+  <data name="HomePageGoMusicBrowse.Text" xml:space="preserve">
+    <value>Zur Musikbibliothek</value>
   </data>
   <data name="AddFolder.Text" xml:space="preserve">
     <value>Ordner hinzufügen</value>
@@ -202,7 +211,7 @@
     <value>Mal</value>
   </data>
   <data name="AppMainTitle" xml:space="preserve">
-    <value>Original-Sound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="ArtistTab.Text" xml:space="preserve">
     <value>Künstler</value>
@@ -375,6 +384,21 @@
   </data>
   <data name="AppStyle.Text" xml:space="preserve">
     <value>Anwendungsstil</value>
+  </data>
+  <data name="CustomBackground.Text" xml:space="preserve">
+    <value>Benutzerdefinierter Bildhintergrund</value>
+  </data>
+  <data name="CustomBackgroundDescription.Text" xml:space="preserve">
+    <value>Wählen Sie ein lokales Bild als App-Hintergrund. Es bleibt nach dem Neustart erhalten.</value>
+  </data>
+  <data name="ChooseBackgroundImage.Content" xml:space="preserve">
+    <value>Bild auswählen</value>
+  </data>
+  <data name="ClearBackgroundImage.Content" xml:space="preserve">
+    <value>Hintergrund löschen</value>
+  </data>
+  <data name="CustomBackgroundBlur.Text" xml:space="preserve">
+    <value>Hintergrund-Weichzeichnung</value>
   </data>
   <data name="MicaStyle.Content" xml:space="preserve">
     <value>Mica</value>
@@ -632,7 +656,7 @@
     <value>Songtext in Datenbank speichern</value>
   </data>
   <data name="AppMainTitleIcon.ToolTipText" xml:space="preserve">
-    <value>Original-Sound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="IconDisplay.Text" xml:space="preserve">
     <value>Anzeigen</value>
@@ -833,7 +857,7 @@
     <value>Originalbild-Cache für Albumcover</value>
   </data>
   <data name="AppTitleHeader.Header" xml:space="preserve">
-    <value>Original-Sound HQ Player</value>
+    <value>XY Music</value>
   </data>
   <data name="CoverLoadThreadCount.Header" xml:space="preserve">
     <value>Threads für Cover-Ladung</value>
@@ -980,7 +1004,7 @@
     <value>Musikordner</value>
   </data>
   <data name="AddFolderPageWelcomeTitle.Text" xml:space="preserve">
-    <value>Willkommen bei Original-Sound HQ Player</value>
+    <value>Willkommen bei XY Music</value>
   </data>
   <data name="AddFolderPageWelcomeSubtitle.Text" xml:space="preserve">
     <value>Füge lokale Musikordner hinzu, um deine Bibliothek aufzubauen. Unterstützt gängige Audioformate mit automatischem Abgleich von Liedtexten und Covern.</value>
@@ -1134,6 +1158,60 @@
   </data>
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>Liedtext-Zeitverschiebung</value>
+  </data>
+  <data name="LinkLyricsTitle" xml:space="preserve">
+    <value>Liedtext verknüpfen</value>
+  </data>
+  <data name="LinkLyrics.Content" xml:space="preserve">
+    <value>Liedtext verknüpfen</value>
+  </data>
+  <data name="LinkLyricsSearchPlaceholder" xml:space="preserve">
+    <value>Suchbegriffe zum Suchen von Liedtexten eingeben</value>
+  </data>
+  <data name="LinkLyricsSearching" xml:space="preserve">
+    <value>Suche läuft…</value>
+  </data>
+  <data name="LinkLyricsNoResults" xml:space="preserve">
+    <value>Keine passenden Liedtexte gefunden</value>
+  </data>
+  <data name="LinkLyricsSearchFailed" xml:space="preserve">
+    <value>Suche fehlgeschlagen, bitte erneut versuchen</value>
+  </data>
+  <data name="LinkLyricsLinking" xml:space="preserve">
+    <value>Liedtext wird abgerufen…</value>
+  </data>
+  <data name="LinkLyricsLinkFailed" xml:space="preserve">
+    <value>Liedtext konnte nicht abgerufen werden, bitte erneut versuchen oder einen anderen wählen</value>
+  </data>
+  <data name="LinkLyricsImportLocal" xml:space="preserve">
+    <value>Liedtext aus lokaler Datei importieren</value>
+  </data>
+  <data name="LinkLyricsOnlineNotSupported" xml:space="preserve">
+    <value>Online-Songs unterstützen das Verknüpfen von Liedtexten nicht</value>
+  </data>
+  <data name="LinkLyricsLinkedTitle" xml:space="preserve">
+    <value>Verknüpfte Liedtexte</value>
+  </data>
+  <data name="LinkLyricsUnlink" xml:space="preserve">
+    <value>Verknüpfung aufheben</value>
+  </data>
+  <data name="LinkLyricsUnlinked" xml:space="preserve">
+    <value>Liedtext-Verknüpfung aufgehoben</value>
+  </data>
+  <data name="LinkLyricsPluginSource" xml:space="preserve">
+    <value>Plugin-Liedtexte</value>
+  </data>
+  <data name="LinkLyricsPluginSourceWith" xml:space="preserve">
+    <value>Plugin: {0}</value>
+  </data>
+  <data name="LinkLyricsLocalSource" xml:space="preserve">
+    <value>Lokale Liedtexte</value>
+  </data>
+  <data name="LinkLyricsCurrentSong" xml:space="preserve">
+    <value>Liedtext des aktuellen Songs</value>
+  </data>
+  <data name="LinkLyricsUnknownArtist" xml:space="preserve">
+    <value>Unbekannter Künstler</value>
   </data>
   <data name="LyricsTimeOffsetTag.Text" xml:space="preserve">
     <value>Liedtext-Zeitverschiebung</value>
@@ -1435,8 +1513,654 @@
   <data name="RtssWarningBody" xml:space="preserve">
     <value>RivaTuner Statistics Server (kurz RTSS, wird meist zusammen mit MSI Afterburner installiert) ist ein D3D-FPS-Überwachungstool, das sich über DXGI in die Grafikpipeline einklinkt. Wenn in diesem Player gleichzeitig „Desktop-Lyrics" und der Shader-Hintergrund aktiv sind, laufen zwei Win2D-Swap-Chains parallel und kollidieren mit den RTSS-DXGI-Hooks, was zum Absturz der App führen kann. Bitte schließe RTSS / MSI Afterburner vor der Nutzung oder füge diesen Player zur Ausschlussliste der RTSS-Hooks hinzu.</value>
   </data>
+  <data name="OnlineSearch.Text" xml:space="preserve">
+    <value>Online-Suche</value>
+  </data>
+  <data name="OnlineSearchButton.Text" xml:space="preserve">
+    <value>Suchen</value>
+  </data>
+  <data name="OnlineSearchLoading" xml:space="preserve">
+    <value>Suche läuft…</value>
+  </data>
+  <data name="OnlineSearchMore.Text" xml:space="preserve">
+    <value>Mehr laden</value>
+  </data>
+  <data name="OnlineSearchNoPlugins" xml:space="preserve">
+    <value>Keine Plugins verfügbar. Bitte zuerst unter Plugins installieren</value>
+  </data>
+  <data name="OnlineSearchNoResults" xml:space="preserve">
+    <value>Keine Songs gefunden</value>
+  </data>
+  <data name="OnlineSearchPlaceholderText" xml:space="preserve">
+    <value>Suchbegriffe eingeben</value>
+  </data>
+  <data name="OnlineSearchClearHistory.Content" xml:space="preserve">
+    <value>Verlauf löschen</value>
+  </data>
+  <data name="OnlineSearchHistory.Text" xml:space="preserve">
+    <value>Suchverlauf</value>
+  </data>
+  <data name="OnlineSearchPlayFailed" xml:space="preserve">
+    <value>Wiedergabe fehlgeschlagen</value>
+  </data>
+  <data name="OnlineSearchSearchFailed" xml:space="preserve">
+    <value>Suche fehlgeschlagen</value>
+  </data>
+  <data name="OnlineSearchSourceFailed" xml:space="preserve">
+    <value>Quellenauflösung fehlgeschlagen</value>
+  </data>
+  <data name="OnlineSearchTypeMusic" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="OnlineSearchTypeArtist" xml:space="preserve">
+    <value>Künstler</value>
+  </data>
+  <data name="OnlineSearchTypeSheet" xml:space="preserve">
+    <value>Playlists</value>
+  </data>
+  <data name="OnlineSearchTypeAlbum" xml:space="preserve">
+    <value>Alben</value>
+  </data>
+  <data name="OnlineSearchNoCatalogResults" xml:space="preserve">
+    <value>Keine Ergebnisse gefunden</value>
+  <data name="OnlineSearchBack.Text" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  </data>
+  <data name="PluginInstall" xml:space="preserve">
+    <value>Plugin installieren</value>
+  </data>
+  <data name="PluginInstallDownloading" xml:space="preserve">
+    <value>Plugin wird heruntergeladen…</value>
+  </data>
+  <data name="PluginInstallFailed" xml:space="preserve">
+    <value>Plugin-Installation fehlgeschlagen</value>
+  </data>
+  <data name="PluginInstallFromFile.Text" xml:space="preserve">
+    <value>Aus Datei installieren</value>
+  </data>
+  <data name="PluginInstallFromUrlTitle" xml:space="preserve">
+    <value>Aus URL installieren</value>
+  </data>
+  <data name="PluginInstallFromUrl.Text" xml:space="preserve">
+    <value>Aus URL installieren</value>
+  </data>
+  <data name="PluginInstallReading" xml:space="preserve">
+    <value>Plugin wird gelesen…</value>
+  </data>
+  <data name="PluginInstallSuccess" xml:space="preserve">
+    <value>Plugin installiert</value>
+  </data>
+  <data name="PluginManage.Text" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="PluginManageEmpty" xml:space="preserve">
+    <value>Keine Plugins installiert</value>
+  </data>
+  <data name="PluginManageTitle.Text" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="PluginUninstallTitle" xml:space="preserve">
+    <value>Deinstallieren</value>
+  </data>
+  <data name="PluginUninstall.Text" xml:space="preserve">
+    <value>Deinstallieren</value>
+  </data>
+  <data name="PluginUninstallConfirm" xml:space="preserve">
+    <value>Dieses Plugin deinstallieren?</value>
+  </data>
+  <data name="PluginUninstallSuccess" xml:space="preserve">
+    <value>Plugin deinstalliert</value>
+  </data>
+  <data name="TextCancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="TextClose" xml:space="preserve">
+    <value>Schließen</value>
+  </data>
+  <data name="TextSave" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="PluginInfoMenu.Text" xml:space="preserve">
+    <value>Plugin-Informationen</value>
+  </data>
+  <data name="PluginInfoTitle" xml:space="preserve">
+    <value>Plugin-Informationen</value>
+  </data>
+  <data name="PluginInfoPlatform" xml:space="preserve">
+    <value>Plattform</value>
+  </data>
+  <data name="PluginInfoVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="PluginInfoAuthor" xml:space="preserve">
+    <value>Autor</value>
+  </data>
+  <data name="PluginInfoSource" xml:space="preserve">
+    <value>Update-Quelle</value>
+  </data>
+  <data name="PluginInfoFile" xml:space="preserve">
+    <value>Datei</value>
+  </data>
+  <data name="PluginInfoMethods" xml:space="preserve">
+    <value>Unterstützte Methoden</value>
+  </data>
+  <data name="PluginInfoSearchTypes" xml:space="preserve">
+    <value>Unterstützte Suchtypen</value>
+  </data>
+  <data name="PluginInfoUserVariables" xml:space="preserve">
+    <value>Benutzervariablen</value>
+  </data>
+  <data name="PluginUserVariablesMenu.Text" xml:space="preserve">
+    <value>Benutzervariablen</value>
+  </data>
+  <data name="PluginUserVariablesTitle" xml:space="preserve">
+    <value>Benutzervariablen</value>
+  </data>
+  <data name="PluginUserVariablesSaved" xml:space="preserve">
+    <value>Benutzervariablen gespeichert</value>
+  </data>
+  <data name="PluginCheckUpdateMenu.Text" xml:space="preserve">
+    <value>Nach Updates suchen</value>
+  </data>
+  <data name="PluginCheckUpdate" xml:space="preserve">
+    <value>Nach Updates suchen</value>
+  </data>
+  <data name="PluginCheckUpdateChecking" xml:space="preserve">
+    <value>Suche nach Updates…</value>
+  </data>
+  <data name="PluginCheckUpdateLatest" xml:space="preserve">
+    <value>Bereits aktuell</value>
+  </data>
+  <data name="PluginCheckUpdateFailed" xml:space="preserve">
+    <value>Update-Prüfung fehlgeschlagen</value>
+  </data>
+  <data name="PluginUpdateAvailable" xml:space="preserve">
+    <value>Neue Version gefunden: {0} → {1}. Jetzt aktualisieren?</value>
+  </data>
+  <data name="PluginUpdateAvailableSameVersion" xml:space="preserve">
+    <value>Plugin-Code hat sich geändert (Version bleibt {0}). Jetzt aktualisieren?</value>
+  </data>
+  <data name="PluginUpdateNow" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="PluginUpdateSuccess" xml:space="preserve">
+    <value>Plugin aktualisiert</value>
+  </data>
+
+  <data name="DownloadChooseDir" xml:space="preserve">
+    <value>Auswählen</value>
+  </data>
+  <data name="DownloadConfirm" xml:space="preserve">
+    <value>Herunterladen</value>
+  </data>
+  <data name="DownloadCoverSavedNote" xml:space="preserve">
+    <value>Coverbild gespeichert</value>
+  </data>
+  <data name="DownloadDialogTitle" xml:space="preserve">
+    <value>Online-Song herunterladen</value>
+  </data>
+  <data name="DownloadAlreadyExists" xml:space="preserve">
+    <value>Dieser Song wurde bereits heruntergeladen. Erneut herunterladen?</value>
+  </data>
+  <data name="DownloadRedownload" xml:space="preserve">
+    <value>Erneut herunterladen</value>
+  </data>
+  <data name="DownloadDirLabel" xml:space="preserve">
+    <value>Speichern unter</value>
+  </data>
+  <data name="DownloadEmbedNote" xml:space="preserve">
+    <value>Lyrics und Cover werden immer in die Audiodatei eingebettet</value>
+  </data>
+  <data name="DownloadFailedFormat" xml:space="preserve">
+    <value>Download fehlgeschlagen: {0}</value>
+  </data>
+  <data name="DownloadFileNotOnline" xml:space="preserve">
+    <value>Der aktuelle Song ist kein Online-Song</value>
+  </data>
+  <data name="DownloadLrcSavedNote" xml:space="preserve">
+    <value>Lyrics-Datei gespeichert</value>
+  </data>
+  <data name="DownloadProgressTitle" xml:space="preserve">
+    <value>Wird heruntergeladen</value>
+  </data>
+  <data name="DownloadQuality" xml:space="preserve">
+    <value>Qualität</value>
+  </data>
+  <data name="DownloadQuality128k" xml:space="preserve">
+    <value>Standard 128k</value>
+  </data>
+  <data name="DownloadQuality320k" xml:space="preserve">
+    <value>Hoch 320k</value>
+  </data>
+  <data name="DownloadQualityFlac" xml:space="preserve">
+    <value>Verlustfrei FLAC</value>
+  </data>
+  <data name="DownloadQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="DownloadSaveCover" xml:space="preserve">
+    <value>Auch Coverbild speichern</value>
+  </data>
+  <data name="DownloadSaveLrc" xml:space="preserve">
+    <value>Zusätzliche Lyrics-Datei (.lrc) speichern</value>
+  </data>
+  <data name="DownloadStatusDownloading" xml:space="preserve">
+    <value>Audio wird heruntergeladen...</value>
+  </data>
+  <data name="DownloadStatusEmbedding" xml:space="preserve">
+    <value>Metadaten werden eingebettet...</value>
+  </data>
+  <data name="DownloadStatusFetchingExtras" xml:space="preserve">
+    <value>Lyrics und Cover werden abgerufen...</value>
+  </data>
+  <data name="DownloadStatusResolving" xml:space="preserve">
+    <value>Audioquelle wird aufgelöst...</value>
+  </data>
+  <data name="DownloadSuccessFormat" xml:space="preserve">
+    <value>Gespeichert unter: {0}</value>
+  </data>
+
+  <data name="DownloadDone" xml:space="preserve">
+    <value>Download abgeschlossen</value>
+  </data>
+  <data name="DownloadFailedShort" xml:space="preserve">
+    <value>Download fehlgeschlagen</value>
+  </data>
+  <data name="DownloadHide" xml:space="preserve">
+    <value>Ausblenden</value>
+  </data>
+  <data name="MyPlayListEmptySubtitle.Text" xml:space="preserve">
+    <value>Erstelle eine Playlist oder füge Songs über die Wiedergabeseite hinzu</value>
+  </data>
+  <data name="MyPlayListAlreadyAdded" xml:space="preserve">
+    <value>Dieser Song ist bereits in dieser Playlist</value>
+  </data>
+  <data name="MyPlayListDelete.Text" xml:space="preserve">
+    <value>Playlist löschen</value>
+  </data>
+  <data name="MyPlayListNamePlaceholder" xml:space="preserve">
+    <value>Playlistname eingeben</value>
+  </data>
+  <data name="MyPlayListDialogTitle" xml:space="preserve">
+    <value>Playlist wählen</value>
+  </data>
+  <data name="MyPlayListNoCurrentSong" xml:space="preserve">
+    <value>Aktuell wird nichts abgespielt</value>
+  </data>
+  <data name="MyPlayListRemoveSong.Text" xml:space="preserve">
+    <value>Aus Playlist entfernen</value>
+  </data>
+  <data name="MyPlayListNewTitle" xml:space="preserve">
+    <value>Neue Playlist</value>
+  </data>
+  <data name="CreatePlayListTabCreate" xml:space="preserve">
+    <value>Neue Playlist</value>
+  </data>
+  <data name="CreatePlayListTabNetwork" xml:space="preserve">
+    <value>Aus dem Web importieren</value>
+  </data>
+  <data name="CreatePlayListTabLocal" xml:space="preserve">
+    <value>Lokal importieren</value>
+  </data>
+  <data name="CreatePlayListCreateButton" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="CreatePlayListNetworkSource" xml:space="preserve">
+    <value>Wiedergabelisten-Quelle</value>
+  </data>
+  <data name="CreatePlayListNoImportPlugin" xml:space="preserve">
+    <value>Kein Plugin unterstützt den Import von Wiedergabelisten. Installieren und aktivieren Sie zuerst eines in der Plugin-Verwaltung</value>
+  </data>
+  <data name="CreatePlayListNetworkUrlPlaceholder" xml:space="preserve">
+    <value>Wiedergabelisten-Link einfügen, z. B. https://y.qq.com/n/ryqq/playlist/xxxx</value>
+  </data>
+  <data name="CreatePlayListImportButton" xml:space="preserve">
+    <value>Importieren</value>
+  </data>
+  <data name="CreatePlayListLocalHint" xml:space="preserve">
+    <value>Unterstützt M3U/M3U8-Wiedergabelisten und MusicFree-Backup-JSON-Dateien</value>
+  </data>
+  <data name="CreatePlayListSelectFileButton" xml:space="preserve">
+    <value>Datei auswählen und importieren</value>
+  </data>
+  <data name="CreatePlayListImporting" xml:space="preserve">
+    <value>Wird importiert…</value>
+  </data>
+  <data name="CreatePlayListUrlRequired" xml:space="preserve">
+    <value>Bitte geben Sie einen Wiedergabelisten-Link ein</value>
+  </data>
+  <data name="CreatePlayListImportFailedPlain" xml:space="preserve">
+    <value>Import fehlgeschlagen, bitte erneut versuchen</value>
+  </data>
+  <data name="CreatePlayListImportFailedReason" xml:space="preserve">
+    <value>Import fehlgeschlagen: {0}</value>
+  </data>
+  <data name="CreatePlayListImportSuccess" xml:space="preserve">
+    <value>„{0}“ importiert, {1} Titel</value>
+  </data>
+  <data name="CreatePlayListImportedDefaultName" xml:space="preserve">
+    <value>Importierte Wiedergabeliste</value>
+  </data>
+  <data name="CreatePlayListUnsupportedFile" xml:space="preserve">
+    <value>Nicht unterstützter Dateityp</value>
+  </data>
+  <data name="CreatePlayListM3uEmpty" xml:space="preserve">
+    <value>Keine lokalen Audiopfade in der Wiedergabendatei</value>
+  </data>
+  <data name="CreatePlayListLocalNoMatch" xml:space="preserve">
+    <value>Die Audiodateien in der Wiedergabeliste sind nicht in der lokalen Musikbibliothek</value>
+  </data>
+  <data name="CreatePlayListLocalImportedWithMissing" xml:space="preserve">
+    <value>„{0}“ importiert, {1} Titel, {2} nicht in der lokalen Musikbibliothek gefunden</value>
+  </data>
+  <data name="CreatePlayListBackupInvalid" xml:space="preserve">
+    <value>Die Datei ist kein gültiges MusicFree-JSON-Backup</value>
+  </data>
+  <data name="CreatePlayListBackupNoSong" xml:space="preserve">
+    <value>Keine importierbaren Titel im Backup gefunden</value>
+  </data>
+  <data name="CreatePlayListBackupNoPlugin" xml:space="preserve">
+    <value>{0} Titel konnten wegen fehlender Plugins nicht verknüpft werden</value>
+  </data>
+  <data name="CreatePlayListBackupImported" xml:space="preserve">
+    <value>{0} Wiedergabelisten und {1} Titel aus dem Backup importiert</value>
+  </data>
+  <data name="CreatePlayListBackupSkippedSuffix" xml:space="preserve">
+    <value>, {0} Titel mit unvollständigen Daten übersprungen</value>
+  </data>
+  <data name="CreatePlayListUnnamedSheet" xml:space="preserve">
+    <value>Unbenannte Wiedergabeliste {0}</value>
+  </data>
+  <data name="MyPlayListNew.Text" xml:space="preserve">
+    <value>Neue Playlist</value>
+  </data>
+  <data name="MyPlayListDialogEmptyHint" xml:space="preserve">
+    <value>Noch keine Playlists — gib einen Namen ein, um eine zu erstellen</value>
+  </data>
+  <data name="MyPlayListSongsSuffix" xml:space="preserve">
+    <value>Songs</value>
+  </data>
+  <data name="AddToMyPlayList" xml:space="preserve">
+    <value>Zur Playlist hinzufügen</value>
+  </data>
+  <data name="MyPlayListEmptyTitle.Text" xml:space="preserve">
+    <value>Noch keine Playlists</value>
+  </data>
+  <data name="MyPlayListCreateAndAdd" xml:space="preserve">
+    <value>Erstellen &amp; Hinzufügen</value>
+  </data>
+  <data name="MyPlayLists.Text" xml:space="preserve">
+    <value>Meine Playlists</value>
+  </data>
+  <data name="MyPlayListAddFailedOnline" xml:space="preserve">
+    <value>Aktueller Song konnte nicht erkannt werden. Erneut abspielen und erneut versuchen.</value>
+  </data>
+  <data name="MyPlayListSongCountSuffix.Text" xml:space="preserve">
+    <value>Songs</value>
+  </data>
+  <data name="AddToMyPlayListToolTip.Content" xml:space="preserve">
+    <value>Zur Playlist hinzufügen</value>
+  </data>
+  <data name="OnlineItemPlay.Text" xml:space="preserve">
+    <value>Wiedergabe</value>
+  </data>
+  <data name="OnlineItemAddToPlayList.Text" xml:space="preserve">
+    <value>Zur Playlist hinzufügen</value>
+  </data>
+  <data name="AccountTitle" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="AccountMyTitle" xml:space="preserve">
+    <value>Mein Konto</value>
+  </data>
+  <data name="AccountBrandSubtitle" xml:space="preserve">
+    <value>Melde dich mit deinem XY Music Konto an, um Playlists, Favoriten und Plugins zu synchronisieren</value>
+  </data>
+  <data name="AccountLoginTab" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="AccountRegisterTab" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="AccountIdLabel" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="AccountPasswordLabel" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="AccountLoginButton" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="AccountForgotPassword" xml:space="preserve">
+    <value>Passwort vergessen?</value>
+  </data>
+  <data name="AccountNicknameLabel" xml:space="preserve">
+    <value>Spitzname</value>
+  </data>
+  <data name="AccountConfirmPasswordLabel" xml:space="preserve">
+    <value>Passwort bestätigen</value>
+  </data>
+  <data name="AccountEmailLabel" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="AccountCodeLabel" xml:space="preserve">
+    <value>Bestätigungscode</value>
+  </data>
+  <data name="AccountSendCode" xml:space="preserve">
+    <value>Code senden</value>
+  </data>
+  <data name="AccountRegisterButton" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="AccountFormIncomplete" xml:space="preserve">
+    <value>Bitte alle Felder ausfüllen</value>
+  </data>
+  <data name="AccountPasswordMismatch" xml:space="preserve">
+    <value>Die Passwörter stimmen nicht überein</value>
+  </data>
+  <data name="AccountLoginFailed" xml:space="preserve">
+    <value>Anmeldung fehlgeschlagen</value>
+  </data>
+  <data name="AccountRegisterFailed" xml:space="preserve">
+    <value>Registrierung fehlgeschlagen</value>
+  </data>
+  <data name="AccountEmailInvalid" xml:space="preserve">
+    <value>Bitte eine gültige E-Mail-Adresse eingeben</value>
+  </data>
+  <data name="AccountCodeSent" xml:space="preserve">
+    <value>Bestätigungscode gesendet, bitte Posteingang prüfen</value>
+  </data>
+  <data name="AccountCodeSendFailed" xml:space="preserve">
+    <value>Bestätigungscode konnte nicht gesendet werden</value>
+  </data>
+  <data name="AccountCodeCountdown" xml:space="preserve">
+    <value>Erneut senden in {0}s</value>
+  </data>
+  <data name="AccountRegisterCaptchaTitle" xml:space="preserve">
+    <value>Menschlichkeitsprüfung</value>
+  </data>
+  <data name="AccountRegisterCaptchaDesc" xml:space="preserve">
+    <value>Bitte schließe die Prüfung ab, um fortzufahren</value>
+  </data>
+  <data name="AccountSendCodeCaptchaTitle" xml:space="preserve">
+    <value>Menschlichkeitsprüfung</value>
+  </data>
+  <data name="AccountSendCodeCaptchaDesc" xml:space="preserve">
+    <value>Bitte Prüfung abschließen, bevor der Code gesendet wird</value>
+  </data>
+  <data name="AccountCaptchaConfirm" xml:space="preserve">
+    <value>Bestätigen</value>
+  </data>
+  <data name="AccountCaptchaRefresh" xml:space="preserve">
+    <value>Neue Frage</value>
+  </data>
+  <data name="AccountCaptchaEmpty" xml:space="preserve">
+    <value>Bitte eine Antwort eingeben</value>
+  </data>
+  <data name="AccountForgotEmailLabel" xml:space="preserve">
+    <value>E-Mail der Registrierung eingeben</value>
+  </data>
+  <data name="AccountForgotTitle" xml:space="preserve">
+    <value>Passwort vergessen</value>
+  </data>
+  <data name="AccountForgotSendCode" xml:space="preserve">
+    <value>Code senden</value>
+  </data>
+  <data name="AccountForgotCaptchaDesc" xml:space="preserve">
+    <value>Bitte Prüfung abschließen, bevor der Code gesendet wird</value>
+  </data>
+  <data name="AccountForgotCodeLabel" xml:space="preserve">
+    <value>E-Mail-Bestätigungscode</value>
+  </data>
+  <data name="AccountForgotNewPassword" xml:space="preserve">
+    <value>Neues Passwort</value>
+  </data>
+  <data name="AccountForgotConfirmPassword" xml:space="preserve">
+    <value>Neues Passwort bestätigen</value>
+  </data>
+  <data name="AccountForgotResetTitle" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="AccountForgotResetButton" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="AccountResetCaptchaTitle" xml:space="preserve">
+    <value>Menschlichkeitsprüfung</value>
+  </data>
+  <data name="AccountResetCaptchaDesc" xml:space="preserve">
+    <value>Bitte Prüfung abschließen, um das Passwort zurückzusetzen</value>
+  </data>
+  <data name="AccountAvatarHint" xml:space="preserve">
+    <value>Avatar anklicken, um das Bild zu ändern</value>
+  </data>
+  <data name="AccountAvatarPending" xml:space="preserve">
+    <value>Avatar wird geprüft</value>
+  </data>
+  <data name="AccountAvatarRejected" xml:space="preserve">
+    <value>Avatar abgelehnt, zum erneuten Hochladen anklicken</value>
+  </data>
+  <data name="AccountAvatarTooBig" xml:space="preserve">
+    <value>Avatarbild darf 5 MB nicht überschreiten</value>
+  </data>
+  <data name="AccountAvatarUploadFailed" xml:space="preserve">
+    <value>Avatar-Upload fehlgeschlagen</value>
+  </data>
+  <data name="AccountIdFormat" xml:space="preserve">
+    <value>Konto: {0}</value>
+  </data>
+  <data name="AccountRefreshProfile" xml:space="preserve">
+    <value>Profil aktualisieren</value>
+  </data>
+  <data name="AccountEditNickname" xml:space="preserve">
+    <value>Spitzname ändern</value>
+  </data>
+  <data name="AccountChangePassword" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+  <data name="AccountLogoutButton" xml:space="preserve">
+    <value>Abmelden</value>
+  </data>
+  <data name="AccountNicknameDialogTitle" xml:space="preserve">
+    <value>Spitzname ändern</value>
+  </data>
+  <data name="AccountNicknameDialogSubmit" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="AccountOldPassword" xml:space="preserve">
+    <value>Aktuelles Passwort</value>
+  </data>
+  <data name="AccountNewPassword" xml:space="preserve">
+    <value>Neues Passwort</value>
+  </data>
+  <data name="AccountNewPasswordConfirm" xml:space="preserve">
+    <value>Neues Passwort bestätigen</value>
+  </data>
+  <data name="AccountChangePasswordTitle" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+  <data name="AccountChangePasswordButton" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="AccountLogoutConfirmTitle" xml:space="preserve">
+    <value>Abmelden</value>
+  </data>
+  <data name="AccountLogoutConfirmText" xml:space="preserve">
+    <value>Wirklich von diesem Konto abmelden?</value>
+  </data>
+  <data name="AccountLogoutConfirmButton" xml:space="preserve">
+    <value>Abmelden</value>
+  </data>
+  <data name="AccountProfileRefreshed" xml:space="preserve">
+    <value>Profil aktualisiert</value>
+  </data>
+  <data name="AccountCloudSyncTitle" xml:space="preserve">
+    <value>Cloud-Sync</value>
+  </data>
+  <data name="AccountCloudSyncEnable" xml:space="preserve">
+    <value>Cloud-Sync aktivieren (Playlists / Favoriten / Plugins)</value>
+  </data>
+  <data name="AccountCloudSyncFrequency" xml:space="preserve">
+    <value>Auto-Upload-Häufigkeit</value>
+  </data>
+  <data name="AccountFreqFiveMinutes" xml:space="preserve">
+    <value>Alle 5 Minuten</value>
+  </data>
+  <data name="AccountFreqFifteenMinutes" xml:space="preserve">
+    <value>Alle 15 Minuten</value>
+  </data>
+  <data name="AccountFreqThirtyMinutes" xml:space="preserve">
+    <value>Alle 30 Minuten</value>
+  </data>
+  <data name="AccountFreqOneHour" xml:space="preserve">
+    <value>Stündlich</value>
+  </data>
+  <data name="AccountFreqSixHours" xml:space="preserve">
+    <value>Alle 6 Stunden</value>
+  </data>
+  <data name="AccountFreqTwelveHours" xml:space="preserve">
+    <value>Alle 12 Stunden</value>
+  </data>
+  <data name="AccountFreqOneDay" xml:space="preserve">
+    <value>Täglich</value>
+  </data>
+  <data name="AccountFreqManual" xml:space="preserve">
+    <value>Nur manuell</value>
+  </data>
+  <data name="AccountSyncNow" xml:space="preserve">
+    <value>Jetzt synchronisieren</value>
+  </data>
+  <data name="AccountNeverSynced" xml:space="preserve">
+    <value>Nie synchronisiert</value>
+  </data>
+  <data name="AccountLastSyncFormat" xml:space="preserve">
+    <value>Letzte Synchronisierung: {0}</value>
+  </data>
+  <data name="AccountSyncNoChange" xml:space="preserve">
+    <value>Keine Änderungen zu synchronisieren</value>
+  </data>
+  <data name="AccountSyncDone" xml:space="preserve">
+    <value>Synchronisierung abgeschlossen: {0} Plugins heruntergeladen, {1} hochgeladen, {2} Playlists hochgeladen, {3} heruntergeladen</value>
+  </data>
+  <data name="AccountSyncPluginErrorSuffix" xml:space="preserve">
+    <value>({0} Plugins nicht synchronisiert)</value>
+  </data>
+  <data name="AccountCloudSyncPromptTitle" xml:space="preserve">
+    <value>Cloud-Sync aktivieren?</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine1" xml:space="preserve">
+    <value>Angemeldet! Cloud-Sync jetzt aktivieren?</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine2" xml:space="preserve">
+    <value>Playlists, Favoriten und Plugins werden automatisch mit der Cloud synchronisiert</value>
+  </data>
+  <data name="AccountCloudSyncPromptEnable" xml:space="preserve">
+    <value>Aktivieren</value>
+  </data>
+  <data name="AccountCloudSyncPromptLater" xml:space="preserve">
+    <value>Später</value>
+  </data>
+  <data name="AccountCloudSyncPromptWait" xml:space="preserve">
+    <value>Auswahl möglich in {0}s</value>
+  </data>
 </root>
-
-
-
-

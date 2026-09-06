@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle.Text" xml:space="preserve">
-    <value>原音HQ播放器</value>
+    <value>XY Music</value>
   </data>
   <data name="LoadingText.Text" xml:space="preserve">
     <value>正在加载数据，请稍候...</value>
@@ -128,6 +128,15 @@
   </data>
   <data name="AlbumTab.Text" xml:space="preserve">
     <value>专辑</value>
+  </data>
+  <data name="Home.Text" xml:space="preserve">
+    <value>首页</value>
+  </data>
+  <data name="HomeCombox.Content" xml:space="preserve">
+    <value>首页</value>
+  </data>
+  <data name="HomePageGoMusicBrowse.Text" xml:space="preserve">
+    <value>前往音乐库</value>
   </data>
   <data name="AddFolder.Text" xml:space="preserve">
     <value>添加文件夹</value>
@@ -202,7 +211,7 @@
     <value>次</value>
   </data>
   <data name="AppMainTitle" xml:space="preserve">
-    <value>原音HQ播放器</value>
+    <value>XY Music</value>
   </data>
   <data name="ArtistTab.Text" xml:space="preserve">
     <value>艺术家</value>
@@ -374,6 +383,21 @@
   </data>
   <data name="AppStyle.Text" xml:space="preserve">
     <value>应用样式</value>
+  </data>
+  <data name="CustomBackground.Text" xml:space="preserve">
+    <value>自定义图片背景</value>
+  </data>
+  <data name="CustomBackgroundDescription.Text" xml:space="preserve">
+    <value>选择一张本地图片作为应用背景，重启后依然保留。</value>
+  </data>
+  <data name="ChooseBackgroundImage.Content" xml:space="preserve">
+    <value>选择图片</value>
+  </data>
+  <data name="ClearBackgroundImage.Content" xml:space="preserve">
+    <value>清除背景</value>
+  </data>
+  <data name="CustomBackgroundBlur.Text" xml:space="preserve">
+    <value>壁纸模糊度</value>
   </data>
   <data name="MicaStyle.Content" xml:space="preserve">
     <value>云母</value>
@@ -631,7 +655,7 @@
     <value>保存歌词到数据库</value>
   </data>
   <data name="AppMainTitleIcon.ToolTipText" xml:space="preserve">
-    <value>原音HQ播放器</value>
+    <value>XY Music</value>
   </data>
   <data name="IconDisplay.Text" xml:space="preserve">
     <value>显示</value>
@@ -832,7 +856,7 @@
     <value>专辑封面原始图像缓存</value>
   </data>
   <data name="AppTitleHeader.Header" xml:space="preserve">
-    <value>原音HQ播放器</value>
+    <value>XY Music</value>
   </data>
   <data name="CoverLoadThreadCount.Header" xml:space="preserve">
     <value>封面加载线程数量</value>
@@ -979,7 +1003,7 @@
     <value>音乐文件夹</value>
   </data>
   <data name="AddFolderPageWelcomeTitle.Text" xml:space="preserve">
-    <value>欢迎使用原音HQ播放器</value>
+    <value>欢迎使用 XY Music</value>
   </data>
   <data name="AddFolderPageWelcomeSubtitle.Text" xml:space="preserve">
     <value>添加本地音乐文件夹，即可开始构建你的音乐库。支持常见音频格式，自动匹配歌词与封面。</value>
@@ -1133,6 +1157,60 @@
   </data>
   <data name="LyricsTimeOffset.Content" xml:space="preserve">
     <value>歌词时间偏移</value>
+  </data>
+  <data name="LinkLyricsTitle" xml:space="preserve">
+    <value>关联歌词</value>
+  </data>
+  <data name="LinkLyrics.Content" xml:space="preserve">
+    <value>关联歌词</value>
+  </data>
+  <data name="LinkLyricsSearchPlaceholder" xml:space="preserve">
+    <value>输入关键词搜索歌词</value>
+  </data>
+  <data name="LinkLyricsSearching" xml:space="preserve">
+    <value>正在搜索…</value>
+  </data>
+  <data name="LinkLyricsNoResults" xml:space="preserve">
+    <value>没有找到匹配的歌词</value>
+  </data>
+  <data name="LinkLyricsSearchFailed" xml:space="preserve">
+    <value>搜索失败，请重试</value>
+  </data>
+  <data name="LinkLyricsLinking" xml:space="preserve">
+    <value>正在获取歌词…</value>
+  </data>
+  <data name="LinkLyricsLinkFailed" xml:space="preserve">
+    <value>歌词获取失败，请重试或换一条</value>
+  </data>
+  <data name="LinkLyricsImportLocal" xml:space="preserve">
+    <value>从本地文件导入歌词</value>
+  </data>
+  <data name="LinkLyricsOnlineNotSupported" xml:space="preserve">
+    <value>在线歌曲暂不支持关联歌词</value>
+  </data>
+  <data name="LinkLyricsLinkedTitle" xml:space="preserve">
+    <value>已关联歌词</value>
+  </data>
+  <data name="LinkLyricsUnlink" xml:space="preserve">
+    <value>取消关联</value>
+  </data>
+  <data name="LinkLyricsUnlinked" xml:space="preserve">
+    <value>已取消关联歌词</value>
+  </data>
+  <data name="LinkLyricsPluginSource" xml:space="preserve">
+    <value>插件歌词</value>
+  </data>
+  <data name="LinkLyricsPluginSourceWith" xml:space="preserve">
+    <value>插件：{0}</value>
+  </data>
+  <data name="LinkLyricsLocalSource" xml:space="preserve">
+    <value>本地歌词</value>
+  </data>
+  <data name="LinkLyricsCurrentSong" xml:space="preserve">
+    <value>当前歌曲歌词</value>
+  </data>
+  <data name="LinkLyricsUnknownArtist" xml:space="preserve">
+    <value>未知作者</value>
   </data>
   <data name="LyricsTimeOffsetTag.Text" xml:space="preserve">
     <value>歌词时间偏移</value>
@@ -1436,5 +1514,655 @@
   </data>
   <data name="RtssWarningBody" xml:space="preserve">
     <value>RivaTuner Statistics Server（简称 RTSS，常与 MSI Afterburner 一同安装）属于 D3D 帧率监控类软件，会通过 DXGI 注入替换程序的图形渲染链路。当本程序的「桌面歌词」与「着色器背景」同时启用时，会同时存在两个 Win2D 渲染线程，与 RTSS 的 DXGI 钩子发生冲突，可能导致程序崩溃。请在使用本程序前关闭 RTSS / MSI Afterburner，或在 RTSS 中将本程序加入挂钩排除列表。</value>
+  </data>
+  <data name="OnlineSearch.Text" xml:space="preserve">
+    <value>在线搜索</value>
+  </data>
+  <data name="OnlineSearchButton.Text" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="OnlineSearchLoading" xml:space="preserve">
+    <value>正在搜索…</value>
+  </data>
+  <data name="OnlineSearchMore.Text" xml:space="preserve">
+    <value>加载更多</value>
+  </data>
+  <data name="OnlineSearchNoPlugins" xml:space="preserve">
+    <value>尚无可用插件，请先在「插件管理」中安装</value>
+  </data>
+  <data name="OnlineSearchNoResults" xml:space="preserve">
+    <value>没有找到相关歌曲</value>
+  </data>
+  <data name="OnlineSearchPlaceholderText" xml:space="preserve">
+    <value>输入关键词搜索歌曲</value>
+  </data>
+  <data name="OnlineSearchClearHistory.Content" xml:space="preserve">
+    <value>清空历史</value>
+  </data>
+  <data name="OnlineSearchHistory.Text" xml:space="preserve">
+    <value>搜索历史</value>
+  </data>
+  <data name="OnlineSearchPlayFailed" xml:space="preserve">
+    <value>播放失败</value>
+  </data>
+  <data name="OnlineSearchSearchFailed" xml:space="preserve">
+    <value>搜索失败</value>
+  </data>
+  <data name="OnlineSearchSourceFailed" xml:space="preserve">
+    <value>音源解析失败</value>
+  </data>
+  <data name="OnlineSearchTypeMusic" xml:space="preserve">
+    <value>歌曲</value>
+  </data>
+  <data name="OnlineSearchTypeArtist" xml:space="preserve">
+    <value>歌手</value>
+  </data>
+  <data name="OnlineSearchTypeSheet" xml:space="preserve">
+    <value>歌单</value>
+  </data>
+  <data name="OnlineSearchTypeAlbum" xml:space="preserve">
+    <value>专辑</value>
+  </data>
+  <data name="OnlineSearchNoCatalogResults" xml:space="preserve">
+    <value>没有找到相关结果</value>
+  </data>
+  <data name="OnlineSearchBack.Text" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="PluginInstall" xml:space="preserve">
+    <value>安装插件</value>
+  </data>
+  <data name="PluginInstallDownloading" xml:space="preserve">
+    <value>正在下载插件…</value>
+  </data>
+  <data name="PluginInstallFailed" xml:space="preserve">
+    <value>插件安装失败</value>
+  </data>
+  <data name="PluginInstallFromFile.Text" xml:space="preserve">
+    <value>从文件安装</value>
+  </data>
+  <data name="PluginInstallFromUrlTitle" xml:space="preserve">
+    <value>从链接安装</value>
+  </data>
+  <data name="PluginInstallFromUrl.Text" xml:space="preserve">
+    <value>从链接安装</value>
+  </data>
+  <data name="PluginInstallReading" xml:space="preserve">
+    <value>正在读取插件…</value>
+  </data>
+  <data name="PluginInstallSuccess" xml:space="preserve">
+    <value>插件安装成功</value>
+  </data>
+  <data name="PluginManage.Text" xml:space="preserve">
+    <value>插件管理</value>
+  </data>
+  <data name="PluginManageEmpty" xml:space="preserve">
+    <value>还没有安装插件</value>
+  </data>
+  <data name="PluginManageTitle.Text" xml:space="preserve">
+    <value>插件管理</value>
+  </data>
+  <data name="PluginUninstallTitle" xml:space="preserve">
+    <value>卸载</value>
+  </data>
+  <data name="PluginUninstall.Text" xml:space="preserve">
+    <value>卸载</value>
+  </data>
+  <data name="PluginUninstallConfirm" xml:space="preserve">
+    <value>确定卸载此插件吗？</value>
+  </data>
+  <data name="PluginUninstallSuccess" xml:space="preserve">
+    <value>插件已卸载</value>
+  </data>
+  <data name="TextCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="TextClose" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="TextSave" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="PluginInfoMenu.Text" xml:space="preserve">
+    <value>插件信息</value>
+  </data>
+  <data name="PluginInfoTitle" xml:space="preserve">
+    <value>插件信息</value>
+  </data>
+  <data name="PluginInfoPlatform" xml:space="preserve">
+    <value>平台</value>
+  </data>
+  <data name="PluginInfoVersion" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="PluginInfoAuthor" xml:space="preserve">
+    <value>作者</value>
+  </data>
+  <data name="PluginInfoSource" xml:space="preserve">
+    <value>更新源</value>
+  </data>
+  <data name="PluginInfoFile" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="PluginInfoMethods" xml:space="preserve">
+    <value>支持的方法</value>
+  </data>
+  <data name="PluginInfoSearchTypes" xml:space="preserve">
+    <value>支持的搜索类型</value>
+  </data>
+  <data name="PluginInfoUserVariables" xml:space="preserve">
+    <value>用户变量</value>
+  </data>
+  <data name="PluginUserVariablesMenu.Text" xml:space="preserve">
+    <value>用户变量</value>
+  </data>
+  <data name="PluginUserVariablesTitle" xml:space="preserve">
+    <value>用户变量</value>
+  </data>
+  <data name="PluginUserVariablesSaved" xml:space="preserve">
+    <value>用户变量已保存</value>
+  </data>
+  <data name="PluginCheckUpdateMenu.Text" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="PluginCheckUpdate" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="PluginCheckUpdateChecking" xml:space="preserve">
+    <value>正在检查更新…</value>
+  </data>
+  <data name="PluginCheckUpdateLatest" xml:space="preserve">
+    <value>已是最新版本</value>
+  </data>
+  <data name="PluginCheckUpdateFailed" xml:space="preserve">
+    <value>检查更新失败</value>
+  </data>
+  <data name="PluginUpdateAvailable" xml:space="preserve">
+    <value>发现新版本: {0} → {1}, 是否更新？</value>
+  </data>
+  <data name="PluginUpdateAvailableSameVersion" xml:space="preserve">
+    <value>插件代码有更新（版本号仍为 {0}），是否更新？</value>
+  </data>
+  <data name="PluginUpdateNow" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="PluginUpdateSuccess" xml:space="preserve">
+    <value>插件更新成功</value>
+  </data>
+
+  <data name="DownloadChooseDir" xml:space="preserve">
+    <value>选择目录</value>
+  </data>
+  <data name="DownloadConfirm" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="DownloadCoverSavedNote" xml:space="preserve">
+    <value>已保存独立封面文件</value>
+  </data>
+  <data name="DownloadDialogTitle" xml:space="preserve">
+    <value>下载在线歌曲</value>
+  </data>
+  <data name="DownloadAlreadyExists" xml:space="preserve">
+    <value>这首歌之前已下载过，是否重新下载？</value>
+  </data>
+  <data name="DownloadRedownload" xml:space="preserve">
+    <value>重新下载</value>
+  </data>
+  <data name="DownloadDirLabel" xml:space="preserve">
+    <value>下载目录</value>
+  </data>
+  <data name="DownloadEmbedNote" xml:space="preserve">
+    <value>歌词与封面将始终内嵌到歌曲文件中</value>
+  </data>
+  <data name="DownloadFailedFormat" xml:space="preserve">
+    <value>下载失败：{0}</value>
+  </data>
+  <data name="DownloadFileNotOnline" xml:space="preserve">
+    <value>当前歌曲不是在线歌曲</value>
+  </data>
+  <data name="DownloadLrcSavedNote" xml:space="preserve">
+    <value>已保存独立歌词文件</value>
+  </data>
+  <data name="DownloadProgressTitle" xml:space="preserve">
+    <value>正在下载</value>
+  </data>
+  <data name="DownloadQuality" xml:space="preserve">
+    <value>下载音质</value>
+  </data>
+  <data name="DownloadQuality128k" xml:space="preserve">
+    <value>标准 128k</value>
+  </data>
+  <data name="DownloadQuality320k" xml:space="preserve">
+    <value>高品 320k</value>
+  </data>
+  <data name="DownloadQualityFlac" xml:space="preserve">
+    <value>无损 FLAC</value>
+  </data>
+  <data name="DownloadQualityFlac24bit" xml:space="preserve">
+    <value>Hi-Res 24bit FLAC</value>
+  </data>
+  <data name="DownloadSaveCover" xml:space="preserve">
+    <value>额外下载封面图片</value>
+  </data>
+  <data name="DownloadSaveLrc" xml:space="preserve">
+    <value>额外下载独立歌词（LRC）</value>
+  </data>
+  <data name="DownloadStatusDownloading" xml:space="preserve">
+    <value>正在下载音频…</value>
+  </data>
+  <data name="DownloadStatusEmbedding" xml:space="preserve">
+    <value>正在写入歌曲元数据…</value>
+  </data>
+  <data name="DownloadStatusFetchingExtras" xml:space="preserve">
+    <value>正在获取歌词与封面…</value>
+  </data>
+  <data name="DownloadStatusResolving" xml:space="preserve">
+    <value>正在解析音源…</value>
+  </data>
+  <data name="DownloadSuccessFormat" xml:space="preserve">
+    <value>已保存到：{0}</value>
+  </data>
+
+  <data name="DownloadDone" xml:space="preserve">
+    <value>下载完成</value>
+  </data>
+  <data name="DownloadFailedShort" xml:space="preserve">
+    <value>下载失败</value>
+  </data>
+  <data name="DownloadHide" xml:space="preserve">
+    <value>隐藏</value>
+  </data>
+  <data name="MyPlayListEmptySubtitle.Text" xml:space="preserve">
+    <value>新建歌单，或在播放页把喜欢的歌曲加入歌单</value>
+  </data>
+  <data name="MyPlayListAlreadyAdded" xml:space="preserve">
+    <value>此歌单已经添加过该歌曲</value>
+  </data>
+  <data name="MyPlayListDelete.Text" xml:space="preserve">
+    <value>删除歌单</value>
+  </data>
+  <data name="MyPlayListNamePlaceholder" xml:space="preserve">
+    <value>请输入歌单名称</value>
+  </data>
+  <data name="MyPlayListDialogTitle" xml:space="preserve">
+    <value>选择歌单</value>
+  </data>
+  <data name="MyPlayListNoCurrentSong" xml:space="preserve">
+    <value>当前没有正在播放的歌曲</value>
+  </data>
+  <data name="MyPlayListRemoveSong.Text" xml:space="preserve">
+    <value>从歌单移除</value>
+  </data>
+  <data name="MyPlayListNewTitle" xml:space="preserve">
+    <value>新建歌单</value>
+  </data>
+  <data name="CreatePlayListTabCreate" xml:space="preserve">
+    <value>新建歌单</value>
+  </data>
+  <data name="CreatePlayListTabNetwork" xml:space="preserve">
+    <value>从网络导入</value>
+  </data>
+  <data name="CreatePlayListTabLocal" xml:space="preserve">
+    <value>从本地导入</value>
+  </data>
+  <data name="CreatePlayListCreateButton" xml:space="preserve">
+    <value>创建</value>
+  </data>
+  <data name="CreatePlayListNetworkSource" xml:space="preserve">
+    <value>歌单来源</value>
+  </data>
+  <data name="CreatePlayListNoImportPlugin" xml:space="preserve">
+    <value>没有支持导入歌单的插件，请先在插件管理中安装并启用</value>
+  </data>
+  <data name="CreatePlayListNetworkUrlPlaceholder" xml:space="preserve">
+    <value>粘贴歌单链接，如 https://y.qq.com/n/ryqq/playlist/xxxx</value>
+  </data>
+  <data name="CreatePlayListImportButton" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="CreatePlayListLocalHint" xml:space="preserve">
+    <value>支持 M3U/M3U8 歌单与 MusicFree 备份 JSON 文件</value>
+  </data>
+  <data name="CreatePlayListSelectFileButton" xml:space="preserve">
+    <value>选择文件并导入</value>
+  </data>
+  <data name="CreatePlayListImporting" xml:space="preserve">
+    <value>正在导入…</value>
+  </data>
+  <data name="CreatePlayListUrlRequired" xml:space="preserve">
+    <value>请输入歌单链接</value>
+  </data>
+  <data name="CreatePlayListImportFailedPlain" xml:space="preserve">
+    <value>导入失败，请重试</value>
+  </data>
+  <data name="CreatePlayListImportFailedReason" xml:space="preserve">
+    <value>导入失败：{0}</value>
+  </data>
+  <data name="CreatePlayListImportSuccess" xml:space="preserve">
+    <value>已导入“{0}”，共 {1} 首</value>
+  </data>
+  <data name="CreatePlayListImportedDefaultName" xml:space="preserve">
+    <value>导入的歌单</value>
+  </data>
+  <data name="CreatePlayListUnsupportedFile" xml:space="preserve">
+    <value>不支持的文件类型</value>
+  </data>
+  <data name="CreatePlayListM3uEmpty" xml:space="preserve">
+    <value>歌单文件中没有本地音频路径</value>
+  </data>
+  <data name="CreatePlayListLocalNoMatch" xml:space="preserve">
+    <value>歌单中的音频文件不在本地音乐库中</value>
+  </data>
+  <data name="CreatePlayListLocalImportedWithMissing" xml:space="preserve">
+    <value>已导入“{0}”，共 {1} 首，{2} 首未在本地音乐库中</value>
+  </data>
+  <data name="CreatePlayListBackupInvalid" xml:space="preserve">
+    <value>文件不是有效的 MusicFree JSON 备份</value>
+  </data>
+  <data name="CreatePlayListBackupNoSong" xml:space="preserve">
+    <value>备份中没有可导入的歌曲</value>
+  </data>
+  <data name="CreatePlayListBackupNoPlugin" xml:space="preserve">
+    <value>{0} 首歌曲因无匹配插件无法关联</value>
+  </data>
+  <data name="CreatePlayListBackupImported" xml:space="preserve">
+    <value>已从备份导入 {0} 个歌单、{1} 首歌曲</value>
+  </data>
+  <data name="CreatePlayListBackupSkippedSuffix" xml:space="preserve">
+    <value>，跳过 {0} 首数据不完整的歌曲</value>
+  </data>
+  <data name="CreatePlayListUnnamedSheet" xml:space="preserve">
+    <value>未命名歌单 {0}</value>
+  </data>
+  <data name="MyPlayListNew.Text" xml:space="preserve">
+    <value>新建歌单</value>
+  </data>
+  <data name="MyPlayListDialogEmptyHint" xml:space="preserve">
+    <value>还没有歌单，输入名称新建一个</value>
+  </data>
+  <data name="MyPlayListSongsSuffix" xml:space="preserve">
+    <value>首</value>
+  </data>
+  <data name="AddToMyPlayList" xml:space="preserve">
+    <value>添加到歌单</value>
+  </data>
+  <data name="MyPlayListEmptyTitle.Text" xml:space="preserve">
+    <value>还没有歌单</value>
+  </data>
+  <data name="MyPlayListCreateAndAdd" xml:space="preserve">
+    <value>新建并添加</value>
+  </data>
+  <data name="MyPlayLists.Text" xml:space="preserve">
+    <value>我的歌单</value>
+  </data>
+  <data name="MyPlayListAddFailedOnline" xml:space="preserve">
+    <value>无法识别当前歌曲，请重新播放后再试</value>
+  </data>
+  <data name="MyPlayListSongCountSuffix.Text" xml:space="preserve">
+    <value>首</value>
+  </data>
+  <data name="AddToMyPlayListToolTip.Content" xml:space="preserve">
+    <value>添加到歌单</value>
+  </data>
+  <data name="OnlineItemPlay.Text" xml:space="preserve">
+    <value>播放</value>
+  </data>
+  <data name="OnlineItemAddToPlayList.Text" xml:space="preserve">
+    <value>添加到歌单</value>
+  </data>
+  <data name="AccountTitle" xml:space="preserve">
+    <value>账号</value>
+  </data>
+  <data name="AccountMyTitle" xml:space="preserve">
+    <value>我的账号</value>
+  </data>
+  <data name="AccountBrandSubtitle" xml:space="preserve">
+    <value>登录 XY Music 账号，同步你的歌单、收藏与插件</value>
+  </data>
+  <data name="AccountLoginTab" xml:space="preserve">
+    <value>登录</value>
+  </data>
+  <data name="AccountRegisterTab" xml:space="preserve">
+    <value>注册</value>
+  </data>
+  <data name="AccountIdLabel" xml:space="preserve">
+    <value>账号</value>
+  </data>
+  <data name="AccountPasswordLabel" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="AccountLoginButton" xml:space="preserve">
+    <value>登录</value>
+  </data>
+  <data name="AccountForgotPassword" xml:space="preserve">
+    <value>忘记密码？</value>
+  </data>
+  <data name="AccountNicknameLabel" xml:space="preserve">
+    <value>昵称</value>
+  </data>
+  <data name="AccountConfirmPasswordLabel" xml:space="preserve">
+    <value>确认密码</value>
+  </data>
+  <data name="AccountEmailLabel" xml:space="preserve">
+    <value>邮箱</value>
+  </data>
+  <data name="AccountCodeLabel" xml:space="preserve">
+    <value>验证码</value>
+  </data>
+  <data name="AccountSendCode" xml:space="preserve">
+    <value>发送验证码</value>
+  </data>
+  <data name="AccountRegisterButton" xml:space="preserve">
+    <value>注册</value>
+  </data>
+  <data name="AccountFormIncomplete" xml:space="preserve">
+    <value>请填写完整的表单信息</value>
+  </data>
+  <data name="AccountPasswordMismatch" xml:space="preserve">
+    <value>两次输入的密码不一致</value>
+  </data>
+  <data name="AccountLoginFailed" xml:space="preserve">
+    <value>登录失败</value>
+  </data>
+  <data name="AccountRegisterFailed" xml:space="preserve">
+    <value>注册失败</value>
+  </data>
+  <data name="AccountEmailInvalid" xml:space="preserve">
+    <value>请输入有效的邮箱地址</value>
+  </data>
+  <data name="AccountCodeSent" xml:space="preserve">
+    <value>验证码已发送，请查收邮箱</value>
+  </data>
+  <data name="AccountCodeSendFailed" xml:space="preserve">
+    <value>验证码发送失败</value>
+  </data>
+  <data name="AccountCodeCountdown" xml:space="preserve">
+    <value>{0} 秒后可重发</value>
+  </data>
+  <data name="AccountRegisterCaptchaTitle" xml:space="preserve">
+    <value>人机验证</value>
+  </data>
+  <data name="AccountRegisterCaptchaDesc" xml:space="preserve">
+    <value>请完成人机验证以继续注册</value>
+  </data>
+  <data name="AccountSendCodeCaptchaTitle" xml:space="preserve">
+    <value>人机验证</value>
+  </data>
+  <data name="AccountSendCodeCaptchaDesc" xml:space="preserve">
+    <value>请完成人机验证后发送验证码</value>
+  </data>
+  <data name="AccountCaptchaConfirm" xml:space="preserve">
+    <value>确认</value>
+  </data>
+  <data name="AccountCaptchaRefresh" xml:space="preserve">
+    <value>换一题</value>
+  </data>
+  <data name="AccountCaptchaEmpty" xml:space="preserve">
+    <value>请输入答案</value>
+  </data>
+  <data name="AccountForgotEmailLabel" xml:space="preserve">
+    <value>请输入注册时使用的邮箱</value>
+  </data>
+  <data name="AccountForgotTitle" xml:space="preserve">
+    <value>忘记密码</value>
+  </data>
+  <data name="AccountForgotSendCode" xml:space="preserve">
+    <value>发送验证码</value>
+  </data>
+  <data name="AccountForgotCaptchaDesc" xml:space="preserve">
+    <value>请完成人机验证后发送验证码</value>
+  </data>
+  <data name="AccountForgotCodeLabel" xml:space="preserve">
+    <value>邮箱验证码</value>
+  </data>
+  <data name="AccountForgotNewPassword" xml:space="preserve">
+    <value>新密码</value>
+  </data>
+  <data name="AccountForgotConfirmPassword" xml:space="preserve">
+    <value>确认新密码</value>
+  </data>
+  <data name="AccountForgotResetTitle" xml:space="preserve">
+    <value>重置密码</value>
+  </data>
+  <data name="AccountForgotResetButton" xml:space="preserve">
+    <value>重置密码</value>
+  </data>
+  <data name="AccountResetCaptchaTitle" xml:space="preserve">
+    <value>人机验证</value>
+  </data>
+  <data name="AccountResetCaptchaDesc" xml:space="preserve">
+    <value>请完成人机验证以重置密码</value>
+  </data>
+  <data name="AccountAvatarHint" xml:space="preserve">
+    <value>点击头像可更换图片</value>
+  </data>
+  <data name="AccountAvatarPending" xml:space="preserve">
+    <value>头像审核中</value>
+  </data>
+  <data name="AccountAvatarRejected" xml:space="preserve">
+    <value>头像未通过审核，点击重新上传</value>
+  </data>
+  <data name="AccountAvatarTooBig" xml:space="preserve">
+    <value>头像图片不能超过 5MB</value>
+  </data>
+  <data name="AccountAvatarUploadFailed" xml:space="preserve">
+    <value>头像上传失败</value>
+  </data>
+  <data name="AccountIdFormat" xml:space="preserve">
+    <value>账号：{0}</value>
+  </data>
+  <data name="AccountRefreshProfile" xml:space="preserve">
+    <value>刷新资料</value>
+  </data>
+  <data name="AccountEditNickname" xml:space="preserve">
+    <value>修改昵称</value>
+  </data>
+  <data name="AccountChangePassword" xml:space="preserve">
+    <value>修改密码</value>
+  </data>
+  <data name="AccountLogoutButton" xml:space="preserve">
+    <value>退出登录</value>
+  </data>
+  <data name="AccountNicknameDialogTitle" xml:space="preserve">
+    <value>修改昵称</value>
+  </data>
+  <data name="AccountNicknameDialogSubmit" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="AccountOldPassword" xml:space="preserve">
+    <value>当前密码</value>
+  </data>
+  <data name="AccountNewPassword" xml:space="preserve">
+    <value>新密码</value>
+  </data>
+  <data name="AccountNewPasswordConfirm" xml:space="preserve">
+    <value>确认新密码</value>
+  </data>
+  <data name="AccountChangePasswordTitle" xml:space="preserve">
+    <value>修改密码</value>
+  </data>
+  <data name="AccountChangePasswordButton" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="AccountLogoutConfirmTitle" xml:space="preserve">
+    <value>退出登录</value>
+  </data>
+  <data name="AccountLogoutConfirmText" xml:space="preserve">
+    <value>确定要退出当前账号吗？</value>
+  </data>
+  <data name="AccountLogoutConfirmButton" xml:space="preserve">
+    <value>退出登录</value>
+  </data>
+  <data name="AccountProfileRefreshed" xml:space="preserve">
+    <value>资料已刷新</value>
+  </data>
+  <data name="AccountCloudSyncTitle" xml:space="preserve">
+    <value>云同步</value>
+  </data>
+  <data name="AccountCloudSyncEnable" xml:space="preserve">
+    <value>启用云同步（歌单 / 收藏 / 插件）</value>
+  </data>
+  <data name="AccountCloudSyncFrequency" xml:space="preserve">
+    <value>自动上传频率</value>
+  </data>
+  <data name="AccountFreqFiveMinutes" xml:space="preserve">
+    <value>每 5 分钟</value>
+  </data>
+  <data name="AccountFreqFifteenMinutes" xml:space="preserve">
+    <value>每 15 分钟</value>
+  </data>
+  <data name="AccountFreqThirtyMinutes" xml:space="preserve">
+    <value>每 30 分钟</value>
+  </data>
+  <data name="AccountFreqOneHour" xml:space="preserve">
+    <value>每 1 小时</value>
+  </data>
+  <data name="AccountFreqSixHours" xml:space="preserve">
+    <value>每 6 小时</value>
+  </data>
+  <data name="AccountFreqTwelveHours" xml:space="preserve">
+    <value>每 12 小时</value>
+  </data>
+  <data name="AccountFreqOneDay" xml:space="preserve">
+    <value>每天</value>
+  </data>
+  <data name="AccountFreqManual" xml:space="preserve">
+    <value>仅手动</value>
+  </data>
+  <data name="AccountSyncNow" xml:space="preserve">
+    <value>立即同步</value>
+  </data>
+  <data name="AccountNeverSynced" xml:space="preserve">
+    <value>尚未同步过</value>
+  </data>
+  <data name="AccountLastSyncFormat" xml:space="preserve">
+    <value>上次同步：{0}</value>
+  </data>
+  <data name="AccountSyncNoChange" xml:space="preserve">
+    <value>没有需要同步的变更</value>
+  </data>
+  <data name="AccountSyncDone" xml:space="preserve">
+    <value>同步完成：下载 {0} 个插件，上传 {1} 个插件，上传 {2} 个歌单，下载 {3} 个歌单</value>
+  </data>
+  <data name="AccountSyncPluginErrorSuffix" xml:space="preserve">
+    <value>（{0} 个插件同步失败）</value>
+  </data>
+  <data name="AccountCloudSyncPromptTitle" xml:space="preserve">
+    <value>启用云同步？</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine1" xml:space="preserve">
+    <value>登录成功！是否启用云同步？</value>
+  </data>
+  <data name="AccountCloudSyncPromptLine2" xml:space="preserve">
+    <value>歌单、收藏与插件将自动同步到云端</value>
+  </data>
+  <data name="AccountCloudSyncPromptEnable" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="AccountCloudSyncPromptLater" xml:space="preserve">
+    <value>暂不</value>
+  </data>
+  <data name="AccountCloudSyncPromptWait" xml:space="preserve">
+    <value>{0} 秒后可选择</value>
   </data>
 </root>

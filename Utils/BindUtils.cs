@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -75,6 +75,10 @@ namespace WinUIMusicPlayer.Utils
         public static Visibility BoolToVisibilityConverter(bool isVisible)
             => isVisible ? Visibility.Visible : Visibility.Collapsed;
 
+        /// <summary>播放详情页规格信息行可见性: 设置开启 且 非插件在线歌曲(在线歌无采样率/位深, 显示 0Hz 0bit 无意义)。</summary>
+        public static Visibility MusicInfoVisibilityConverter(bool settingEnabled, bool isOnline)
+            => settingEnabled && !isOnline ? Visibility.Visible : Visibility.Collapsed;
+
         public static HorizontalAlignment TextAlignmentToHorizontalAlignmentConverter(TextAlignment alignment)
             => alignment switch
             {
@@ -97,6 +101,19 @@ namespace WinUIMusicPlayer.Utils
                 : string.Create(5, timeSpan, static (span, ts) => WriteTimeSpanNoHours(span, ts));
             TimeSpanTextCache[key] = result;
             return result;
+        }
+
+        /// <summary>歌词偏移值显示: 0 → "0", ≥1s → "+1.2s", 其余 → "+300ms"。</summary>
+        public static string LyricsOffsetTextConverter(int offsetMs)
+        {
+            return offsetMs switch
+            {
+                0 => "0",
+                >= 1000 => $"+{offsetMs / 1000.0:0.#}s",
+                <= -1000 => $"-{Math.Abs(offsetMs) / 1000.0:0.#}s",
+                > 0 => $"+{offsetMs}ms",
+                _ => $"{offsetMs}ms",
+            };
         }
 
         private static void WriteTimeSpanWithHours(Span<char> dst, TimeSpan ts)

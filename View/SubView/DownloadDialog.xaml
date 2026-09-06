@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="WinUIMusicPlayer.View.SubView.DownloadDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    CornerRadius="10"
+    mc:Ignorable="d">
+
+    <Grid MinWidth="440" MaxWidth="560" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+        <!--  歌曲信息  -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,14" Spacing="2">
+            <TextBlock
+                x:Name="SongTitleText"
+                FontSize="16"
+                FontWeight="SemiBold"
+                TextTrimming="CharacterEllipsis" />
+            <TextBlock
+                x:Name="SongArtistText"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <!--  音质选择  -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,12" Spacing="6">
+            <TextBlock x:Name="QualityLabel" FontSize="14" />
+            <ComboBox x:Name="QualityComboBox" MinWidth="220" />
+        </StackPanel>
+
+        <!--  下载目录  -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,12" Spacing="6">
+            <TextBlock x:Name="DirLabel" FontSize="14" />
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock
+                    x:Name="DirText"
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextTrimming="CharacterEllipsis" />
+                <Button
+                    x:Name="ChooseDirButton"
+                    Grid.Column="1"
+                    Margin="8,0,0,0"
+                    MinWidth="70"
+                    Click="ChooseDirButton_Click" />
+            </Grid>
+        </StackPanel>
+
+        <!--  额外下载选项  -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,10" Spacing="8">
+            <CheckBox x:Name="SaveLrcCheckBox" />
+            <CheckBox x:Name="SaveCoverCheckBox" />
+            <TextBlock
+                x:Name="EmbedNoteText"
+                FontSize="12"
+                FontStyle="Italic"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+    </Grid>
+</ContentDialog>

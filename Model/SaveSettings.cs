@@ -1,4 +1,4 @@
-﻿using AnimatedWin2dControls.Controls.AnimatedLyricsLineControl.Advance;
+using AnimatedWin2dControls.Controls.AnimatedLyricsLineControl.Advance;
 using AnimatedWin2dControls.Controls.AnimatedTextBlock.Enums;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI.Xaml;
@@ -17,13 +17,25 @@ namespace WinUIMusicPlayer.Model
         public bool IsFadeEnabled { get; set; } = false;
         public string DeviceFriendlyName { get; set; } = ToolUtils.GetString("DefaultDevice");
         [JsonPropertyName("DefualtEntry")]
-        public string DefaultEntry { get; set; } = "AddFolder";
+        public string DefaultEntry { get; set; } = "Home";
         [JsonPropertyName("DefualtPlayList")]
         public string DefaultPlayList { get; set; } = "song";
         public string AppStyle { get; set; } = "TransparentAcrylic";
         public float CustomAcrylicOpacity { get; set; } = 0.5f;
         public uint CustomColorArgb { get; set; } = 0xFF808080u;
         public uint LyricsCustomColorRgb { get; set; } = 0x00FFFFFFu;
+        /// <summary>自定义图片背景: 持久化到 LocalFolder\Backgrounds 的文件路径。</summary>
+        public string CustomBackgroundPath { get; set; } = string.Empty;
+        /// <summary>自定义图片背景模糊度(0-50, 0=不模糊)。</summary>
+        public double CustomBackgroundBlur { get; set; } = 0;
+        /// <summary>在线歌曲下载目录(空=默认"音乐\XY Music"文件夹)。</summary>
+        public string DownloadPath { get; set; } = string.Empty;
+        /// <summary>在线歌曲下载音质(128k/320k/flac/flac24bit)。</summary>
+        public string DownloadQuality { get; set; } = "320k";
+        /// <summary>下载时额外保存独立 LRC 歌词文件。</summary>
+        public bool DownloadSaveLrc { get; set; } = true;
+        /// <summary>下载时额外保存独立封面图片。</summary>
+        public bool DownloadSaveCover { get; set; } = true;
         public bool IsCustomLyricsColorEnabled { get; set; } = false;
         public string AppTheme { get; set; } = "Default";
         public float LyricsBlurAmount { get; set; } = 5f;
