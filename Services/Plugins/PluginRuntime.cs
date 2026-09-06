@@ -116,6 +116,35 @@ namespace WinUIMusicPlayer.Services.Plugins
                 SaveStorage(storageFile, storage);
             }));
 
+            // 原生文本解码(对齐弦予 __xyNativeDecodeText): 酷狗/酷我部分接口返回 GBK/gb18030 编码,
+            // JS 端无法实现解码表, 桥到 C# Encoding; 失败回退 utf-8
+            engine.SetValue("__hostDecodeText", new Func<string, string, string>((bytesBase64, label) =>
+            {
+                try
+                {
+                    var bytes = Convert.FromBase64String(bytesBase64);
+                    var enc = label.ToLowerInvariant() is "gb18030" or "gbk" or "gb2312" or "chinese" ? Encoding.GetEncoding("gb18030") : Encoding.UTF8;
+                    return enc.GetString(bytes);
+                }
+                catch { return string.Empty; }
+            }));
+            // 安全随机字节(对齐弦予 __xyNativeRandomBytes): 插件生成设备参数/盐值用, 返回 base64
+            var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+            engine.SetValue("__hostRandomBytes", new Func<int, string>(n =>
+            {
+                n = Math.Clamp(n, 0, 4096);
+                var buf = new byte[n];
+                rng.GetBytes(buf);
+                return Convert.ToBase64String(buf);
+            }));
+
+            // Cookie 桥(对齐弦予 cookie 模块): @react-native-cookies/cookies 读写宿主 CookieJar
+            engine.SetValue("__hostCookiesGet", new Func<string, string>(host =>
+                JsonSerializer.Serialize(PluginHttpBridge.CookieJar.For(host))));
+            engine.SetValue("__hostCookiesSet", new Action<string, string, string>((host, name, value)
+                => PluginHttpBridge.CookieJar.Set(host, name, value)));
+            engine.SetValue("__hostCookiesClear", new Action(PluginHttpBridge.CookieJar.ClearAll));
+
             // 1. 引导(宿主全局 + require + axios 垫片)
             engine.Execute(BootstrapSource);
 
@@ -224,39 +253,24 @@ namespace WinUIMusicPlayer.Services.Plugins
 
         public bool SupportsMethod(string method) => Metadata.Methods.Contains(method);
 
-        /// <summary>当前正在执行的插件调用的起始时刻(ticks), 0 表示空闲。供熔断判断。</summary>
-        private long _callInProgressSinceTicks;
-
         /// <summary>调用插件方法(返回 state JSON: {done,json,error,unsupported})。后台线程调用。
-        /// 引擎锁熔断: Jint 单引擎串行, 超时不取消的调用(插件内部 HTTP 卡住最长 90 秒)会占住 _gate,
-        /// 后续调用(如音质逐档回退)在锁上排队堆积, 表现为该插件所有歌曲长时间无法解析;
-        /// 已有调用执行超过 5 秒时新调用直接返回"插件正忙", 不再排队。</summary>
+        /// Jint 单引擎串行: 同一插件的调用在 _gate 上排队执行(对齐弦予版单实例排队模型),
+        /// 由外层 GetMediaSourceAsync 的逐档循环检查 CancellationToken 实现超时止损。</summary>
         public PluginCallState CallMethodState(string method, string argsJson)
         {
-            var since = Interlocked.Read(ref _callInProgressSinceTicks);
-            if (since != 0 && DateTime.UtcNow.Ticks - since > TimeSpan.FromSeconds(5).Ticks)
-                return new PluginCallState { Error = "插件正忙(上一次调用未返回)，请稍后重试" };
             lock (_gate)
             {
                 if (_disposed) throw new ObjectDisposedException(nameof(PluginRuntime));
-                Interlocked.Exchange(ref _callInProgressSinceTicks, DateTime.UtcNow.Ticks);
-                try
-                {
-                    _engine.Evaluate($"__callPluginMethod({JsonSerializer.Serialize(method)}, {argsJson})");
-                    var stateJson = _engine.Evaluate("""
-                        (function(){
-                            var s = globalThis.__lastCallResult;
-                            if (!s) return JSON.stringify({done:false, error:'internal: no state'});
-                            return JSON.stringify({done: !!s.done, json: s.json === undefined ? null : s.json,
-                                                   error: s.error === undefined ? null : s.error, unsupported: !!s.unsupported});
-                        })()
-                        """).AsString();
-                    return JsonSerializer.Deserialize<PluginCallState>(stateJson, JsonOptions) ?? new PluginCallState { Error = "internal" };
-                }
-                finally
-                {
-                    Interlocked.Exchange(ref _callInProgressSinceTicks, 0);
-                }
+                _engine.Evaluate($"__callPluginMethod({JsonSerializer.Serialize(method)}, {argsJson})");
+                var stateJson = _engine.Evaluate("""
+                    (function(){
+                        var s = globalThis.__lastCallResult;
+                        if (!s) return JSON.stringify({done:false, error:'internal: no state'});
+                        return JSON.stringify({done: !!s.done, json: s.json === undefined ? null : s.json,
+                                               error: s.error === undefined ? null : s.error, unsupported: !!s.unsupported});
+                    })()
+                    """).AsString();
+                return JsonSerializer.Deserialize<PluginCallState>(stateJson, JsonOptions) ?? new PluginCallState { Error = "internal" };
             }
         }
 
@@ -344,7 +358,17 @@ namespace WinUIMusicPlayer.Services.Plugins
                 }
 
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Math.Clamp(options.TimeoutMs ?? 15000, 1000, 90000)));
+                // 同域自动回带 Cookie(对齐弦予 capture_set_cookies): 插件未显式设置 Cookie 头时附加 Jar 中该域的值
+                var uri = new Uri(url);
+                if (options.Headers is null || !options.Headers.Keys.Any(k => k.Equals("Cookie", StringComparison.OrdinalIgnoreCase)))
+                {
+                    var jarHeader = CookieJar.HeaderFor(uri);
+                    if (jarHeader.Length > 0) req.Headers.TryAddWithoutValidation("Cookie", jarHeader);
+                }
                 using var response = _client.Send(req, HttpCompletionOption.ResponseContentRead, cts.Token);
+
+                // 捕获响应 Set-Cookie 到 Jar(对齐弦予 store.rs): 登录类插件依赖 cookie 在请求间保持
+                CookieJar.Capture(response, uri);
 
                 var headers = new Dictionary<string, string>();
                 foreach (var h in response.Headers) headers[h.Key] = string.Join(", ", h.Value);
@@ -387,6 +411,60 @@ namespace WinUIMusicPlayer.Services.Plugins
             public string? Body { get; set; }
             public string? BodyBase64 { get; set; }
             public string? Error { get; set; }
+        }
+
+        /// <summary>插件 HTTP Cookie Jar(对齐弦予 store.rs): 按 host 存储, 响应捕获 Set-Cookie,
+        /// 同域请求自动回带, 供登录类插件(B站/QQ)在请求间保持会话。</summary>
+        public static class CookieJar
+        {
+            private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> _store = new();
+
+            /// <summary>从响应捕获 Set-Cookie(忽略 Expires/Path 等属性, 简化持久)。</summary>
+            public static void Capture(HttpResponseMessage response, Uri uri)
+            {
+                try
+                {
+                    IEnumerable<string> values;
+                    if (!response.Headers.TryGetValues("Set-Cookie", out values)) return;
+                    var jar = _store.GetOrAdd(uri.Host, _ => new ConcurrentDictionary<string, string>());
+                    foreach (var raw in values)
+                    {
+                        // 形如 "name=value; Path=/; Expires=..." 取第一段
+                        var first = raw.Split(';')[0].Trim();
+                        var eq = first.IndexOf('=');
+                        if (eq <= 0) continue;
+                        var name = first[..eq].Trim();
+                        var value = first[(eq + 1)..].Trim();
+                        if (name.Length == 0) continue;
+                        // 删除标记(过去时间/空值)则移除, 否则写入
+                        if (value.Length == 0) jar.TryRemove(name, out _);
+                        else jar[name] = value;
+                    }
+                }
+                catch { /* Cookie 解析失败不阻断请求 */ }
+            }
+
+            /// <summary>该域的 Cookie 请求头值("a=1; b=2"); 无 cookie 返回空串。</summary>
+            public static string HeaderFor(Uri uri)
+            {
+                if (!_store.TryGetValue(uri.Host, out var jar) || jar.IsEmpty) return string.Empty;
+                return string.Join("; ", jar.Select(kv => $"{kv.Key}={kv.Value}"));
+            }
+
+            /// <summary>设置指定域的 cookie(供插件 cookies.set 模块)。</summary>
+            public static void Set(string host, string name, string value)
+            {
+                if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(name)) return;
+                var jar = _store.GetOrAdd(host, _ => new ConcurrentDictionary<string, string>());
+                jar[name] = value ?? string.Empty;
+            }
+
+            /// <summary>读取指定域全部 cookie(供插件 cookies.get 模块)。</summary>
+            public static Dictionary<string, string> For(string host)
+                => _store.TryGetValue(host, out var jar) ? jar.ToDictionary(kv => kv.Key, kv => kv.Value) : [];
+
+            /// <summary>清空全部 cookie(供插件 cookies.clearAll 模块)。</summary>
+            public static void ClearAll() => _store.Clear();
         }
     }
 }

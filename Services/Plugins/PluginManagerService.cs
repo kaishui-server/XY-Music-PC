@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using WinUIMusicPlayer.Utils;
 
@@ -654,21 +655,35 @@ namespace WinUIMusicPlayer.Services.Plugins
                     }
                     using var doc = JsonDocument.Parse(state.Json);
                     var root = doc.RootElement;
-                    if (root.ValueKind != JsonValueKind.Object)
+                    // 响应形态对齐弦予 pluginImportMusicSheet: 直接数组 / {title, musicList} / {data: []} 三种
+                    JsonElement list;
+                    if (root.ValueKind == JsonValueKind.Array)
+                    {
+                        list = root;
+                    }
+                    else if (root.ValueKind == JsonValueKind.Object)
+                    {
+                        if (root.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                            result.Title = title.GetString() ?? string.Empty;
+                        if (!root.TryGetProperty("musicList", out list) || list.ValueKind != JsonValueKind.Array)
+                        {
+                            if (!root.TryGetProperty("data", out list) || list.ValueKind != JsonValueKind.Array)
+                            {
+                                result.Error = "插件返回的数据格式不正确";
+                                return result;
+                            }
+                        }
+                    }
+                    else
                     {
                         result.Error = "插件返回的数据格式不正确";
                         return result;
                     }
-                    if (root.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
-                        result.Title = title.GetString() ?? string.Empty;
                     var songs = new List<OnlineSong>();
-                    if (root.TryGetProperty("musicList", out var list) && list.ValueKind == JsonValueKind.Array)
+                    foreach (var item in list.EnumerateArray())
                     {
-                        foreach (var item in list.EnumerateArray())
-                        {
-                            var song = ParseMusicItem(item, runtime);
-                            if (song is not null) songs.Add(song);
-                        }
+                        var song = ParseMusicItem(item, runtime);
+                        if (song is not null) songs.Add(song);
                     }
                     if (songs.Count == 0)
                     {
@@ -1079,8 +1094,9 @@ namespace WinUIMusicPlayer.Services.Plugins
             }
         }
 
-        /// <summary>解析在线歌曲播放地址: MF 走 getMediaSource(返回 url+headers, 如 B 站 Referer/Cookie), LX 走 musicUrl。</summary>
-        public Task<(OnlineMediaSource? Source, string? Error)> GetMediaSourceAsync(OnlineSong song, string quality = "320k")
+        /// <summary>解析在线歌曲播放地址: MF 走 getMediaSource(返回 url+headers, 如 B 站 Referer/Cookie), LX 走 musicUrl。
+        /// ct 由外层限时器传入: 超时后逐档循环立即停止, 释放引擎给后续调用(对齐弦予版"超时即放弃该插件"模型)。</summary>
+        public Task<(OnlineMediaSource? Source, string? Error)> GetMediaSourceAsync(OnlineSong song, string quality = "320k", CancellationToken ct = default)
         {
             return Task.Run<(OnlineMediaSource?, string?)>(async () =>
             {
@@ -1098,6 +1114,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                     {
                         foreach (var q in pluginQualities)
                         {
+                            ct.ThrowIfCancellationRequested(); // 超时止损: 档间检查, 释放引擎
                             var (result, error) = lx.GetMusicUrl(song.Platform, song.RawJson, q);
                             if (result is not null) return (new OnlineMediaSource(result.Url, result.Headers), null);
                             lastError = error;
@@ -1116,41 +1133,78 @@ namespace WinUIMusicPlayer.Services.Plugins
                     return (null, "歌曲数据不完整，请重新从云端同步");
                 if (!runtime.SupportsMethod("getMediaSource"))
                     return (null, "插件不支持获取音源");
-                // 逐档位回退(与手机版 pluginQualityCandidates 一致): 酷狗等插件高音质档解析失败的歌曲,
-                // 低档位(如 128k)往往仍可返回可用地址, 单档请求一次失败就放弃会导致"部分歌曲无法播放"
-                var qualities = new[] { quality, "320k", "high", "flac", "lossless", "128k", "standard", "super" }
-                    .Where(q => !string.IsNullOrWhiteSpace(q))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
+                // ===== MF 音质解析(移植弦予版 pluginEngineMedia.runPluginGetMusicInfo) =====
+                // 1. 内部音质键 → MusicFree 固有四级键: 插件内部 QUALITY_MAPPING 只认 low/standard/high/super,
+                //    直传 '320k'/'flac' 等原生键会查不到映射而回退默认档或报"不支持音质"
+                // 2. 对齐 MusicFree 官方 getQualityOrder('asc'): [首选, ...更高侧, ...更低侧] 逐级尝试
+                // 3. MusicFree 官方语义: getMediaSource 返回空时取 musicItem.qualities[quality].url 预解析直链
+                // 4. 四级键全部报"不支持音质"时补试原生键(320k/flac/128k): 部分插件只认原生键
                 string? mfLastError = null;
-                foreach (var q in qualities)
+                try
                 {
-                    try
+                    using var doc = JsonDocument.Parse(song.RawJson);
+                    var musicItem = doc.RootElement.Deserialize<object>();
+                    // 单档解析: 返回音源或 null(错误写入 mfLastError)。响应形态(对齐弦予 _toMediaSource):
+                    // {url, headers} 对象或纯字符串 URL
+                    OnlineMediaSource? TryGet(string q)
                     {
-                        using var doc = JsonDocument.Parse(song.RawJson);
-                        var args = JsonSerializer.Serialize(new object[] { doc.RootElement.Deserialize<object>(), q });
+                        var args = JsonSerializer.Serialize(new object[] { musicItem!, q });
                         var state = runtime.CallMethodState("getMediaSource", args);
                         if (state.Error is not null)
                         {
                             mfLastError = state.Error;
-                            // 引擎熔断触发(上一档调用仍在执行): 同一插件排队无意义, 停止逐档
-                            if (state.Error.Contains("插件正忙")) break;
-                            continue;
+                            return null;
                         }
-                        if (state.Json is null) { mfLastError = "插件未返回音源"; continue; }
+                        if (state.Json is null) { mfLastError = "插件未返回音源"; return null; }
                         using var res = JsonDocument.Parse(state.Json);
-                        // 响应形态对齐手机版 _toMediaSource: 纯字符串(HTTP URL)或 {url, headers} 对象
-                        if (res.RootElement.ValueKind == JsonValueKind.String && res.RootElement.GetString() is { Length: > 0 } rawUrl && IsHttpUrl(rawUrl))
-                            return (new OnlineMediaSource(rawUrl.Trim(), null), null);
                         if (res.RootElement.TryGetProperty("url", out var url) && url.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(url.GetString()))
-                            return (new OnlineMediaSource(url.GetString()!, ParseMediaHeaders(res.RootElement)), null);
+                            return new OnlineMediaSource(url.GetString()!, ParseMediaHeaders(res.RootElement));
+                        if (res.RootElement.ValueKind == JsonValueKind.String && res.RootElement.GetString() is { Length: > 0 } rawUrl && IsHttpUrl(rawUrl))
+                            return new OnlineMediaSource(rawUrl.Trim(), null);
                         mfLastError = "插件未返回有效音源 URL";
+                        return null;
                     }
-                    catch (Exception ex)
+                    var order = MfQualityOrder(quality);
+                    var tried = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var mfQ in order)
                     {
-                        mfLastError = ex.Message;
+                        ct.ThrowIfCancellationRequested(); // 超时止损: 立即停止逐级, 释放引擎
+                        tried.Add(mfQ);
+                        try
+                        {
+                            var src = TryGet(mfQ);
+                            if (src is not null) return (src, null);
+                        }
+                        catch (OperationCanceledException) { throw; }
+                        catch (Exception ex) { mfLastError = ex.Message; }
+                        // [歌曲级错误] 歌曲不存在/版权限制/VIP 等换音质无意义, 立即停止逐级(移植弦予 isSongLevelError)
+                        if (mfLastError is not null && IsSongLevelError(mfLastError)) break;
+                        // MusicFree 官方语义: 该档解析失败/为空时, 取 musicItem.qualities[mfQ].url 预解析直链兜底
+                        var preUrl = ExtractQualityUrl(song.RawJson, mfQ);
+                        if (preUrl is not null) return (preUrl, null);
+                    }
+                    // [原生键补试] 四级键全部报"不支持音质"时, 插件实际只认 flac/320k/128k 等原生键,
+                    // 逐个补试避免"该歌曲不支持low音质"直接失败(移植弦予 buildNativePluginQualityPairs)
+                    if (mfLastError is not null && IsUnsupportedQualityError(mfLastError))
+                    {
+                        foreach (var nq in new[] { quality, "320k", "flac", "128k", "flac24bit", "192k" }
+                                     .Where(q => !string.IsNullOrWhiteSpace(q) && !tried.Contains(q))
+                                     .Distinct(StringComparer.OrdinalIgnoreCase))
+                        {
+                            ct.ThrowIfCancellationRequested();
+                            try
+                            {
+                                var src = TryGet(nq);
+                                if (src is not null) return (src, null);
+                                if (mfLastError is not null && IsSongLevelError(mfLastError)) break;
+                            }
+                            catch (OperationCanceledException) { throw; }
+                            catch (Exception ex) { mfLastError = ex.Message; }
+                        }
                     }
                 }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex) { mfLastError = ex.Message; }
                 // 直链兜底(与手机版 _extractDirectUrl 一致): 歌单导入的 rawData 自带可播地址时直接使用
                 var direct = ExtractDirectUrl(song.RawJson);
                 if (direct is not null) return (direct, null);
@@ -1223,6 +1277,60 @@ namespace WinUIMusicPlayer.Services.Plugins
 
         private static string GetStringProp(JsonElement obj, string name)
             => obj.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? string.Empty : string.Empty;
+
+        /// <summary>是否为"不支持音质"错误(移植弦予 isUnsupportedQualityError): 此类错误换音质键可能解决。</summary>
+        private static bool IsUnsupportedQualityError(string message)
+            => System.Text.RegularExpressions.Regex.IsMatch(message, @"不支持.*音质|音质.*不支持|quality.*not\s+support|not\s+support.*quality",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        /// <summary>是否为歌曲级错误(移植弦予 isSongLevelError): 歌曲不存在/版权/VIP 等, 换音质无意义, 立即停止逐级。</summary>
+        private static bool IsSongLevelError(string message)
+            => System.Text.RegularExpressions.Regex.IsMatch(message,
+                @"歌曲不存在|歌曲已下架|已?下架|版权.{0,4}(限制|保护|原因)|需要?登录|地区限制|需要?\s*(VIP|会员|付费)|VIP歌曲|会员歌曲|付费歌曲|无版权|暂无版权",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        /// <summary>内部音质键 → MusicFree 四级键(移植弦予 qualityKeyToMfQuality):
+        /// mgg/128k→low, 192k→standard, 320k/high→high, flac/flac24bit/hires/vinyl/dolby/atmos/master/lossless/super→super。</summary>
+        private static string QualityToMfKey(string quality) => quality?.ToLowerInvariant() switch
+        {
+            "mgg" or "96k" or "128k" or "128" or "low" => "low",
+            "192k" or "192" or "standard" => "standard",
+            "320k" or "320" or "exhigh" or "high" => "high",
+            "flac" or "sq" or "flac24bit" or "flac24" or "hires" or "hi-res" or "vinyl" or "dolby" or "atmos" or "atmos_plus" or "master" or "lossless" or "super" => "super",
+            _ => "high", // 未知音质按 320k 档处理(弦予同款兜底)
+        };
+
+        /// <summary>MusicFree 官方 getQualityOrder('asc') 顺序(移植弦予 mfAscOrder):
+        /// [首选, ...更高侧, ...更低侧], 如 high → [high, super, standard, low]。</summary>
+        private static string[] MfQualityOrder(string quality)
+        {
+            var order = new[] { "low", "standard", "high", "super" };
+            var baseIdx = Array.IndexOf(order, QualityToMfKey(quality));
+            if (baseIdx < 0) baseIdx = 2; // high
+            var result = new List<string> { order[baseIdx] };
+            for (var i = baseIdx + 1; i < order.Length; i++) result.Add(order[i]);
+            for (var i = baseIdx - 1; i >= 0; i--) result.Add(order[i]);
+            return result.ToArray();
+        }
+
+        /// <summary>从 musicItem.qualities 取预解析直链(移植弦予 MusicFree 官方语义):
+        /// { qualities: { high: {url}, ... } }; 键兼容四级键与原生键。</summary>
+        private static OnlineMediaSource? ExtractQualityUrl(string rawJson, string mfQuality)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(rawJson);
+                if (!doc.RootElement.TryGetProperty("qualities", out var qs) || qs.ValueKind != JsonValueKind.Object) return null;
+                foreach (var key in new[] { mfQuality, "320k", "128k", "flac" })
+                {
+                    if (!qs.TryGetProperty(key, out var entry) || entry.ValueKind != JsonValueKind.Object) continue;
+                    if (entry.TryGetProperty("url", out var u) && u.ValueKind == JsonValueKind.String && u.GetString() is { Length: > 0 } url && IsHttpUrl(url))
+                        return new OnlineMediaSource(url.Trim(), null);
+                }
+                return null;
+            }
+            catch { return null; }
+        }
 
         /// <summary>LX 公共 API 直链兜底(对外): 供播放链路在插件返回死链(下载 404)时按音质 hash 重新解析。</summary>
         public Task<OnlineMediaSource?> GetLxApiFallbackAsync(OnlineSong song, string quality = "320k")

@@ -111,8 +111,18 @@
     }
     globalThis.TextEncoder = function () { };
     globalThis.TextEncoder.prototype.encode = function (s) { return __utf8Encode(s); };
-    globalThis.TextDecoder = function () { };
-    globalThis.TextDecoder.prototype.decode = function (b) { return __utf8Decode(b instanceof Uint8Array ? b : new Uint8Array(b)); };
+    // TextDecoder: utf-8 走 JS 解码, gb18030/gbk 等桥接原生 __hostDecodeText(对齐弦予, 酷狗/酷我接口需要)
+    globalThis.TextDecoder = function (label) {
+        this.__label = String(label || 'utf-8').toLowerCase();
+    };
+    globalThis.TextDecoder.prototype.decode = function (b) {
+        var bytes = b instanceof Uint8Array ? b : new Uint8Array(b);
+        if (this.__label === 'utf-8' || this.__label === 'utf8') return __utf8Decode(bytes);
+        if (typeof __hostDecodeText === 'function') {
+            try { return __hostDecodeText(__bytesToBase64(bytes), this.__label); } catch (e) { /* 回退 utf-8 */ }
+        }
+        return __utf8Decode(bytes);
+    };
 
     // ---------- setTimeout (微任务实现, 延迟被近似为0) ----------
     var __timerCount = 0;
@@ -127,6 +137,45 @@
     globalThis.clearTimeout = function () { };
     globalThis.setInterval = globalThis.setTimeout;
     globalThis.clearInterval = globalThis.clearTimeout;
+
+    // ---------- queueMicrotask / performance / navigator / crypto (对齐弦予 host_shim) ----------
+    globalThis.queueMicrotask = function (fn) { Promise.resolve().then(fn); };
+    globalThis.performance = globalThis.performance || {
+        now: function () { return Date.now(); },
+        timeOrigin: Date.now()
+    };
+    globalThis.navigator = globalThis.navigator || {
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        platform: 'Win32',
+        language: 'zh-CN',
+        languages: ['zh-CN', 'zh'],
+        onLine: true
+    };
+    globalThis.crypto = globalThis.crypto || {};
+    if (!globalThis.crypto.getRandomValues) {
+        globalThis.crypto.getRandomValues = function (arr) {
+            var n = arr.length;
+            if (n <= 0 || n > 65536) throw new RangeError('crypto.getRandomValues length out of range');
+            var b64 = typeof __hostRandomBytes === 'function' ? __hostRandomBytes(n) : null;
+            if (b64) {
+                var bytes = __base64ToBytes(b64);
+                for (var i = 0; i < n; i++) arr[i] = bytes[i];
+            } else {
+                for (var i2 = 0; i2 < n; i2++) arr[i2] = Math.floor(Math.random() * 256);
+            }
+            return arr;
+        };
+    }
+    if (!globalThis.crypto.randomUUID) {
+        globalThis.crypto.randomUUID = function () {
+            var b = new Uint8Array(16);
+            globalThis.crypto.getRandomValues(b);
+            b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+            var hex = [];
+            for (var i = 0; i < 16; i++) hex.push((b[i] + 0x100).toString(16).slice(1));
+            return hex.slice(0, 4).join('') + '-' + hex.slice(4, 6).join('') + '-' + hex.slice(6, 8).join('') + '-' + hex.slice(8, 10).join('') + '-' + hex.slice(10, 16).join('');
+        };
+    }
 
     // ---------- URLSearchParams (最小实现) ----------
     function URLSearchParams(init) {
@@ -624,12 +673,30 @@
         };
     });
 
-    // ---------- @react-native-cookies/cookies (存根) ----------
+    // ---------- @react-native-cookies/cookies (基于宿主 CookieJar, 对齐弦予 cookie 桥) ----------
     __defineModule('@react-native-cookies/cookies', function (module) {
+        function hostOf(url) {
+            try { return new URL(url).hostname; } catch (e) { return ''; }
+        }
         module.exports = {
-            get: function () { return {}; },
-            set: function () { return true; },
-            clearAll: function () { return true; },
+            get: function (url) {
+                if (typeof __hostCookiesGet === 'function') {
+                    try { return __hostCookiesGet(hostOf(String(url))); } catch (e) { return {}; }
+                }
+                return {};
+            },
+            set: function (url, name, value) {
+                if (typeof __hostCookiesSet === 'function') {
+                    try { __hostCookiesSet(hostOf(String(url)), String(name), String(value)); } catch (e) { /* ignore */ }
+                }
+                return true;
+            },
+            clearAll: function () {
+                if (typeof __hostCookiesClear === 'function') {
+                    try { __hostCookiesClear(); } catch (e) { /* ignore */ }
+                }
+                return true;
+            },
             flush: function () { return true; }
         };
     });

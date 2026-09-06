@@ -498,17 +498,22 @@ namespace WinUIMusicPlayer.Services.Plugins
             return [];
         }
 
-        /// <summary>限时取流: 插件内部可能带 45 秒级重试, 超时不再等待, 视为该插件不可用。被取消时抛 OperationCanceledException。</summary>
+        /// <summary>限时取流(移植弦予"超时即放弃该插件"模型): 超时通过 CancellationToken 真正取消
+        /// 插件内的逐档解析循环(Jint 档间检查), 引擎立即释放给后续调用, 不再出现旧版
+        /// "超时后底层循环继续占用引擎数分钟, 该插件所有歌曲全部排队失败"的瘫痪。</summary>
         private static async Task<(OnlineMediaSource? Source, string? Error)> GetMediaSourceWithTimeoutAsync(
             PluginManagerService pm, OnlineSong song, CancellationToken ct, TimeSpan timeout)
         {
-            var task = pm.GetMediaSourceAsync(song);
-            var done = await Task.WhenAny(task, Task.Delay(timeout, ct));
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var task = pm.GetMediaSourceAsync(song, "320k", timeoutCts.Token);
+            var done = await Task.WhenAny(task, Task.Delay(timeout, timeoutCts.Token));
             if (done != task)
             {
+                timeoutCts.Cancel(); // 触发插件内逐档循环的档间检查, 释放引擎
                 ct.ThrowIfCancellationRequested(); // 先区分"被新点击取消"与"真超时"
                 return (null, "音源接口响应超时");
             }
+            timeoutCts.Cancel(); // 已完成, 正常回收(插件循环已结束, 取消无副作用)
             return await task; // 已完成: 直接取结果(含真实错误信息)
         }
 

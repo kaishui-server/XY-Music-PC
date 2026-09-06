@@ -56,6 +56,7 @@ namespace WinUIMusicPlayer.ViewModel.Pages
                 WinRT.Interop.InitializeWithWindow.Initialize(
                     picker, WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow));
                 picker.FileTypeFilter.Add(".js");
+                picker.FileTypeFilter.Add(".json");
                 picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
                 var file = await picker.PickSingleFileAsync();
                 if (file is null) return;
@@ -76,14 +77,62 @@ namespace WinUIMusicPlayer.ViewModel.Pages
                 {
                     using var http = new System.Net.Http.HttpClient();
                     http.Timeout = TimeSpan.FromSeconds(60);
-                    var code = await http.GetStringAsync(urlOrCode.Trim());
-                    return await _pluginManager.InstallFromCodeAsync(code);
+                    // 部分插件源(如 jsDelivr/Gitee)拒绝无 UA 请求, 附浏览器 UA(对齐弦予 URL 安装)
+                    http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+                    var content = await http.GetStringAsync(urlOrCode.Trim());
+                    // 批量 JSON 导入(对齐弦予 importMultiplePlugins): 内容是插件列表 [{name,url,version},...] 时逐个下载安装
+                    if (TryParsePluginList(content, out var pluginList))
+                    {
+                        string? lastHash = null;
+                        var okCount = 0;
+                        foreach (var (name, url) in pluginList)
+                        {
+                            try
+                            {
+                                var script = await http.GetStringAsync(url);
+                                if (string.IsNullOrWhiteSpace(script)) continue;
+                                var (hash, error) = await _pluginManager.InstallFromCodeAsync(script);
+                                if (hash is not null) { lastHash = hash; okCount++; _ = name; }
+                            }
+                            catch { /* 单个失败继续下一个 */ }
+                        }
+                        if (okCount > 0)
+                        {
+                            ToastFlyout.ShowSuccess($"批量导入完成: 成功 {okCount} 个, 失败 {pluginList.Count - okCount} 个");
+                            return (lastHash, null);
+                        }
+                        return (null, "批量导入: 所有插件安装失败");
+                    }
+                    return await _pluginManager.InstallFromCodeAsync(content);
                 });
             }
             else
             {
                 await InstallCore(ToolUtils.GetString("PluginInstallReading"), () => _pluginManager.InstallFromCodeAsync(urlOrCode));
             }
+        }
+
+        /// <summary>识别插件列表 JSON(对齐弦予): 顶层数组或 {plugins:[...]} 且元素含 url 字段。</summary>
+        private static bool TryParsePluginList(string content, out List<(string? Name, string Url)> pluginList)
+        {
+            pluginList = [];
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(content.Trim());
+                var root = doc.RootElement;
+                if (root.ValueKind == System.Text.Json.JsonValueKind.Object && root.TryGetProperty("plugins", out var pl) && pl.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    root = pl;
+                if (root.ValueKind != System.Text.Json.JsonValueKind.Array) return false;
+                foreach (var item in root.EnumerateArray())
+                {
+                    if (item.ValueKind != System.Text.Json.JsonValueKind.Object) continue;
+                    if (!item.TryGetProperty("url", out var url) || url.ValueKind != System.Text.Json.JsonValueKind.String || !url.GetString()!.StartsWith("http", StringComparison.OrdinalIgnoreCase)) continue;
+                    string? name = item.TryGetProperty("name", out var n) && n.ValueKind == System.Text.Json.JsonValueKind.String ? n.GetString() : null;
+                    pluginList.Add((name, url.GetString()!));
+                }
+                return pluginList.Count > 0;
+            }
+            catch { return false; }
         }
 
         private async Task InstallCore(string busyText, Func<Task<(string? Hash, string? Error)>> installer)
