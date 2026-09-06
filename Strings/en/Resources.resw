@@ -1615,6 +1615,18 @@
   <data name="PluginUninstallSuccess" xml:space="preserve">
     <value>Plugin uninstalled</value>
   </data>
+  <data name="PluginUninstallAllTitle2" xml:space="preserve">
+    <value>Uninstall All</value>
+  </data>
+  <data name="PluginUninstallAll.Text" xml:space="preserve">
+    <value>Uninstall All</value>
+  </data>
+  <data name="PluginUninstallAllTitle" xml:space="preserve">
+    <value>Uninstall All Plugins</value>
+  </data>
+  <data name="PluginUninstallAllConfirm" xml:space="preserve">
+    <value>This will uninstall ALL plugins (MusicFree and LX sources) along with their user variables. This cannot be undone. Continue?</value>
+  </data>
   <data name="TextCancel" xml:space="preserve">
     <value>Cancel</value>
   </data>

@@ -1614,6 +1614,18 @@
   <data name="PluginUninstallSuccess" xml:space="preserve">
     <value>插件已卸载</value>
   </data>
+  <data name="PluginUninstallAllTitle2" xml:space="preserve">
+    <value>一键卸载全部</value>
+  </data>
+  <data name="PluginUninstallAll.Text" xml:space="preserve">
+    <value>一键卸载全部</value>
+  </data>
+  <data name="PluginUninstallAllTitle" xml:space="preserve">
+    <value>卸载全部插件</value>
+  </data>
+  <data name="PluginUninstallAllConfirm" xml:space="preserve">
+    <value>将卸载全部插件（含 MusicFree 与 LX 音源）及其用户变量，此操作不可恢复。确定继续吗？</value>
+  </data>
   <data name="TextCancel" xml:space="preserve">
     <value>取消</value>
   </data>

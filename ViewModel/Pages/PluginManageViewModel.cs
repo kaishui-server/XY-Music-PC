@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -185,6 +186,36 @@ namespace WinUIMusicPlayer.ViewModel.Pages
                 var (ok, error) = await _pluginManager.UninstallAsync(item.Hash);
                 if (!ok) ToastFlyout.ShowError(error ?? "操作失败");
                 else ToastFlyout.ShowSuccess(ToolUtils.GetString("PluginUninstallSuccess"));
+            }
+            finally
+            {
+                IsBusy = false;
+                RefreshList();
+            }
+        }
+
+        /// <summary>一键卸载全部插件(MF+LX)。先弹确认框, 避免误触不可恢复。</summary>
+        [RelayCommand]
+        private async Task UninstallAllAsync()
+        {
+            if (IsBusy) return;
+            var dialog = new ContentDialog
+            {
+                Title = ToolUtils.GetString("PluginUninstallAllTitle"),
+                Content = ToolUtils.GetString("PluginUninstallAllConfirm"),
+                PrimaryButtonText = ToolUtils.GetString("PluginUninstallAllTitle2"),
+                CloseButtonText = ToolUtils.GetString("CancelButton"),
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = App.MainWindow!.Content.XamlRoot,
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            IsBusy = true;
+            try
+            {
+                var (count, error) = await _pluginManager.UninstallAllAsync();
+                if (error is not null) ToastFlyout.ShowError(error);
+                else if (count == 0) ToastFlyout.ShowInfo(ToolUtils.GetString("PluginManageEmpty"));
+                else ToastFlyout.ShowSuccess($"{ToolUtils.GetString("PluginUninstallSuccess")} ({count})");
             }
             finally
             {

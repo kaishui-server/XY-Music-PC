@@ -85,7 +85,7 @@ namespace WinUIMusicPlayer.Services.Plugins
         {
             var engine = new Engine(options => options
                 .TimeoutInterval(TimeSpan.FromMinutes(2))
-                .MaxStatements(10_000_000)
+                .MaxStatements(20_000_000)
                 .LimitRecursion(5000));
 
             var storage = LoadStorage(storageFile);
@@ -185,6 +185,9 @@ namespace WinUIMusicPlayer.Services.Plugins
 
         private static string BuildPluginLoader(string code, string appVersion, IReadOnlyDictionary<string, string>? userVariables)
         {
+            // 反调试死循环补丁(与 LX 引导一致): jsjiami.v7 等混淆源的"代码被修改"分支注册空体
+            // while(!![]){} 死循环, 直接改写为 while(0){}(空体死循环不可能是正常业务逻辑)
+            code = System.Text.RegularExpressions.Regex.Replace(code, @"while\s*\(\s*!!\[\]\s*\)\s*\{\s*\}", "while(0){}");
             var userVarsJson = JsonSerializer.Serialize(userVariables ?? EmptyUserVars);
             var envSetup = $$"""
                 globalThis.__userVars = {{userVarsJson}};

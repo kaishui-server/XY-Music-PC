@@ -38,6 +38,14 @@
                     <TextBlock x:Uid="PluginInstallFromUrl" />
                 </StackPanel>
             </Button>
+            <Button
+                Command="{x:Bind ViewModel.UninstallAllCommand}"
+                IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Glyph="&#xE74D;" />
+                    <TextBlock x:Uid="PluginUninstallAll" />
+                </StackPanel>
+            </Button>
         </StackPanel>
 
         <!--  插件列表  -->

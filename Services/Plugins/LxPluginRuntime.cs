@@ -106,7 +106,10 @@ namespace WinUIMusicPlayer.Services.Plugins
             if (string.IsNullOrWhiteSpace(code)) return false;
             // MusicFree 插件是 CommonJS 导出(module.exports = {platform:...}), LX 脚本没有
             if (code.Contains("module.exports")) return false;
-            return code.Contains("globalThis.lx") || code.Contains("lx.EVENT_NAMES") ||
+            // 方括号访问形态(混淆插件如 jsjiami.v7): globalThis['lx'] / globalThis["lx"] / window['lx']
+            var bracketLx = System.Text.RegularExpressions.Regex.IsMatch(code,
+                @"(?:globalThis|window|self|global)\s*\[\s*['""]lx['""]\s*\]");
+            return bracketLx || code.Contains("globalThis.lx") || code.Contains("lx.EVENT_NAMES") ||
                    code.Contains("EVENT_NAMES.request") || code.Contains("EVENT_NAMES.inited") ||
                    code.Contains("on(EVENT_NAMES") || code.Contains("send(EVENT_NAMES");
         }
@@ -466,6 +469,10 @@ namespace WinUIMusicPlayer.Services.Plugins
         /// <summary>构建 LX 插件执行环境(参考 lx-music-desktop preload + XianYu lxPluginEngine)。</summary>
         private static string BuildBootstrap(string code, LxScriptInfo scriptInfo)
         {
+            // 反调试死循环补丁: jsjiami.v7 等混淆源在"代码被修改"分支注册空体 while(!![]){} 死循环,
+            // Jint 的 MaxStatements 需 10+ 秒才能熔断且部分调用在插件 try/catch 内被吞后循环继续。
+            // 空体死循环不可能是正常业务逻辑, 直接改写为 while(0){}。
+            code = System.Text.RegularExpressions.Regex.Replace(code, @"while\s*\(\s*!!\[\]\s*\)\s*\{\s*\}", "while(0){}");
             var scriptInfoJson = JsonSerializer.Serialize(new Dictionary<string, string>
             {
                 ["name"] = scriptInfo.Name,
@@ -496,10 +503,13 @@ namespace WinUIMusicPlayer.Services.Plugins
                     group: function(){}, groupCollapsed: function(){}, groupEnd: function(){},
                     table: function(){}, trace: function(){}, dir: function(){},
                 };
-                // setTimeout/setInterval: 同步立即执行(宿主 HTTP 为同步桥接, 整个链路在一次引擎执行内完成)
+                // setTimeout: 同步立即执行(宿主 HTTP 为同步桥接, 整个链路在一次引擎执行内完成)
                 globalThis.setTimeout = function(fn){ if (typeof fn === 'function') { try { fn(); } catch (e) { log('error', 'setTimeout: ' + (e && e.message)); } } return 0; };
+                // setInterval: 仅注册不执行。同步立即执行会触发混淆插件(jsjiami.v7 等)的
+                // 反调试回调(注册于 setInterval 的 while(!![]){} 死循环), 卡死引擎直至语句数超限。
+                // 音乐解析插件几乎不依赖真实定时器, 注册语义已足够。
+                globalThis.setInterval = function(){ return 0; };
                 globalThis.clearTimeout = function(){};
-                globalThis.setInterval = globalThis.setTimeout;
                 globalThis.clearInterval = function(){};
 
                 // ---- 字节/编码辅助 ----
@@ -684,6 +694,19 @@ namespace WinUIMusicPlayer.Services.Plugins
                         try { state.initedHandlers[i]({ source: 'lx', action: 'inited' }); } catch (e) {}
                     }
                 };
+                })();
+                // Function.toString 重写(混淆源完整性校验): Jint 对所有函数返回 "function () { [native code] }",
+                // 而 V8 返回真实源码。jsjiami.v7 等混淆源的完整性 gadget 用正则校验 toString 输出,
+                // 校验失败会进入 push+len 的无限 for 循环卡死引擎。fake 必须用 V8 紧凑形态
+                // "function NAME(){return'ok';}"(带空格/双引号形态会被正则拒绝, 实测验证)。
+                (function(){
+                    var __fts = Function.prototype.toString;
+                    Function.prototype.toString = function(){
+                        try {
+                            var n = (this && this.name && /^[\w$]*$/.test(String(this.name))) ? String(this.name) : '';
+                            return "function " + n + "(){return'ok';}";
+                        } catch (e) { return "function(){return'ok';}"; }
+                    };
                 })();
                 {{code}}
                 ;

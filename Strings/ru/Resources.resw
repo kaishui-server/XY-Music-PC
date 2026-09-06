@@ -1612,6 +1612,18 @@
   <data name="PluginUninstallSuccess" xml:space="preserve">
     <value>Плагин удалён</value>
   </data>
+  <data name="PluginUninstallAllTitle2" xml:space="preserve">
+    <value>Удалить все</value>
+  </data>
+  <data name="PluginUninstallAll.Text" xml:space="preserve">
+    <value>Удалить все</value>
+  </data>
+  <data name="PluginUninstallAllTitle" xml:space="preserve">
+    <value>Удалить все плагины</value>
+  </data>
+  <data name="PluginUninstallAllConfirm" xml:space="preserve">
+    <value>Будут удалены ВСЕ плагины (MusicFree и LX-источники) вместе с пользовательскими переменными. Действие необратимо. Продолжить?</value>
+  </data>
   <data name="TextCancel" xml:space="preserve">
     <value>Отмена</value>
   </data>

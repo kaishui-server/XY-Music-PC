@@ -1612,6 +1612,18 @@
   <data name="PluginUninstallSuccess" xml:space="preserve">
     <value>Plugin desinstalado</value>
   </data>
+  <data name="PluginUninstallAllTitle2" xml:space="preserve">
+    <value>Desinstalar todo</value>
+  </data>
+  <data name="PluginUninstallAll.Text" xml:space="preserve">
+    <value>Desinstalar todo</value>
+  </data>
+  <data name="PluginUninstallAllTitle" xml:space="preserve">
+    <value>Desinstalar todos los plugins</value>
+  </data>
+  <data name="PluginUninstallAllConfirm" xml:space="preserve">
+    <value>Se desinstalarán TODOS los plugins (MusicFree y fuentes LX) junto con sus variables de usuario. No se puede deshacer. ¿Continuar?</value>
+  </data>
   <data name="TextCancel" xml:space="preserve">
     <value>Cancelar</value>
   </data>

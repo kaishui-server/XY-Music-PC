@@ -268,6 +268,33 @@ namespace WinUIMusicPlayer.Services.Plugins
             });
         }
 
+        /// <summary>一键卸载全部插件(MF+LX): 清空清单/脚本/存储/用户变量并释放全部运行时。</summary>
+        public Task<(int Count, string? Error)> UninstallAllAsync()
+        {
+            return Task.Run(() =>
+            {
+                List<PluginManifestEntry> entries;
+                lock (_manifestGate)
+                {
+                    entries = [.. _manifest];
+                    _manifest.Clear();
+                    SaveManifestLocked();
+                }
+                foreach (var entry in entries)
+                {
+                    try { File.Delete(Path.Combine(PluginDir, entry.FileName)); } catch { }
+                    try { File.Delete(Path.Combine(StorageDir, entry.Hash[..8] + ".json")); } catch { }
+                    if (!string.IsNullOrEmpty(entry.Platform)) PluginUserVariablesStore.Remove(entry.Platform);
+                }
+                foreach (var (_, runtime) in _runtimes) runtime.Dispose();
+                _runtimes.Clear();
+                foreach (var (_, lxRuntime) in _lxRuntimes) lxRuntime.Dispose();
+                _lxRuntimes.Clear();
+                PluginsChanged?.Invoke();
+                return (entries.Count, (string?)null);
+            });
+        }
+
         public Task<(bool Ok, string? Error)> SetEnabledAsync(string hash, bool enabled)
         {
             return Task.Run(() =>
@@ -995,6 +1022,32 @@ namespace WinUIMusicPlayer.Services.Plugins
                 }
                 return result;
             });
+        }
+
+        /// <summary>LX 跨音源候选(对齐弦予 findAlternativeLxSource): LX 某音源解析失败/仅试听时,
+        /// 在其余 LX 音源(kw/kg/tx/wy/mg)按 标题+歌手 搜索同名歌。LX 五音源共用一个插件 hash,
+        /// 按插件排除的常规回退无法覆盖, 单独在此提供。返回未匹配的原始候选(调用方 RankCandidates 严格匹配)。</summary>
+        public async Task<List<OnlineSong>> SearchLxAlternatesAsync(OnlineSong failed, string title, string artist)
+        {
+            var result = new List<OnlineSong>();
+            var query = $"{title} {artist}".Trim();
+            if (string.IsNullOrWhiteSpace(query)) return result;
+            foreach (var source in LxSources.StandardOrder)
+            {
+                if (source == failed.Platform) continue;
+                // 无支持该音源的启用 LX 插件则没有解析能力, 跳过
+                var runtime = _lxRuntimes.Values.FirstOrDefault(r => r.SupportsSource(source));
+                if (runtime is null) continue;
+                try
+                {
+                    var search = await LxMusicSdk.SearchAsync(source, query, 1, 20);
+                    // 每音源取前 6 条进候选池, 由 RankCandidates 统一严格匹配
+                    foreach (var item in search.List.Take(6))
+                        result.Add(ToLxOnlineSong(item, runtime, source, LxSources.DisplayName(source)));
+                }
+                catch { /* 单音源搜索失败继续下一个 */ }
+            }
+            return result;
         }
 
         /// <summary>LX 歌曲条目 → OnlineSong(musicInfo JSON 交给 LX 插件解析播放)。</summary>

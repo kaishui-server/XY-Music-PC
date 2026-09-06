@@ -1612,6 +1612,18 @@
   <data name="PluginUninstallSuccess" xml:space="preserve">
     <value>プラグインをアンインストールしました</value>
   </data>
+  <data name="PluginUninstallAllTitle2" xml:space="preserve">
+    <value>すべてアンインストール</value>
+  </data>
+  <data name="PluginUninstallAll.Text" xml:space="preserve">
+    <value>すべてアンインストール</value>
+  </data>
+  <data name="PluginUninstallAllTitle" xml:space="preserve">
+    <value>すべてのプラグインをアンインストール</value>
+  </data>
+  <data name="PluginUninstallAllConfirm" xml:space="preserve">
+    <value>すべてのプラグイン（MusicFree・LX音源）とユーザー変数を削除します。この操作は取り消せません。続行しますか？</value>
+  </data>
   <data name="TextCancel" xml:space="preserve">
     <value>キャンセル</value>
   </data>

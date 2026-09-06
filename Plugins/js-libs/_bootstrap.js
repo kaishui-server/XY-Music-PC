@@ -9,6 +9,19 @@
 (function () {
     'use strict';
 
+    // ---------- Function.toString 重写(混淆源完整性校验, 与 LX 引导一致) ----------
+    // Jint 对所有函数返回 "function () { [native code] }", V8 返回真实源码。
+    // jsjiami.v7 等混淆源的完整性 gadget 用正则校验 toString 输出, 失败会进入
+    // push+len 的无限 for 循环卡死引擎。fake 必须用 V8 紧凑形态
+    // "function NAME(){return'ok';}"(带空格/双引号形态会被正则拒绝, 实测验证)。
+    var __fts = Function.prototype.toString;
+    Function.prototype.toString = function () {
+        try {
+            var n = (this && this.name && /^[\w$]*$/.test(String(this.name))) ? String(this.name) : '';
+            return "function " + n + "(){return'ok';}";
+        } catch (e) { return "function(){return'ok';}"; }
+    };
+
     // ---------- console ----------
     globalThis.console = {
         log: function () { __hostLog('info', __joinArgs(arguments)); },
@@ -135,8 +148,10 @@
         return __timerCount;
     };
     globalThis.clearTimeout = function () { };
-    globalThis.setInterval = globalThis.setTimeout;
-    globalThis.clearInterval = globalThis.clearTimeout;
+    // setInterval: 仅注册不执行(与 LX 引导一致)。同步执行会触发混淆插件(jsjiami.v7 等)
+    // 注册在 setInterval 上的反调试死循环(while(!![]){}), 卡死引擎直至语句数超限。
+    globalThis.setInterval = function () { return 0; };
+    globalThis.clearInterval = function () { };
 
     // ---------- queueMicrotask / performance / navigator / crypto (对齐弦予 host_shim) ----------
     globalThis.queueMicrotask = function (fn) { Promise.resolve().then(fn); };

@@ -436,9 +436,15 @@ namespace WinUIMusicPlayer.Services.Plugins
             {
                 ct.ThrowIfCancellationRequested();
                 if (DateTime.UtcNow >= deadline) break;
-                if (string.IsNullOrEmpty(cand.PluginHash) || !failedPlugins.Add(cand.PluginHash)) continue;
+                if (string.IsNullOrEmpty(cand.PluginHash) || failedPlugins.Contains(cand.PluginHash)) continue;
                 var (altSource, _) = await GetMediaSourceWithTimeoutAsync(pluginManager, cand, ct, TimeSpan.FromSeconds(12));
-                if (altSource is null) continue; // 失败/超时插件已记入 failedPlugins, 其余候选自动跳过
+                if (altSource is null)
+                {
+                    // 解析确认失败/超时才封杀该插件的其余候选: 仅试听/下载失败不应封杀——
+                    // LX 五音源共用一个插件 hash, 提前封杀会把其他音源的可用完整版一并跳过
+                    failedPlugins.Add(cand.PluginHash);
+                    continue;
+                }
                 var (altFile, _) = await DownloadAudioWithTimeoutAsync(altSource.Url, altSource.Headers, ct, TimeSpan.FromSeconds(15));
                 if (altFile is null) continue;
                 if (IsTrialVersion(altFile, cand.DurationSec > 0 ? cand.DurationSec : expectedSec))
@@ -467,27 +473,40 @@ namespace WinUIMusicPlayer.Services.Plugins
             return (false, lastError);
         }
 
-        /// <summary>主音源失败时按 标题+歌手 在其余插件中搜索同曲, 返回按匹配分降序的候选(排除已失败插件, 严格匹配标题+歌手/时长)。限时 8 秒。</summary>
+        /// <summary>主音源失败时按 标题+歌手 在其余插件中搜索同曲, 返回按匹配分降序的候选(排除已失败插件, 严格匹配标题+歌手/时长)。限时 8 秒。
+        /// LX 歌曲额外并入其余 LX 音源的同名歌候选(对齐弦予 findAlternativeLxSource): LX 五音源共用一个
+        /// 插件 hash, 按插件排除的常规回退对 LX 歌曲无效, 必须按"已失败音源"粒度换源。</summary>
         private static async Task<List<OnlineSong>> FindAlternateCandidatesAsync(Model.Music music, OnlineSong song, CancellationToken ct)
         {
             try
             {
                 var pm = App.Services.GetRequiredService<PluginManagerService>();
-                var hashes = pm.ActivePlugins
-                    .Where(r => r.SupportsMethod("search") && r.Hash != song.PluginHash)
-                    .Select(r => r.Hash).ToList();
-                if (hashes.Count == 0) return [];
                 var title = song.Title ?? music.Title ?? string.Empty;
                 var artist = song.Artist ?? music.Author ?? string.Empty;
                 var durationSec = song.DurationSec > 0 ? song.DurationSec : music.Duration.TotalSeconds;
+                var hashes = pm.ActivePlugins
+                    .Where(r => r.SupportsMethod("search") && r.Hash != song.PluginHash)
+                    .Select(r => r.Hash).ToList();
+                // LX 跨音源候选与其他插件搜索并行, 整体限时 8 秒
+                var lxAlternateTask = song.IsLx
+                    ? pm.SearchLxAlternatesAsync(song, title, artist)
+                    : Task.FromResult(new List<OnlineSong>());
                 // 两轮检索: "标题 歌手" 优先, 无匹配时仅按标题; 搜索阶段整体限时, 慢插件(内部重试)不等它
                 foreach (var query in new[] { $"{title} {artist}".Trim(), title })
                 {
                     if (string.IsNullOrWhiteSpace(query)) continue;
-                    var searchTask = Task.WhenAll(hashes.Select(h => SafeSearchAsync(pm, h, query)));
+                    Task<List<OnlineSong>?[]> searchTask = hashes.Count > 0
+                        ? Task.WhenAll(hashes.Select(h => SafeSearchAsync(pm, h, query)))
+                        : Task.FromResult(Array.Empty<List<OnlineSong>?>());
                     var done = await Task.WhenAny(searchTask, Task.Delay(TimeSpan.FromSeconds(8), ct));
                     if (done != searchTask) return [];
                     var candidates = searchTask.Result.Where(r => r is not null).SelectMany(r => r!).ToList();
+                    // LX 候选只在第一轮并入(与 query 无关, 内部固定用 标题+歌手)
+                    if (song.IsLx && query.Contains(artist))
+                    {
+                        var lxReady = await Task.WhenAny(lxAlternateTask, Task.Delay(TimeSpan.FromSeconds(2), ct));
+                        if (lxReady == lxAlternateTask) candidates.AddRange(lxAlternateTask.Result);
+                    }
                     if (candidates.Count == 0) continue;
                     var matches = RankCandidates(candidates, title, artist, durationSec, 5);
                     if (matches.Count > 0) return matches;

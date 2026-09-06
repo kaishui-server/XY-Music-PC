@@ -1612,6 +1612,18 @@
   <data name="PluginUninstallSuccess" xml:space="preserve">
     <value>Plugin deinstalliert</value>
   </data>
+  <data name="PluginUninstallAllTitle2" xml:space="preserve">
+    <value>Alle deinstallieren</value>
+  </data>
+  <data name="PluginUninstallAll.Text" xml:space="preserve">
+    <value>Alle deinstallieren</value>
+  </data>
+  <data name="PluginUninstallAllTitle" xml:space="preserve">
+    <value>Alle Plugins deinstallieren</value>
+  </data>
+  <data name="PluginUninstallAllConfirm" xml:space="preserve">
+    <value>Alle Plugins (MusicFree- und LX-Quellen) werden连同 ihre Benutzervariablen deinstalliert. Dies kann nicht rückgängig gemacht werden. Fortfahren?</value>
+  </data>
   <data name="TextCancel" xml:space="preserve">
     <value>Abbrechen</value>
   </data>
