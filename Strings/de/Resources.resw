@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -973,8 +973,18 @@
   <data name="AreUSureDeleteFromDisk" xml:space="preserve">
     <value>Musik wirklich von der Festplatte löschen?</value>
   </data>
-  <data name="AreUSureDeletePlayList" xml:space="preserve">
-    <value>Möchten Sie diese Wiedergabeliste wirklich löschen?</value>
+  $1
+  <data name="MyPlayListDeleteAll.Text" xml:space="preserve">
+    <value>Alle löschen</value>
+  </data>
+  <data name="MyPlayListDeleteAllTitle" xml:space="preserve">
+    <value>Alle Playlists löschen</value>
+  </data>
+  <data name="MyPlayListDeleteAllConfirm" xml:space="preserve">
+    <value>Alle {0} Playlists und ihre Songs werden gelöscht. Dies kann nicht rückgängig gemacht werden. Fortfahren?</value>
+  </data>
+  <data name="MyPlayListDeleteAllDone" xml:space="preserve">
+    <value>{0} Playlists gelöscht</value>
   </data>
   <data name="SongListCoverEnable.Header" xml:space="preserve">
     <value>Cover in Titelliste</value>

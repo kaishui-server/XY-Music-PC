@@ -7,7 +7,9 @@ using Microsoft.UI.Xaml.Navigation;
 using System;
 using WinUIMusicPlayer.Helper;
 using WinUIMusicPlayer.Model;
+using WinUIMusicPlayer.Utils;
 using WinUIMusicPlayer.ViewModel.Pages;
+using WinUIMusicPlayer.View.SubView;
 
 namespace WinUIMusicPlayer.View
 {
@@ -82,6 +84,19 @@ namespace WinUIMusicPlayer.View
             if (await DialogHelper.ShowConfirmAsync(this.XamlRoot, "AreUSureDeletePlayList"))
             {
                 await ViewModel.RemovePlayListAsync(playList);
+            }
+        }
+
+        private async void RemoveAllPlayLists_Click(object sender, RoutedEventArgs e)
+        {
+            var count = ViewModel.PlayLists.Count;
+            if (count == 0) return;
+            if (await DialogHelper.ShowConfirmAsync(this.XamlRoot, "MyPlayListDeleteAllTitle",
+                ToolUtils.GetString("MyPlayListDeleteAllConfirm").Replace("{0}", count.ToString())))
+            {
+                var removed = await ViewModel.RemoveAllPlayListsAsync();
+                if (removed > 0)
+                    ToastFlyout.ShowSuccess(ToolUtils.GetString("MyPlayListDeleteAllDone").Replace("{0}", removed.ToString()));
             }
         }
 

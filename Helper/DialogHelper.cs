@@ -30,6 +30,18 @@ namespace WinUIMusicPlayer.Helper
             return await dialog.ShowAsync() == ContentDialogResult.Primary;
         }
 
+        /// <summary>带正文消息的确认框(如"将删除 N 个歌单, 不可恢复")。</summary>
+        public static async Task<bool> ShowConfirmAsync(XamlRoot xamlRoot, string titleKey, string message)
+        {
+            var dialog = s_confirmCache.GetValue(xamlRoot, static root => new ContentDialog { XamlRoot = root });
+            dialog.Title = ToolUtils.GetString(titleKey);
+            dialog.Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
+            dialog.PrimaryButtonText = ToolUtils.GetString("PrimaryButton");
+            dialog.CloseButtonText = ToolUtils.GetString("CloseButton");
+            dialog.RequestedTheme = AppSettings.ElementTheme;
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+
         public static async Task<string> ShowInputAsync(XamlRoot xamlRoot, string titleKey, string prefillText, string? placeholderKey = null)
         {
             var dialog = s_inputCache.GetValue(xamlRoot, static root => new ContentDialog { XamlRoot = root });

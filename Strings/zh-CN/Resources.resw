@@ -975,6 +975,18 @@
   <data name="AreUSureDeletePlayList" xml:space="preserve">
     <value>确定删除此播放列表吗？</value>
   </data>
+  <data name="MyPlayListDeleteAll.Text" xml:space="preserve">
+    <value>删除全部</value>
+  </data>
+  <data name="MyPlayListDeleteAllTitle" xml:space="preserve">
+    <value>删除全部歌单</value>
+  </data>
+  <data name="MyPlayListDeleteAllConfirm" xml:space="preserve">
+    <value>将删除全部 {0} 个歌单及其收录的歌曲，此操作不可恢复。确定继续吗？</value>
+  </data>
+  <data name="MyPlayListDeleteAllDone" xml:space="preserve">
+    <value>已删除 {0} 个歌单</value>
+  </data>
   <data name="SongListCoverEnable.Header" xml:space="preserve">
     <value>歌曲列表封面</value>
   </data>

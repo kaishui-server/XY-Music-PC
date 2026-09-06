@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -973,8 +973,18 @@
   <data name="AreUSureDeleteFromDisk" xml:space="preserve">
     <value>音楽をディスクから削除してよろしいですか？</value>
   </data>
-  <data name="AreUSureDeletePlayList" xml:space="preserve">
-    <value>このプレイリストを削除してもよろしいですか？</value>
+  $1
+  <data name="MyPlayListDeleteAll.Text" xml:space="preserve">
+    <value>すべて削除</value>
+  </data>
+  <data name="MyPlayListDeleteAllTitle" xml:space="preserve">
+    <value>すべてのプレイリストを削除</value>
+  </data>
+  <data name="MyPlayListDeleteAllConfirm" xml:space="preserve">
+    <value>{0} 個のプレイリストと収録曲をすべて削除します。この操作は取り消せません。続行しますか？</value>
+  </data>
+  <data name="MyPlayListDeleteAllDone" xml:space="preserve">
+    <value>{0} 個のプレイリストを削除しました</value>
   </data>
   <data name="SongListCoverEnable.Header" xml:space="preserve">
     <value>歌曲リストカバー</value>

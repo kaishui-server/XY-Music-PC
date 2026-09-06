@@ -128,6 +128,18 @@ namespace WinUIMusicPlayer.ViewModel.Pages
             await RefreshAsync();
         }
 
+        /// <summary>一键删除全部在线歌单(含歌单曲目), 返回删除数量。</summary>
+        public async Task<int> RemoveAllPlayListsAsync()
+        {
+            var count = _appViewModel.OnlinePlayLists.Count;
+            if (count == 0) return 0;
+            foreach (var pl in _appViewModel.OnlinePlayLists.ToList())
+                await _db.DeleteOnlinePlayListAsync(pl);
+            _appViewModel.OnlinePlayLists.Clear();
+            await RefreshAsync();
+            return count;
+        }
+
         // ────────────────────────────────────────────────────────────
         //  歌单导入(新建歌单弹窗: 从网络导入 / 从本地导入)
         // ────────────────────────────────────────────────────────────

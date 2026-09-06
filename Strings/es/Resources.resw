@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -973,8 +973,18 @@
   <data name="AreUSureDeleteFromDisk" xml:space="preserve">
     <value>¿¿ estás seguro de eliminar la música del disco?</value>
   </data>
-  <data name="AreUSureDeletePlayList" xml:space="preserve">
-    <value>¿Estás seguro de eliminar esta lista de reproducción?</value>
+  $1
+  <data name="MyPlayListDeleteAll.Text" xml:space="preserve">
+    <value>Eliminar todo</value>
+  </data>
+  <data name="MyPlayListDeleteAllTitle" xml:space="preserve">
+    <value>Eliminar todas las listas</value>
+  </data>
+  <data name="MyPlayListDeleteAllConfirm" xml:space="preserve">
+    <value>Se eliminarán las {0} listas y sus canciones. No se puede deshacer. ¿Continuar?</value>
+  </data>
+  <data name="MyPlayListDeleteAllDone" xml:space="preserve">
+    <value>Se eliminaron {0} listas</value>
   </data>
   <data name="SongListCoverEnable.Header" xml:space="preserve">
     <value>Portada de la lista de canciones</value>

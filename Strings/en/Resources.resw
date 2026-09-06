@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -973,8 +973,18 @@
   <data name="AreUSureDeleteFromDisk" xml:space="preserve">
     <value>Are you sure to delete music from the disk?</value>
   </data>
-  <data name="AreUSureDeletePlayList" xml:space="preserve">
-    <value>Are you sure to delete this playlist?</value>
+  $1
+  <data name="MyPlayListDeleteAll.Text" xml:space="preserve">
+    <value>Delete All</value>
+  </data>
+  <data name="MyPlayListDeleteAllTitle" xml:space="preserve">
+    <value>Delete All Playlists</value>
+  </data>
+  <data name="MyPlayListDeleteAllConfirm" xml:space="preserve">
+    <value>This will delete all {0} playlists and their songs. This cannot be undone. Continue?</value>
+  </data>
+  <data name="MyPlayListDeleteAllDone" xml:space="preserve">
+    <value>Deleted {0} playlists</value>
   </data>
   <data name="SongListCoverEnable.Header" xml:space="preserve">
     <value>Song List Cover</value>

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -973,8 +973,18 @@
   <data name="AreUSureDeleteFromDisk" xml:space="preserve">
     <value>Удалить музыку с диска?</value>
   </data>
-  <data name="AreUSureDeletePlayList" xml:space="preserve">
-    <value>Вы уверены, что хотите удалить этот плейлист?</value>
+  $1
+  <data name="MyPlayListDeleteAll.Text" xml:space="preserve">
+    <value>Удалить все</value>
+  </data>
+  <data name="MyPlayListDeleteAllTitle" xml:space="preserve">
+    <value>Удалить все плейлисты</value>
+  </data>
+  <data name="MyPlayListDeleteAllConfirm" xml:space="preserve">
+    <value>Будут удалены все плейлисты ({0}) и их треки. Действие необратимо. Продолжить?</value>
+  </data>
+  <data name="MyPlayListDeleteAllDone" xml:space="preserve">
+    <value>Удалено плейлистов: {0}</value>
   </data>
   <data name="SongListCoverEnable.Header" xml:space="preserve">
     <value>Обложка списка песен</value>
