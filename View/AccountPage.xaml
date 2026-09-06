@@ -442,7 +442,7 @@
                     </Border>
 
                     <!--  账号操作  -->
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
                         <Button
                             Grid.Column="0"
                             HorizontalAlignment="Stretch"
