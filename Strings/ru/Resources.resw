@@ -2434,4 +2434,151 @@
   <data name="CloudDataPlaylistNotFound" xml:space="preserve">
     <value>Плейлист не найден или удалён</value>
   </data>
+  <data name="MobileBackupImportDone" xml:space="preserve">
+    <value>Импорт завершён</value>
+  </data>
+  <data name="MobileBackupLblPlugins" xml:space="preserve">
+    <value>Плагины</value>
+  </data>
+  <data name="MobileBackupImporting" xml:space="preserve">
+    <value>Импорт резервной копии...</value>
+  </data>
+  <data name="MobileBackupLblSongs" xml:space="preserve">
+    <value>Песни</value>
+  </data>
+  <data name="MobileBackupInvalidFile" xml:space="preserve">
+    <value>Недопустимый файл резервной копии мобильной версии</value>
+  </data>
+  <data name="MobileBackupLblUserVars" xml:space="preserve">
+    <value>Переменные</value>
+  </data>
+  <data name="ImportMobileBackupButton.Content" xml:space="preserve">
+    <value>Выбрать файл копии</value>
+  </data>
+  <data name="MobileBackupLblSkipped" xml:space="preserve">
+    <value>Пропущено</value>
+  </data>
+  <data name="MobileBackupLblFavorites" xml:space="preserve">
+    <value>Избранное</value>
+  </data>
+  <data name="SettingsBackup.Text" xml:space="preserve">
+    <value>Резервное копирование</value>
+  </data>
+  <data name="MobileBackupLblFailed" xml:space="preserve">
+    <value>Ошибки</value>
+  </data>
+  <data name="ImportMobileBackupDescription" xml:space="preserve">
+    <value>Выберите файл резервной копии (.json), экспортированный из мобильного приложения, чтобы импортировать плейлисты, избранное, плагины и пользовательские переменные. Темы, настройки и другое содержимое будет проигнорировано.</value>
+  </data>
+  <data name="MobileBackupLblPlaylists" xml:space="preserve">
+    <value>Плейлисты</value>
+  </data>
+  <data name="MobileBackupLblApplied" xml:space="preserve">
+    <value>Применено</value>
+  </data>
+  <data name="MobileBackupLblLocal" xml:space="preserve">
+    <value>Локально</value>
+  </data>
+  <data name="ImportMobileBackup.Text" xml:space="preserve">
+    <value>Импорт из резервной копии мобильной версии</value>
+  </data>
+  <data name="MobileBackupLblOnline" xml:space="preserve">
+    <value>Онлайн</value>
+  </data>
+  <data name="ExportMobileBackup.Text" xml:space="preserve">
+    <value>Экспорт резервной копии</value>
+  </data>
+  <data name="ExportMobileBackupButton.Content" xml:space="preserve">
+    <value>Выбрать место сохранения</value>
+  </data>
+  <data name="ExportMobileBackupDescription" xml:space="preserve">
+    <value>Экспортирует избранное, плейлисты, плагины и пользовательские переменные в файл резервной копии (.json), который можно импортировать на другом ПК или в мобильной версии. Локальная медиатека, темы и настройки не включаются.</value>
+  </data>
+  <data name="MobileBackupExporting" xml:space="preserve">
+    <value>Экспорт резервной копии...</value>
+  </data>
+  <data name="MobileBackupExportDone" xml:space="preserve">
+    <value>Экспорт завершён</value>
+  </data>
+  <data name="MobileBackupExportFailed" xml:space="preserve">
+    <value>Не удалось экспортировать резервную копию</value>
+  </data>
+  <data name="SettingsDebugLogs.Text" xml:space="preserve">
+    <value>Отладка и журналы</value>
+  </data>
+  <data name="LogSettings.Text" xml:space="preserve">
+    <value>Настройки журнала</value>
+  </data>
+  <data name="LogRetentionCount.Text" xml:space="preserve">
+    <value>Количество сохраняемых записей</value>
+  </data>
+  <data name="LogRetentionCountDescription" xml:space="preserve">
+    <value>Максимальное количество записей в файле журнала. Старые записи обрезаются автоматически.</value>
+  </data>
+  <data name="LogWarningOnly.Text" xml:space="preserve">
+    <value>Записывать только предупреждения и ошибки</value>
+  </data>
+  <data name="LogWarningOnlyDescription" xml:space="preserve">
+    <value>Если включено, записываются только предупреждения и ошибки для экономии места на диске.</value>
+  </data>
+  <data name="LogExportCrashTitle" xml:space="preserve">
+    <value>Экспорт записей о сбоях</value>
+  </data>
+  <data name="LogExportCrashDescription" xml:space="preserve">
+    <value>Экспорт записей, содержащих сбои и необработанные исключения.</value>
+  </data>
+  <data name="LogExportErrorTitle" xml:space="preserve">
+    <value>Экспорт журнала ошибок</value>
+  </data>
+  <data name="LogExportErrorDescription" xml:space="preserve">
+    <value>Экспорт всех журналов уровня ошибок и критических ошибок.</value>
+  </data>
+  <data name="LogExportAllTitle" xml:space="preserve">
+    <value>Экспорт всех журналов</value>
+  </data>
+  <data name="LogExportAllDescription" xml:space="preserve">
+    <value>Экспорт содержимого всех сохранённых файлов журнала.</value>
+  </data>
+  <data name="LogExportButton" xml:space="preserve">
+    <value>Экспорт</value>
+  </data>
+  <data name="LogClear.Text" xml:space="preserve">
+    <value>Очистить журналы</value>
+  </data>
+  <data name="LogClearDescription" xml:space="preserve">
+    <value>Удалить все файлы журнала. Операция необратима.</value>
+  </data>
+  <data name="LogClearButton" xml:space="preserve">
+    <value>Очистить</value>
+  </data>
+  <data name="LogExportDoneFormat" xml:space="preserve">
+    <value>Экспортировано записей ({1}): {0}</value>
+  </data>
+  <data name="LogExportEmpty" xml:space="preserve">
+    <value>Нет журналов для экспорта</value>
+  </data>
+  <data name="LogClearConfirmTitle" xml:space="preserve">
+    <value>Очистить журналы</value>
+  </data>
+  <data name="LogClearConfirmContent" xml:space="preserve">
+    <value>Все файлы журнала будут удалены. Операция необратима. Продолжить?</value>
+  </data>
+  <data name="LogClearDoneFormat" xml:space="preserve">
+    <value>Очищено файлов журнала: {0}</value>
+  </data>
+  <data name="PluginEnableAll.Text" xml:space="preserve">
+    <value>Включить все</value>
+  </data>
+  <data name="PluginDisableAll.Text" xml:space="preserve">
+    <value>Отключить все</value>
+  </data>
+  <data name="PluginEnableAllToast" xml:space="preserve">
+    <value>Включено источников: {0}</value>
+  </data>
+  <data name="PluginDisableAllToast" xml:space="preserve">
+    <value>Отключено источников: {0}</value>
+  </data>
+  <data name="PluginSetAllNoChange" xml:space="preserve">
+    <value>Состояние плагинов не изменилось</value>
+  </data>
 </root>

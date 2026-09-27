@@ -111,6 +111,22 @@ namespace AnimatedWin2dControls.Controls.AnimatedLyricsLineControl
         private Color _playedColor = Colors.White;
         private Color _unplayedColor = Color.FromArgb(80, 255, 255, 255);
 
+        /// <summary>歌词文字色覆盖(仅非自定义颜色模式生效): null=跟随主题黑白字。
+        /// 供宿主按背景亮度临时反转字色, 与页面其他文字保持一致。</summary>
+        public Color? TextColorOverride
+        {
+            get => _textColorOverride;
+            set
+            {
+                _textColorOverride = value;
+                ApplyThemeColors(_cachedIsDark);
+            }
+        }
+        private Color? _textColorOverride;
+        private bool _cachedIsDark;
+        private bool _cachedIsCustomColorEnabled;
+        private Color _cachedLyricsCustomColor = Colors.White;
+
         private double _cachedLyricsFontSize = 36.0;
         private string _cachedFontFamilyName = "Segoe UI";
         private Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment _cachedLyricsTextAlignment = Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment.Left;
@@ -237,22 +253,9 @@ namespace AnimatedWin2dControls.Controls.AnimatedLyricsLineControl
             if (Canvas is not null)
                 Canvas.TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / s.TargetFrameRate);
 
-            bool isDark = s.IsDark;
-            if (s.IsCustomColorEnabled)
-            {
-                _playedColor = s.LyricsCustomColor;
-                _unplayedColor = s.LyricsCustomColor;
-            }
-            else if (isDark)
-            {
-                _playedColor = Colors.White;
-                _unplayedColor = Colors.White;
-            }
-            else
-            {
-                _playedColor = Color.FromArgb(255, 0, 0, 0);
-                _unplayedColor = Color.FromArgb(255, 0, 0, 0);
-            }
+            _cachedIsCustomColorEnabled = s.IsCustomColorEnabled;
+            _cachedLyricsCustomColor = s.LyricsCustomColor;
+            ApplyThemeColors(s.IsDark);
 
             _layoutDirty = true;
             Canvas?.Invalidate();
@@ -281,7 +284,25 @@ namespace AnimatedWin2dControls.Controls.AnimatedLyricsLineControl
 
         private void OnIsDarkChanged(bool isDark)
         {
-            if (isDark)
+            ApplyThemeColors(isDark);
+            Canvas?.Invalidate();
+        }
+
+        /// <summary>歌词文字色统一决策: 用户自定义色 > 宿主覆盖(背景自适应反转) > 主题黑白字。</summary>
+        private void ApplyThemeColors(bool isDark)
+        {
+            _cachedIsDark = isDark;
+            if (_cachedIsCustomColorEnabled)
+            {
+                _playedColor = _cachedLyricsCustomColor;
+                _unplayedColor = _cachedLyricsCustomColor;
+            }
+            else if (_textColorOverride is { } overrideColor)
+            {
+                _playedColor = overrideColor;
+                _unplayedColor = overrideColor;
+            }
+            else if (isDark)
             {
                 _playedColor = Colors.White;
                 _unplayedColor = Colors.White;

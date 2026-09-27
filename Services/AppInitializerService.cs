@@ -88,7 +88,7 @@ namespace WinUIMusicPlayer.Services
                     if (notes is not null)
                     {
                         var dialog = new View.SubView.UpdateHistoryDialog(
-                            currentVersion, notes, "https://github.com/Johnwikix/original-sound-hq-player");
+                            currentVersion, notes, "https://github.com/kaishui-server/XY-Music-PC");
                         await dialog.ShowThemedAsync(App.MainWindow.Content.XamlRoot);
                     }
                     await MusicDatabaseService.SaveCurrentVersionAsync(currentVersion);

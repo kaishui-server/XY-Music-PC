@@ -71,6 +71,7 @@ namespace WinUIMusicPlayer.Services
                 await _dbConnection.CreateTableAsync<PlayList>();
                 await _dbConnection.CreateTableAsync<PlayListMusic>();
                 await _dbConnection.CreateTableAsync<OnlinePlayListMusic>();
+                await _dbConnection.CreateTableAsync<OnlineFavoriteSong>();
                 try
                 {
                     // PlayList.IsOnline 列迁移(老库补列, 在线歌单=1)
@@ -438,6 +439,7 @@ namespace WinUIMusicPlayer.Services
         {
             var entries = await _dbConnection.Table<OnlinePlayListMusic>()
                 .Where(e => e.PlayListId == playListId).ToListAsync();
+            OnlinePlayListMusic? sameKeyEntry = null;
             foreach (var e in entries)
             {
                 if (e.MusicId > 0 || string.IsNullOrEmpty(e.SongJson)) continue;
@@ -446,12 +448,25 @@ namespace WinUIMusicPlayer.Services
                     var existing = System.Text.Json.JsonSerializer.Deserialize<Services.Plugins.OnlineSong>(e.SongJson, OnlineSongJsonOpts);
                     if (existing is null) continue;
                     if (existing.VirtualPath == song.VirtualPath) return false;
+                    // 同一首歌仅插件哈希不同(手机备份重导入换算哈希): 就地修复旧条目
+                    if (sameKeyEntry is null
+                        && !string.IsNullOrEmpty(existing.Id) && !string.IsNullOrEmpty(song.Id)
+                        && existing.IsLx == song.IsLx
+                        && string.Equals(existing.Platform, song.Platform, StringComparison.Ordinal)
+                        && string.Equals(existing.Id, song.Id, StringComparison.Ordinal))
+                        sameKeyEntry = e;
                     // 云端损坏条目(无 id)与本地已修复条目(有 id)同名同歌手 → 同一首, 跳过避免同步出重复
                     if (!string.IsNullOrEmpty(existing.Id) && string.IsNullOrEmpty(song.Id)
                         && Services.Plugins.OnlinePlaybackResolver.NormalizeText(existing.Title ?? "") == Services.Plugins.OnlinePlaybackResolver.NormalizeText(song.Title ?? ""))
                         return false;
                 }
                 catch { /* 损坏条目按不存在处理 */ }
+            }
+            if (sameKeyEntry is not null)
+            {
+                sameKeyEntry.SongJson = System.Text.Json.JsonSerializer.Serialize(song, OnlineSongJsonOpts);
+                await _dbConnection.UpdateAsync(sameKeyEntry);
+                return false;
             }
             int newOrder = (entries.Count == 0 ? 0 : entries.Max(e => e.Order)) + 1;
             await _dbConnection.InsertAsync(new OnlinePlayListMusic
@@ -546,6 +561,95 @@ namespace WinUIMusicPlayer.Services
         {
             await _dbConnection.ExecuteAsync("DELETE FROM OnlinePlayListMusic WHERE PlayListId = ?", playList.Id);
             await _dbConnection.DeleteAsync(playList);
+        }
+
+        // ─── 在线收藏(插件歌曲不落 Music 表, 独立存储, 收藏页与本地收藏合并展示) ──────────────
+
+        /// <summary>批量添加在线歌曲到收藏(按虚拟路径去重, 含批内去重), 返回新增数。
+        /// 同一首歌仅插件哈希不同(手机备份重导入换算哈希)时, 就地修复旧条目而非新增重复。</summary>
+        public async Task<int> AddOnlineFavoritesAsync(IEnumerable<OnlineSong> songs)
+        {
+            var entries = await _dbConnection.Table<OnlineFavoriteSong>().ToListAsync();
+            var existingPaths = new HashSet<string>(StringComparer.Ordinal);
+            var existingByKey = new Dictionary<(bool IsLx, string Platform, string Id), OnlineFavoriteSong>();
+            foreach (var e in entries)
+            {
+                if (string.IsNullOrEmpty(e.SongJson)) continue;
+                try
+                {
+                    var existing = JsonSerializer.Deserialize<OnlineSong>(e.SongJson, OnlineSongJsonOpts);
+                    if (existing is null) continue;
+                    if (!string.IsNullOrEmpty(existing.VirtualPath)) existingPaths.Add(existing.VirtualPath);
+                    if (!string.IsNullOrEmpty(existing.Id) && !string.IsNullOrEmpty(existing.Platform))
+                        existingByKey.TryAdd((existing.IsLx, existing.Platform, existing.Id), e);
+                }
+                catch { /* 损坏条目按不存在处理 */ }
+            }
+            int maxOrder = entries.Count == 0 ? 0 : entries.Max(e => e.Order);
+            var toInsert = new List<OnlineFavoriteSong>();
+            var toUpdate = new List<OnlineFavoriteSong>();
+            var batchKeys = new HashSet<(bool IsLx, string Platform, string Id)>();
+            foreach (var song in songs)
+            {
+                if (song is null || string.IsNullOrEmpty(song.VirtualPath) || !existingPaths.Add(song.VirtualPath)) continue;
+                var (keyPlatform, keyId) = (song.Platform ?? string.Empty, song.Id ?? string.Empty);
+                var key = (song.IsLx, keyPlatform, keyId);
+                if (keyPlatform.Length > 0 && keyId.Length > 0 && !batchKeys.Add(key)) continue;
+                if (keyPlatform.Length > 0 && keyId.Length > 0 && existingByKey.TryGetValue(key, out var oldEntry))
+                {
+                    oldEntry.SongJson = JsonSerializer.Serialize(song, OnlineSongJsonOpts);
+                    toUpdate.Add(oldEntry);
+                    continue;
+                }
+                maxOrder++;
+                toInsert.Add(new OnlineFavoriteSong { Order = maxOrder, SongJson = JsonSerializer.Serialize(song, OnlineSongJsonOpts) });
+            }
+            if (toUpdate.Count > 0)
+                await _dbConnection.UpdateAllAsync(toUpdate);
+            if (toInsert.Count > 0)
+                await _dbConnection.InsertAllAsync(toInsert);
+            return toInsert.Count;
+        }
+
+        /// <summary>添加单首在线歌曲到收藏(按虚拟路径去重), 返回是否新增。</summary>
+        public async Task<bool> AddOnlineFavoriteAsync(OnlineSong song)
+            => await AddOnlineFavoritesAsync([song]) > 0;
+
+        /// <summary>按虚拟路径移除在线收藏。</summary>
+        public async Task RemoveOnlineFavoriteAsync(string virtualPath)
+        {
+            var entries = await _dbConnection.Table<OnlineFavoriteSong>().ToListAsync();
+            var ids = new List<int>();
+            foreach (var e in entries)
+            {
+                if (string.IsNullOrEmpty(e.SongJson)) continue;
+                try
+                {
+                    var existing = JsonSerializer.Deserialize<OnlineSong>(e.SongJson, OnlineSongJsonOpts);
+                    if (existing is not null && existing.VirtualPath == virtualPath) ids.Add(e.Id);
+                }
+                catch { /* 损坏条目跳过 */ }
+            }
+            if (ids.Count > 0)
+                await _dbConnection.ExecuteAsync($"DELETE FROM OnlineFavoriteSong WHERE Id IN ({string.Join(',', ids)})");
+        }
+
+        /// <summary>全部在线收藏(Order 升序 = 收藏时间先后), 供收藏视图合并展示。</summary>
+        public async Task<List<(OnlineSong Song, int Order)>> GetOnlineFavoriteSongsAsync()
+        {
+            var result = new List<(OnlineSong, int)>();
+            var entries = await _dbConnection.Table<OnlineFavoriteSong>().OrderBy(e => e.Order).ToListAsync();
+            foreach (var e in entries)
+            {
+                if (string.IsNullOrEmpty(e.SongJson)) continue;
+                try
+                {
+                    var song = JsonSerializer.Deserialize<OnlineSong>(e.SongJson, OnlineSongJsonOpts);
+                    if (song is not null && !string.IsNullOrEmpty(song.Id)) result.Add((song, e.Order));
+                }
+                catch { /* 损坏条目跳过 */ }
+            }
+            return result;
         }
 
         public async Task UpdateMusicInfo(Music music)

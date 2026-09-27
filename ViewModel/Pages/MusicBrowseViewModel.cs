@@ -681,11 +681,23 @@ namespace WinUIMusicPlayer.ViewModel
                 // 3.5 在线歌曲歌词延迟加载: 同一插件引擎串行(_gate), getLyric 在音质逐档循环间
                 // 插队抢锁会把起播拖长数秒 —— 立即清空旧歌词(空态显示"暂无歌词"), 解析完成后才取词;
                 // 本地歌曲无引擎争用, 保持原序立即加载
+                // 在线歌缓存文件被系统清理后重播: Path 已是缓存路径但文件不存在, 还原虚拟路径重新走解析
+                if (!Services.Plugins.OnlineMusicRegistry.IsOnlinePath(music.Path)
+                    && music.OnlineVirtualPath is { Length: > 0 }
+                    && !File.Exists(music.Path))
+                {
+                    music.Path = music.OnlineVirtualPath;
+                }
                 var wasOnlineSong = Services.Plugins.OnlineMusicRegistry.IsOnlinePath(music.Path);
-                if (wasOnlineSong) AppViewModel.UILyrics = [];
-                else AppViewModel.LoadLyricsToUI(music);
-                MainPage?.UpdateCurrentPlayList();
-                AppViewModel.UpdateProgressTimerUI();
+                await App.MainWindow.DispatcherQueue.EnqueueAsync(() =>
+                {
+                    // 自动切歌从 IPC 后台线程进入: 操作播放详情页歌词面板/播放队列面板必须回 UI 线程,
+                    // 否则跨线程 COMException 会中断后续音源解析, 表现为下一首不起播(卡住)
+                    if (wasOnlineSong) AppViewModel.UILyrics = [];
+                    else AppViewModel.LoadLyricsToUI(music);
+                    MainPage?.UpdateCurrentPlayList();
+                    AppViewModel.UpdateProgressTimerUI();
+                });
                 // 3. 在线队列歌曲: Path 仍是虚拟路径时解析音源并下载缓存(点击搜索列表/自动切歌共用)
                 // 解析期间底栏/详情页播放按钮转加载态并禁用; 各阶段自带超时(主源15s/回退40s),
                 // 超时或失败在弹报错的同时按钮经 finally 复位, 不会永久卡在加载中
@@ -731,6 +743,9 @@ namespace WinUIMusicPlayer.ViewModel
                         }
                     });
                     TrimMemory();
+                    // 5. 预取播放队列中的下一首在线歌曲: 当前曲播放期间后台解析缓存,
+                    // 自动切歌时命中缓存零等待(回退换源链 6-20 秒的耗时全部被前置吸收)
+                    Services.Plugins.OnlinePlaybackResolver.PrefetchNextTrack();
                 }
                 finally
                 {

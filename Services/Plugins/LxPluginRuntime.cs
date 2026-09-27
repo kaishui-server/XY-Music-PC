@@ -202,7 +202,22 @@ namespace WinUIMusicPlayer.Services.Plugins
             if (state.InitError is not null)
                 throw new InvalidOperationException($"LX 插件初始化失败: {state.InitError}");
             if (!state.Inited)
+            {
+                // 插件强制更新逻辑: 检测到新版本时发送 updateAlert 且拒绝初始化(如长青SVIP音源),
+                // 把更新说明/地址透出给用户, 避免误报"初始化超时"
+                if (state.UpdateAlert is { } alert)
+                {
+                    var detail = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(alert.Log)) detail.Add(alert.Log.Trim());
+                    if (!string.IsNullOrWhiteSpace(alert.UpdateUrl)) detail.Add($"更新地址: {alert.UpdateUrl.Trim()}");
+                    throw new InvalidOperationException(detail.Count > 0
+                        ? $"插件要求更新后才能使用: {string.Join("；", detail)}"
+                        : "插件要求更新后才能使用(updateAlert)");
+                }
                 throw new InvalidOperationException("LX 插件未发送 inited 事件(初始化超时)");
+            }
+            if (state.UpdateAlert is { } notice && (!string.IsNullOrWhiteSpace(notice.Log) || !string.IsNullOrWhiteSpace(notice.UpdateUrl)))
+                _logger.LogWarning("LX 插件 {Name} 有可用更新: {Log} {Url}", ScriptInfo.Name, notice.Log, notice.UpdateUrl);
             // 引导握手把音源存在 __lxState.initInfo.sources(非顶层 sources)
             foreach (var (source, info) in state.InitInfo?.Sources ?? [])
             {
@@ -226,6 +241,14 @@ namespace WinUIMusicPlayer.Services.Plugins
             public bool Inited { get; set; }
             public string? InitError { get; set; }
             public LxRawInitInfo? InitInfo { get; set; }
+            public LxUpdateAlert? UpdateAlert { get; set; }
+        }
+
+        /// <summary>插件 updateAlert 事件负载(强制更新提示)。</summary>
+        private class LxUpdateAlert
+        {
+            [JsonPropertyName("log")] public string? Log { get; set; }
+            [JsonPropertyName("updateUrl")] public string? UpdateUrl { get; set; }
         }
 
         private class LxRawInitInfo
@@ -487,7 +510,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                 var EVENT_NAMES = { request: 'request', inited: 'inited', updateAlert: 'updateAlert' };
                 var eventNames = Object.values(EVENT_NAMES);
                 var state = globalThis.__lxState = {
-                    inited: false, initError: null, initInfo: null,
+                    inited: false, initError: null, initInfo: null, updateAlert: null,
                     requestHandler: null, initedHandlers: [],
                     lastHandlerResult: undefined, lastRequestResult: null, lastRequestError: null,
                 };
@@ -631,7 +654,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                             if (eventNames.indexOf(eventName) < 0) return reject(new Error('The event is not supported: ' + eventName));
                             switch (eventName) {
                                 case EVENT_NAMES.inited: handleInit(data); resolve(); break;
-                                case EVENT_NAMES.updateAlert: resolve(); break;
+                                case EVENT_NAMES.updateAlert: state.updateAlert = data || {}; resolve(); break;
                                 case EVENT_NAMES.request:
                                     // send-back 应答方式: 插件通过 lx.send(request, {..., result}) 回传
                                     state.lastRequestResult = data && data.result !== undefined ? data.result : data;

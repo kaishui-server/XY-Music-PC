@@ -23,6 +23,7 @@ using WinUIMusicPlayer.Extensions;
 using WinUIMusicPlayer.Helper;
 using WinUIMusicPlayer.Model;
 using WinUIMusicPlayer.Services;
+using WinUIMusicPlayer.Services.Plugins;
 using WinUIMusicPlayer.Utils;
 using WinUIMusicPlayer.View;
 using WinUIMusicPlayer.ViewModel.Controls;
@@ -211,7 +212,15 @@ namespace WinUIMusicPlayer.ViewModel
             set
             {
                 if (SetProperty(ref field, value))
-                    AnimatedWin2dControls.Messages.UILyricsBus.Publish(value);
+                {
+                    // 订阅者(播放详情页等)在回调里直接操作 XAML 元素, 仅允许 UI 线程发布;
+                    // 自动切歌从 IPC 后台线程设置时曾抛 0x8001010E 中断整个播放流程(下一首不起播)
+                    var dq = App.MainWindow?.DispatcherQueue;
+                    if (dq is not null && !dq.HasThreadAccess)
+                        dq.TryEnqueue(() => AnimatedWin2dControls.Messages.UILyricsBus.Publish(value));
+                    else
+                        AnimatedWin2dControls.Messages.UILyricsBus.Publish(value);
+                }
             }
         } = [];
         public int LastLyricIndex { get; set; } = -1;
@@ -237,7 +246,23 @@ namespace WinUIMusicPlayer.ViewModel
         public bool IsPlayingDetailVisible { get; set => SetProperty(ref field, value); } = false;
         public bool IsPointerOverTitleBar { get; set => SetProperty(ref field, value); } = true;
         /// <summary>在线歌曲正在解析音源: 底栏/详情页播放按钮显示加载圈并禁用, 解析结束(成功/失败/超时/被取代)复位。</summary>
-        public bool IsResolvingSource { get; set => SetProperty(ref field, value); } = false;
+        public bool IsResolvingSource
+        {
+            get => field;
+            set
+            {
+                // 自动切歌从 IPC 后台线程设置: x:Bind 订阅者(MainPage/PlayingDetailPage 的
+                // ProgressRing)在 PropertyChanged 回调里直接操作 XAML 元素, 跨线程发布抛
+                // COMException 会中断 PlayMusic 后续音源解析 —— 表现为下一首不起播(卡住)
+                var dq = App.MainWindow?.DispatcherQueue;
+                if (dq is not null && !dq.HasThreadAccess)
+                {
+                    dq.TryEnqueue(() => IsResolvingSource = value);
+                    return;
+                }
+                SetProperty(ref field, value);
+            }
+        } = false;
 
         public void ToggleFullScreen() => IsFullScreen = !IsFullScreen;
 
@@ -818,9 +843,13 @@ namespace WinUIMusicPlayer.ViewModel
                 ? m => filterPredicate(m) && searchPredicate(m)
                 : filterPredicate ?? searchPredicate;
 
+            // 在线收藏不在 SongsSource(插件歌曲不落 Music 表), 收藏视图单独加载后合并展示
+            List<Music>? onlineFavorites = viewType == SongViewType.Favorite
+                ? await LoadOnlineFavoriteMusicsAsync()
+                : null;
             var srcSpan = CollectionsMarshal.AsSpan(SongsSource);
             var pool = ArrayPool<Music>.Shared;
-            var buf = pool.Rent(Math.Max(srcSpan.Length, 1));
+            var buf = pool.Rent(Math.Max(srcSpan.Length, 1) + (onlineFavorites?.Count ?? 0));
             int count = 0;
             try
             {
@@ -836,6 +865,15 @@ namespace WinUIMusicPlayer.ViewModel
                 {
                     srcSpan.CopyTo(buf);
                     count = srcSpan.Length;
+                }
+                if (onlineFavorites is not null)
+                {
+                    var onlineSpan = CollectionsMarshal.AsSpan(onlineFavorites);
+                    for (int i = 0; i < onlineSpan.Length; i++)
+                    {
+                        if (combinedPredicate == null || combinedPredicate(onlineSpan[i]))
+                            buf[count++] = onlineSpan[i];
+                    }
                 }
 
                 var slice = buf.AsSpan(0, count);
@@ -1225,6 +1263,31 @@ namespace WinUIMusicPlayer.ViewModel
         public void RemoveFromFavoriteSongs(Music music)
         {
             FavoriteSongs.Remove(music);
+        }
+
+        /// <summary>加载在线收藏为虚拟路径 Music(注册到会话注册表供播放解析), 收藏视图与本地收藏合并展示。</summary>
+        private static async Task<List<Music>> LoadOnlineFavoriteMusicsAsync()
+        {
+            var songs = await App.Services.GetRequiredService<MusicDatabaseService>().GetOnlineFavoriteSongsAsync();
+            var list = new List<Music>(songs.Count);
+            foreach (var (song, order) in songs)
+            {
+                OnlineMusicRegistry.Register(song);
+                list.Add(new Music
+                {
+                    Id = OnlineMusicRegistry.NextMusicId(),
+                    Path = song.VirtualPath,
+                    Title = song.Title,
+                    Author = song.Artist,
+                    Album = song.Album,
+                    Duration = TimeSpan.FromSeconds(song.DurationSec),
+                    Extension = "Online",
+                    IsFavorite = true,
+                    Order = order,
+                    OnlineVirtualPath = song.VirtualPath,
+                });
+            }
+            return list;
         }
 
         public async Task RefreshSongsSourceAsync()

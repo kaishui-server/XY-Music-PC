@@ -32,6 +32,11 @@ namespace AnimatedWin2dControls.Renderer.Background
 
         public float Time { get; protected set; }
 
+        /// <summary>当前 4 个目标色的平均 WCAG 相对亮度(0=纯黑, 1=纯白)。SetPalette/RefreshColors
+        /// 后同步更新，供宿主读取实现"文字黑/白自适应反转"(背景过暗黑字看不清→换白字)。
+        /// 渲染内容与 4 色不一致的子类(如 RotatingMesh 直接绘制封面像素)可 override 换算。</summary>
+        public virtual float TargetAverageLuminance { get; protected set; }
+
         public abstract void LoadResources();
         public abstract void Update(TimeSpan deltaTime);
         public abstract void Draw(ICanvasAnimatedControl control, CanvasDrawingSession ds);
@@ -79,6 +84,7 @@ namespace AnimatedWin2dControls.Renderer.Background
             _target3 = isDark ? new Vector3(0.07f, 0.07f, 0.07f) : new Vector3(0.80f, 0.80f, 0.80f);
             _target4 = isDark ? new Vector3(0.05f, 0.05f, 0.05f) : new Vector3(0.85f, 0.85f, 0.85f);
             _transitionProgress = 0f;
+            TargetAverageLuminance = AverageRelativeLuminance(_target1, _target2, _target3, _target4);
         }
 
         protected void ApplyPaletteColors(PaletteResult palette)
@@ -95,6 +101,15 @@ namespace AnimatedWin2dControls.Renderer.Background
             _target3 = slots[2];
             _target4 = slots[3];
             _transitionProgress = 0f;
+            TargetAverageLuminance = AverageRelativeLuminance(_target1, _target2, _target3, _target4);
+        }
+
+        /// <summary>4 色 sRGB(0..1)平均 WCAG 相对亮度: 分量线性化后按 Rec.709 加权。</summary>
+        private static float AverageRelativeLuminance(Vector3 c1, Vector3 c2, Vector3 c3, Vector3 c4)
+        {
+            static float Linear(float c) => c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
+            static float Lum(Vector3 c) => Linear(c.X) * 0.2126f + Linear(c.Y) * 0.7152f + Linear(c.Z) * 0.0722f;
+            return (Lum(c1) + Lum(c2) + Lum(c3) + Lum(c4)) * 0.25f;
         }
 
         /// <summary>

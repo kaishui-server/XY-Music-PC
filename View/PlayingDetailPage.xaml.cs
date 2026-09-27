@@ -106,6 +106,8 @@ namespace WinUIMusicPlayer.View
             if (ViewModel.AppViewModel.LyricPageArtwork is { } artwork)
                 NowPlaying?.SetArtwork(artwork);
             UpdateLyricsRegion();
+            // 背景自适应字色初评(当前曲已播放时页面后加载的场景)
+            ScheduleAdaptiveTextUpdate();
             Loaded -= PlayingDetailPage_Loaded;
         }
 
@@ -117,6 +119,7 @@ namespace WinUIMusicPlayer.View
                 {
                     NowPlaying?.SetPalette(palette);
                 }
+                ScheduleAdaptiveTextUpdate();
             }
             else if (e.PropertyName == nameof(AppViewModel.LyricPageArtwork))
             {
@@ -126,6 +129,104 @@ namespace WinUIMusicPlayer.View
             {
                 UpdateLyricsRegion();
             }
+            else if (e.PropertyName == nameof(AppViewModel.IsDarkMode)
+                || e.PropertyName == nameof(AppViewModel.UseImageDominantTheme)
+                || e.PropertyName == nameof(AppViewModel.IsFluidBackgroundEnabled))
+            {
+                ScheduleAdaptiveTextUpdate();
+            }
+            else if (e.PropertyName == nameof(AppViewModel.IsWin2dAnimatedText))
+            {
+                // 动画文字控件因 x:Load 重建, 丢弃已应用状态以便对新建实例重设前景色
+                _adaptiveWhiteText = null;
+                ScheduleAdaptiveTextUpdate();
+            }
+        }
+
+        // ── 背景自适应文字色 ─────────────────────────────────────────────────
+
+        /// <summary>黑白字 WCAG 对比度交叉点: 背景亮度低于该值时白字对比更高, 反之黑字更高
+        /// (白字 1.05/(L+0.05) 与黑字 (L+0.05)/0.05 在 L≈0.179 处相等)。</summary>
+        private const float AdaptiveTextCrossoverLuminance = 0.179f;
+
+        /// <summary>当前自适应覆盖: null=未覆盖(跟主题), true=白字, false=黑字。防重复应用。</summary>
+        private bool? _adaptiveWhiteText;
+
+        /// <summary>上次评估的背景亮度: 漂移超阈值才记日志, 防逐曲重复刷屏。</summary>
+        private float? _lastAdaptiveBgLum;
+
+        /// <summary>按当前歌曲背景亮度自适应文字颜色(逐曲重算, 仅本页临时生效):
+        /// 背景过暗→白字, 背景过亮→黑字(对比度择优, 不依赖主题默认字色);
+        /// 非流体背景时页面底色跟主题永远可读, 还原跟随主题。
+        /// 覆盖范围: 主内容区与底部控制条两棵子树, 播放列表面板(亚克力底)不受影响。</summary>
+        private void ScheduleAdaptiveTextUpdate()
+        {
+            // 延迟一拍: 等 x:Bind 把 IsDarkMode 推到背景画布(DP→RefreshColors 重算目标色)后再读亮度
+            DispatcherQueue.TryEnqueue(UpdateAdaptiveTextColor);
+        }
+
+        private void UpdateAdaptiveTextColor()
+        {
+            try
+            {
+                // 流体背景未启用: 页面底色跟主题, 文字永远可读 → 还原
+                if (!ViewModel.AppViewModel.IsFluidBackgroundEnabled || NowPlaying is null)
+                {
+                    _lastAdaptiveBgLum = null;
+                    ApplyAdaptiveTextOverride(null);
+                    return;
+                }
+                float bgLum = NowPlaying.GetBackgroundLuminance();
+                // 对比度择优: 背景亮度低于交叉点选白字, 反之选黑字。
+                // 不沿用"主题默认色≥4.5 对比即保持": 亮色主题下调色板被亮度缩放拉到理论亮区,
+                // 实际渲染(LightWave 压暗/流体空间不均)偏暗时黑字仍会被误判可读
+                bool whiteText = bgLum < AdaptiveTextCrossoverLuminance;
+                if (_lastAdaptiveBgLum is not { } prev || MathF.Abs(prev - bgLum) > 0.02f)
+                {
+                    _lastAdaptiveBgLum = bgLum;
+                    _logger.LogInformation("背景自适应字色评估: 背景亮度={bgLum:F3} → 择优{choice}",
+                        bgLum, whiteText ? "白字" : "黑字");
+                }
+                ApplyAdaptiveTextOverride(whiteText);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "背景自适应字色计算失败");
+            }
+        }
+
+        private void ApplyAdaptiveTextOverride(bool? whiteText)
+        {
+            if (whiteText == _adaptiveWhiteText) return;
+            _adaptiveWhiteText = whiteText;
+            _logger.LogInformation("背景自适应字色: {action} (背景亮度≈{bgLum:F3})",
+                whiteText is null ? "跟随主题" : whiteText.Value ? "应用白字" : "应用黑字",
+                NowPlaying?.GetBackgroundLuminance() ?? -1f);
+
+            // 高级歌词由 Win2D 绘制, 不吃子树主题翻转, 走协调器文字色覆盖口
+            NowPlaying?.SetLyricsTextColorOverride(
+                whiteText is null ? null : whiteText.Value ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black);
+
+            if (whiteText is null)
+            {
+                // 还原: 子树主题回跟应用, 动画文字清本地覆盖回主题色
+                PlayingDetail.RequestedTheme = ElementTheme.Default;
+                ControlsStack.RequestedTheme = ElementTheme.Default;
+                AnimatedPlayingDetailTitleTextBlock?.ClearValue(Control.ForegroundProperty);
+                AnimatedPlayingDetailAlbumArtistTextBlock?.ClearValue(Control.ForegroundProperty);
+                return;
+            }
+
+            // 临时翻转: 子树整体换主题(标题/歌手/歌词/控制条图标等所有 ThemeResource 文字一致反色);
+            // Win2D 动画文字直接读应用级资源不吃子树主题, 单独设本地前景色
+            var theme = whiteText.Value ? ElementTheme.Dark : ElementTheme.Light;
+            PlayingDetail.RequestedTheme = theme;
+            ControlsStack.RequestedTheme = theme;
+            var foreground = new SolidColorBrush(whiteText.Value ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black);
+            if (AnimatedPlayingDetailTitleTextBlock is not null)
+                AnimatedPlayingDetailTitleTextBlock.Foreground = foreground;
+            if (AnimatedPlayingDetailAlbumArtistTextBlock is not null)
+                AnimatedPlayingDetailAlbumArtistTextBlock.Foreground = foreground;
         }
 
         private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
@@ -496,20 +597,35 @@ namespace WinUIMusicPlayer.View
                         {
                             DispatcherQueue.TryEnqueue(() =>
                             {
-                                CurrentPlayListViewPlayingDetail.SelectedItem = selectedMusic;
-                                CurrentPlayListViewPlayingDetail.ScrollIntoView(selectedMusic);
+                                _isProgrammaticPlayListSelectionPlayingDetail = true;
+                                try
+                                {
+                                    CurrentPlayListViewPlayingDetail.SelectedItem = selectedMusic;
+                                    CurrentPlayListViewPlayingDetail.ScrollIntoView(selectedMusic);
+                                }
+                                finally
+                                {
+                                    _isProgrammaticPlayListSelectionPlayingDetail = false;
+                                }
                             });
                         });
                     }
                 }
             }
         }
-        private void CurrentPlayListViewPlayingDetail_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        /// <summary>
+        /// 程序性高亮当前播放曲时抑制点播: 面板打开/切歌都会经 UpdateCurrentPlayList
+        /// 设置 SelectedItem, 不抑制的话每次都会触发重播当前曲。
+        /// </summary>
+        private bool _isProgrammaticPlayListSelectionPlayingDetail;
+
+        private void CurrentPlayListViewPlayingDetail_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedMusic = CurrentPlayListViewPlayingDetail.SelectedItem as Music;
-            if (selectedMusic is not null)
+            if (_isProgrammaticPlayListSelectionPlayingDetail) return;
+            // 单击队列歌曲立即跳播(原来仅双击才播, 单击只选中不播放)
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is Music clicked)
             {
-                _ = App.Services.GetRequiredService<MusicBrowseViewModel>().PlayMusic(music: selectedMusic, IsChangeList: false);
+                _ = App.Services.GetRequiredService<MusicBrowseViewModel>().PlayMusic(music: clicked, IsChangeList: false);
             }
         }
 

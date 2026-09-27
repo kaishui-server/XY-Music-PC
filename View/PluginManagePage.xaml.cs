@@ -50,6 +50,9 @@ namespace WinUIMusicPlayer.View
             {
                 // OneWay 绑定初始化(IsOn←Enabled)触发 Toggled 时两者相等, 跳过, 仅响应用户操作
                 if (toggle.IsOn == item.Enabled) return;
+                // 行对象已不在当前列表(卸载移除或容器回收后的陈旧 DataContext 回声), 忽略,
+                // 防止误发反向开关命令把刚启用的插件又禁用回去
+                if (!ViewModel.Plugins.Contains(item)) return;
                 item.Enabled = toggle.IsOn;
                 _ = ViewModel.ToggleEnabledCommand.ExecuteAsync(item);
             }

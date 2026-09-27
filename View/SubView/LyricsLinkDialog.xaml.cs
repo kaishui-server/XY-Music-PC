@@ -133,7 +133,7 @@ public sealed partial class LyricsLinkDialog : ContentDialog
             var sources = new List<(string Hash, string Name)>();
             var usedLxSources = new HashSet<string>();
             // MF 插件一个插件一个来源; LX 插件按其覆盖音源生成多个来源(重复音源先到先得), 与在线搜索页 Tab 生成逻辑一致
-            foreach (var (mf, lx) in _pluginManager.GetActiveRuntimesInOrder())
+            foreach (var (mf, lx, am) in _pluginManager.GetActiveRuntimesInOrder())
             {
                 if (mf is not null)
                 {
@@ -148,6 +148,10 @@ public sealed partial class LyricsLinkDialog : ContentDialog
                         usedLxSources.Add(source);
                         sources.Add(($"lx:{source}", LxSources.DisplayName(source)));
                     }
+                }
+                else if (am is not null)
+                {
+                    sources.Add((am.Hash, am.Meta.Name));
                 }
             }
 

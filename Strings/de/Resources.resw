@@ -2434,4 +2434,151 @@
   <data name="CloudDataPlaylistNotFound" xml:space="preserve">
     <value>Playlist nicht gefunden oder gelöscht</value>
   </data>
+  <data name="MobileBackupImportDone" xml:space="preserve">
+    <value>Import abgeschlossen</value>
+  </data>
+  <data name="MobileBackupLblPlugins" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="MobileBackupImporting" xml:space="preserve">
+    <value>Sicherung wird importiert...</value>
+  </data>
+  <data name="MobileBackupLblSongs" xml:space="preserve">
+    <value>Titel</value>
+  </data>
+  <data name="MobileBackupInvalidFile" xml:space="preserve">
+    <value>Keine gültige mobile Sicherungsdatei</value>
+  </data>
+  <data name="MobileBackupLblUserVars" xml:space="preserve">
+    <value>Benutzervariablen</value>
+  </data>
+  <data name="ImportMobileBackupButton.Content" xml:space="preserve">
+    <value>Sicherungsdatei auswählen</value>
+  </data>
+  <data name="MobileBackupLblSkipped" xml:space="preserve">
+    <value>Übersprungen</value>
+  </data>
+  <data name="MobileBackupLblFavorites" xml:space="preserve">
+    <value>Favoriten</value>
+  </data>
+  <data name="SettingsBackup.Text" xml:space="preserve">
+    <value>Sicherung &amp; Wiederherstellung</value>
+  </data>
+  <data name="MobileBackupLblFailed" xml:space="preserve">
+    <value>Fehlgeschlagen</value>
+  </data>
+  <data name="ImportMobileBackupDescription" xml:space="preserve">
+    <value>Wähle eine Sicherungsdatei (.json) aus der mobilen App, um Playlists, Favoriten, Plugins und Benutzervariablen zu importieren. Designs, Einstellungen und andere Inhalte werden ignoriert.</value>
+  </data>
+  <data name="MobileBackupLblPlaylists" xml:space="preserve">
+    <value>Playlists</value>
+  </data>
+  <data name="MobileBackupLblApplied" xml:space="preserve">
+    <value>Angewendet</value>
+  </data>
+  <data name="MobileBackupLblLocal" xml:space="preserve">
+    <value>Lokal</value>
+  </data>
+  <data name="ImportMobileBackup.Text" xml:space="preserve">
+    <value>Aus mobiler Sicherung importieren</value>
+  </data>
+  <data name="MobileBackupLblOnline" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="ExportMobileBackup.Text" xml:space="preserve">
+    <value>Backup exportieren</value>
+  </data>
+  <data name="ExportMobileBackupButton.Content" xml:space="preserve">
+    <value>Speicherort wählen</value>
+  </data>
+  <data name="ExportMobileBackupDescription" xml:space="preserve">
+    <value>Exportiert Favoriten, Playlists, Plugins und Benutzervariablen in eine Backup-Datei (.json), die auf einem anderen PC oder in der mobilen Version importiert werden kann. Lokale Mediathek, Designs und Einstellungen sind nicht enthalten.</value>
+  </data>
+  <data name="MobileBackupExporting" xml:space="preserve">
+    <value>Backup wird exportiert...</value>
+  </data>
+  <data name="MobileBackupExportDone" xml:space="preserve">
+    <value>Export abgeschlossen</value>
+  </data>
+  <data name="MobileBackupExportFailed" xml:space="preserve">
+    <value>Backup-Export fehlgeschlagen</value>
+  </data>
+  <data name="SettingsDebugLogs.Text" xml:space="preserve">
+    <value>Debugging &amp; Protokolle</value>
+  </data>
+  <data name="LogSettings.Text" xml:space="preserve">
+    <value>Protokolleinstellungen</value>
+  </data>
+  <data name="LogRetentionCount.Text" xml:space="preserve">
+    <value>Anzahl gespeicherter Protokolleinträge</value>
+  </data>
+  <data name="LogRetentionCountDescription" xml:space="preserve">
+    <value>Maximale Anzahl der im Protokoll gehaltenen Einträge. Ältere Einträge werden automatisch gekürzt.</value>
+  </data>
+  <data name="LogWarningOnly.Text" xml:space="preserve">
+    <value>Nur Warnungen und Fehler protokollieren</value>
+  </data>
+  <data name="LogWarningOnlyDescription" xml:space="preserve">
+    <value>Wenn aktiviert, werden nur Warnungen und Fehler aufgezeichnet, um Speicherplatz zu sparen.</value>
+  </data>
+  <data name="LogExportCrashTitle" xml:space="preserve">
+    <value>Absturzberichte exportieren</value>
+  </data>
+  <data name="LogExportCrashDescription" xml:space="preserve">
+    <value>Exportiert Einträge mit Abstürzen und unbehandelten Ausnahmen.</value>
+  </data>
+  <data name="LogExportErrorTitle" xml:space="preserve">
+    <value>Fehlerprotokoll exportieren</value>
+  </data>
+  <data name="LogExportErrorDescription" xml:space="preserve">
+    <value>Exportiert alle Protokolle der Stufen Fehler und Kritisch.</value>
+  </data>
+  <data name="LogExportAllTitle" xml:space="preserve">
+    <value>Alle Protokolle exportieren</value>
+  </data>
+  <data name="LogExportAllDescription" xml:space="preserve">
+    <value>Exportiert den Inhalt aller aufbewahrten Protokolldateien.</value>
+  </data>
+  <data name="LogExportButton" xml:space="preserve">
+    <value>Exportieren</value>
+  </data>
+  <data name="LogClear.Text" xml:space="preserve">
+    <value>Protokolle löschen</value>
+  </data>
+  <data name="LogClearDescription" xml:space="preserve">
+    <value>Löscht alle Protokolldateien. Dies kann nicht rückgängig gemacht werden.</value>
+  </data>
+  <data name="LogClearButton" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="LogExportDoneFormat" xml:space="preserve">
+    <value>{0} Einträge exportiert ({1})</value>
+  </data>
+  <data name="LogExportEmpty" xml:space="preserve">
+    <value>Keine Protokolle zum Exportieren</value>
+  </data>
+  <data name="LogClearConfirmTitle" xml:space="preserve">
+    <value>Protokolle löschen</value>
+  </data>
+  <data name="LogClearConfirmContent" xml:space="preserve">
+    <value>Alle Protokolldateien werden gelöscht. Dies kann nicht rückgängig gemacht werden. Fortfahren?</value>
+  </data>
+  <data name="LogClearDoneFormat" xml:space="preserve">
+    <value>{0} Protokolldateien gelöscht</value>
+  </data>
+  <data name="PluginEnableAll.Text" xml:space="preserve">
+    <value>Alle aktivieren</value>
+  </data>
+  <data name="PluginDisableAll.Text" xml:space="preserve">
+    <value>Alle deaktivieren</value>
+  </data>
+  <data name="PluginEnableAllToast" xml:space="preserve">
+    <value>{0} Quellen aktiviert</value>
+  </data>
+  <data name="PluginDisableAllToast" xml:space="preserve">
+    <value>{0} Quellen deaktiviert</value>
+  </data>
+  <data name="PluginSetAllNoChange" xml:space="preserve">
+    <value>Keine Änderung am Plugin-Status</value>
+  </data>
 </root>

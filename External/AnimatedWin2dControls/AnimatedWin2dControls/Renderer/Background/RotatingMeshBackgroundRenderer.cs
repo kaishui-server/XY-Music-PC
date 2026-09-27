@@ -7,6 +7,7 @@ using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using System;
 using Windows.Graphics.DirectX;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -272,12 +273,50 @@ namespace AnimatedWin2dControls.Renderer.Background
             {
                 _realArtwork = artwork;
                 _pendingArtwork = artwork;
+                _artworkLuma = AveragePixelLuminance(artwork);
             }
             else
             {
                 _realArtwork = null;
                 _pendingArtwork = BuildPaletteArtwork(CurrentPalette) ?? CreateDefaultArtwork();
+                _artworkLuma = float.NaN;
             }
+        }
+
+        /// <summary>真实封面的像素平均 WCAG 亮度；NaN = 无真实封面(调色板兜底渐变)。</summary>
+        private float _artworkLuma = float.NaN;
+
+        /// <summary>本渲染器直接绘制封面像素而非 4 色，亮度读数须取封面实际观感：
+        /// 原始像素亮度按合成着色器的主题适配同口径换算(暗色 ×(1-α) 压暗 / 亮色 lerp 提亮)，
+        /// 供宿主"文字黑/白自适应反转"读到与视觉一致的背景亮度。</summary>
+        public override float TargetAverageLuminance
+            => float.IsNaN(_artworkLuma)
+                ? base.TargetAverageLuminance
+                : IsDark
+                    ? _artworkLuma * (1f - DarkLumaStrength)
+                    : _artworkLuma + (1f - _artworkLuma) * LightLumaStrength;
+
+        private static readonly double[] SrgbLinearTable =
+            Enumerable.Range(0, 256).Select(i =>
+            {
+                double c = i / 255.0;
+                return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+            }).ToArray();
+
+        /// <summary>封面像素平均 WCAG 相对亮度(0=纯黑,1=纯白)，与基类调色板亮度同口径。</summary>
+        private static float AveragePixelLuminance(ArtworkPixelData artwork)
+        {
+            byte[] p = artwork.Pixels;
+            double sum = 0;
+            int count = 0;
+            for (int i = 0; i + 2 < p.Length; i += 4)
+            {
+                sum += 0.2126 * SrgbLinearTable[p[i]]
+                     + 0.7152 * SrgbLinearTable[p[i + 1]]
+                     + 0.0722 * SrgbLinearTable[p[i + 2]];
+                count++;
+            }
+            return count > 0 ? (float)(sum / count) : 0.5f;
         }
 
         public override void SetPalette(PaletteResult? palette)

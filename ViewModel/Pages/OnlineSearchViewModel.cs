@@ -283,7 +283,7 @@ namespace WinUIMusicPlayer.ViewModel.Pages
             var plugins = new List<PluginTab>();
             var usedLxSources = new HashSet<string>();
             // MF 插件一个插件一个 Tab; LX 插件按其覆盖音源生成多个 Tab(同一插件的音源间保持标准顺序, 重复音源先到先得)
-            foreach (var (mf, lx) in _pluginManager.GetActiveRuntimesInOrder())
+            foreach (var (mf, lx, am) in _pluginManager.GetActiveRuntimesInOrder())
             {
                 if (mf is not null)
                 {
@@ -299,6 +299,12 @@ namespace WinUIMusicPlayer.ViewModel.Pages
                         usedLxSources.Add(source);
                         plugins.Add(new PluginTab { Hash = $"lx:{source}", Name = LxSources.DisplayName(source) });
                     }
+                }
+                else if (am is not null)
+                {
+                    // animemusic 插件: 宿主直连后端, 仅支持音乐搜索
+                    if (_selectedSearchType == "music")
+                        plugins.Add(new PluginTab { Hash = am.Hash, Name = am.Meta.Name });
                 }
             }
             AvailablePlugins.Clear();

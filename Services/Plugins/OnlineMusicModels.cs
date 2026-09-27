@@ -350,6 +350,14 @@ namespace WinUIMusicPlayer.Services.Plugins
         /// <summary>当前解析令牌: 新一次点击取消上一次仍在进行的解析, 避免多个回退链并行堆积把网络与 UI 拖死。</summary>
         private static CancellationTokenSource? _resolutionCts;
 
+        // ---- 下一首预取: 当前曲播放期间后台解析缓存队列下一首, 自动切歌零等待 ----
+        /// <summary>预取令牌(独立于正式解析令牌): 新的正式解析会取消在跑的预取, 预取绝不取消正式解析。</summary>
+        private static CancellationTokenSource? _prefetchCts;
+        /// <summary>预取目标与任务: 正式播放同一首时直接接管预取任务, 避免取消重启造成重复解析下载。</summary>
+        private static Model.Music? _prefetchTarget;
+        private static Task<bool>? _prefetchTask;
+        private static readonly object _prefetchGate = new();
+
         /// <summary>当前播放默认音质(底栏音质菜单的持久化设置, 归一化为 128k/320k/flac/flac24bit, 非法/未设置回退 320k)。</summary>
         public static string GetPreferredQuality()
             => LxSources.NormalizeQuality(Model.AppSettings.PreferredQuality) is { Length: > 0 } q ? q : "320k";
@@ -357,26 +365,137 @@ namespace WinUIMusicPlayer.Services.Plugins
         /// <summary>若 music 为未解析的在线歌曲(Path 仍然是虚拟路径)则解析音源并下载缓存, 就地更新 Path。</summary>
         public static async Task<(bool Ok, string? Error)> EnsurePlayableAsync(Model.Music music)
         {
-            if (!OnlineMusicRegistry.TryGet(music.Path, out var song)) return (true, null);
-            // 旧版跨端同步损坏数据(歌曲 id/原始 musicItem 丢失): 按 标题+歌手 在全部插件重新搜索匹配修复
-            if (string.IsNullOrEmpty(song.Id) || string.IsNullOrEmpty(song.RawJson))
+            // 同一首歌正在后台预取: 直接接管预取任务等结果, 不取消重启(重复解析下载),
+            // 预取未缓存成功(试听/失败/被让位)则照常走正式解析链
+            Task<bool>? shared;
+            lock (_prefetchGate)
+            {
+                if (_prefetchTask is not null && _prefetchTarget is not null && ReferenceEquals(_prefetchTarget, music))
+                {
+                    shared = _prefetchTask;
+                    _prefetchTarget = null;
+                }
+                else shared = null;
+            }
+            if (shared is not null)
+            {
+                try
+                {
+                    if (await shared && !OnlineMusicRegistry.IsOnlinePath(music.Path)) return (true, null);
+                }
+                catch { /* 预取途中被更新的点击取消: 走正常解析 */ }
+            }
+            return await ResolveForPlaybackAsync(music, prefetch: false);
+        }
+
+        /// <summary>预取播放队列中的下一首在线歌曲(供当前曲起播后调用): 后台解析并缓存完整版,
+        /// 自动切歌到该曲时 EnsurePlayableAsync 命中缓存文件零等待。失败静默, 不影响当前播放。
+        /// 选曲逻辑与自动切歌一致: ListLoop/RandomLoop 取顺序下一首; SingleLoop(同曲已缓存)与
+        /// RepeatOff(不再自动播)无需预取。</summary>
+        public static void PrefetchNextTrack()
+        {
+            var dq = App.MainWindow?.DispatcherQueue;
+            if (dq is null) return;
+            dq.TryEnqueue(() =>
+            {
+                try
+                {
+                    var appVM = App.Services.GetRequiredService<ViewModel.AppViewModel>();
+                    var current = appVM.CurrentPlayingMusic;
+                    if (current is null || appVM.CurrentPlayingList.Count == 0) return;
+                    if (appVM.CurrentPlayMode is not (Utils.ToolUtils.PlayMode.ListLoop or Utils.ToolUtils.PlayMode.RandomLoop)) return;
+                    var idx = appVM.GetCurrentIndex();
+                    if (idx < 0) return;
+                    var next = appVM.CurrentPlayingList[(idx + 1) % appVM.CurrentPlayingList.Count];
+                    if (next is null || ReferenceEquals(next, current)) return;
+                    // 本地歌曲/已解析缓存(Path 已是本地文件)无需预取
+                    if (!OnlineMusicRegistry.IsOnlinePath(next.Path)) return;
+                    lock (_prefetchGate)
+                    {
+                        // 覆盖旧预取: PrefetchCoreAsync 内部的令牌替换会自动取消上一个在跑的预取
+                        _prefetchTarget = next;
+                        _prefetchTask = Task.Run(() => PrefetchCoreAsync(next));
+                    }
+                }
+                catch { /* 预取失败静默 */ }
+            });
+        }
+
+        private static async Task<bool> PrefetchCoreAsync(Model.Music music)
+        {
+            var log = App.GetLogger<App>();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                log.LogInformation("[播放计时] 预取开始 「{title}」", music.Title);
+                var (ok, _) = await ResolveForPlaybackAsync(music, prefetch: true);
+                log.LogInformation("[播放计时] 预取完成 「{title}」 cached={ok} {ms}ms", music.Title, ok, sw.ElapsedMilliseconds);
+                return ok;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                lock (_prefetchGate)
+                {
+                    if (ReferenceEquals(_prefetchTarget, music)) _prefetchTarget = null;
+                }
+            }
+        }
+
+        /// <summary>解析主体(正式播放与预取共用): 修复注册→限时解析→回退换源全链路。</summary>
+        private static async Task<(bool Ok, string? Error)> ResolveForPlaybackAsync(Model.Music music, bool prefetch)
+        {
+            OnlineMusicRegistry.TryGet(music.Path, out var song);
+            // 本地歌曲(含已解析缓存文件)不在注册表, 直接放行交播放器
+            if (song is null && !OnlineMusicRegistry.IsOnlinePath(music.Path)) return (true, null);
+            // 注册表未命中(重启后队列/视图重建丢注册)或数据损坏(旧版同步丢 id/RawJson):
+            // 静默放行会把 mfplugin:// 虚拟路径当本地文件交给播放子进程, 打不开直接卡死 →
+            // 按 标题+歌手 在全部插件重新搜索匹配修复
+            if (song is null || string.IsNullOrEmpty(song.Id) || string.IsNullOrEmpty(song.RawJson))
             {
                 var repaired = await TryRepairBrokenSongAsync(music);
                 if (repaired is null)
+                {
+                    if (song is null)
+                        return (false, $"「{music.Title}」在线音源数据缺失(跨会话注册失效)，自动搜索匹配失败，请重新搜索添加");
                     return (false, $"「{music.Title}」数据不完整(旧版同步损坏)，自动搜索匹配失败，请重新搜索添加");
+                }
                 song = repaired;
                 OnlineMusicRegistry.Register(repaired);
                 // 后台持久化到歌单库: 修复后的完整数据随下次同步上传, 云端逐步恢复
                 _ = Task.Run(() => RepairOnlineSongInDbAsync(music, repaired));
             }
+            if (prefetch)
+            {
+                // 预取令牌独立于正式解析: 新的正式解析会取消在跑的预取, 预取绝不干扰正式解析
+                var prevPrefetch = Interlocked.Exchange(ref _prefetchCts, new CancellationTokenSource());
+                try { prevPrefetch?.Cancel(); prevPrefetch?.Dispose(); }
+                catch { /* 已释放 */ }
+                var pct = _prefetchCts!.Token;
+                try
+                {
+                    return await ResolveCoreAsync(music, song, pct, prefetch: true);
+                }
+                catch (OperationCanceledException)
+                {
+                    return (false, null); // 被正式播放取代, 静默让位
+                }
+            }
             // 新解析取消旧解析: 回退链涉及全插件搜索+多候选下载, 不取消会并行堆积导致点击长时间无响应
             var previous = Interlocked.Exchange(ref _resolutionCts, new CancellationTokenSource());
             try { previous?.Cancel(); previous?.Dispose(); }
             catch { /* 已释放 */ }
+            // 正式播放优先: 同步取消仍在跑的预取, 释放下载带宽给用户当前点播
+            var runningPrefetch = Interlocked.Exchange(ref _prefetchCts, null);
+            try { runningPrefetch?.Cancel(); runningPrefetch?.Dispose(); }
+            catch { /* 已释放 */ }
             var ct = _resolutionCts!.Token;
             try
             {
-                return await ResolveCoreAsync(music, song, ct);
+                return await ResolveCoreAsync(music, song, ct, prefetch: false);
             }
             catch (OperationCanceledException)
             {
@@ -384,7 +503,7 @@ namespace WinUIMusicPlayer.Services.Plugins
             }
         }
 
-        private static async Task<(bool Ok, string? Error)> ResolveCoreAsync(Model.Music music, OnlineSong song, CancellationToken ct)
+        private static async Task<(bool Ok, string? Error)> ResolveCoreAsync(Model.Music music, OnlineSong song, CancellationToken ct, bool prefetch = false)
         {
             var pluginManager = App.Services.GetRequiredService<PluginManagerService>();
             var expectedSec = song.DurationSec > 0 ? song.DurationSec : music.Duration.TotalSeconds;
@@ -443,45 +562,34 @@ namespace WinUIMusicPlayer.Services.Plugins
             // 主音源失败或仅试听时静默回退搜索(可能耗时数十秒), 仅最终结果(试听版提示/失败)才弹窗
             var candidates = await FindAlternateCandidatesAsync(music, song, ct);
             log.LogInformation("[播放计时] 回退搜索完成 {ms}ms 候选数={n}", sw.ElapsedMilliseconds, candidates.Count);
-            // 该插件取流已失败/超时的不再尝试(如汽水内部重试一次长达 45 秒), 整体限时 40 秒防止点击长时间无响应
-            var failedPlugins = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            // 回退候选全部并行解析+下载, 最快的完整版先到先用: 串行逐个尝试时单个病态插件
+            // (如汽水内部重试一次 12 秒超时)会把其余可用音源全部拖在身后, 实测 18.9 秒;
+            // 并行后总耗时≈回退搜索+最快完整版耗时(实测场景约 5-6 秒)
             var deadline = DateTime.UtcNow.AddSeconds(40);
-            foreach (var cand in candidates)
+            var fallback = await ResolveCandidatesInParallelAsync(pluginManager, candidates, expectedSec, trialFile, trialSong, ct, deadline, log);
+            if (fallback.CompleteFile is not null && fallback.CompleteSong is not null)
             {
-                ct.ThrowIfCancellationRequested();
-                if (DateTime.UtcNow >= deadline) break;
-                if (string.IsNullOrEmpty(cand.PluginHash) || failedPlugins.Contains(cand.PluginHash)) continue;
-                var swCand = System.Diagnostics.Stopwatch.StartNew();
-                var (altSource, _) = await GetMediaSourceWithTimeoutAsync(pluginManager, cand, ct, TimeSpan.FromSeconds(12));
-                if (altSource is null)
-                {
-                    // 解析确认失败/超时才封杀该插件的其余候选: 仅试听/下载失败不应封杀——
-                    // LX 五音源共用一个插件 hash, 提前封杀会把其他音源的可用完整版一并跳过
-                    failedPlugins.Add(cand.PluginHash);
-                    log.LogInformation("[播放计时] 候选[{platform}] 解析失败 {ms}ms", cand.Platform, swCand.ElapsedMilliseconds);
-                    continue;
-                }
-                var (altFile, _) = await DownloadAudioWithTimeoutAsync(altSource.Url, altSource.Headers, ct, TimeSpan.FromSeconds(15));
-                log.LogInformation("[播放计时] 候选[{platform}] 解析+下载 {ms}ms 下载成功={ok}", cand.Platform, swCand.ElapsedMilliseconds, altFile is not null);
-                if (altFile is null) continue;
-                if (IsTrialVersion(altFile, cand.DurationSec > 0 ? cand.DurationSec : expectedSec))
-                {
-                    // 也是试听版, 记为兜底后继续找完整版
-                    if (trialFile is null) { trialFile = altFile; trialSong = cand; }
-                    continue;
-                }
-                OnlineMusicRegistry.Register(cand);
+                OnlineMusicRegistry.Register(fallback.CompleteSong);
                 // 完整版写回歌单库: 修复数据随下次同步上传, 避免每次播放都重新跨插件搜索
-                _ = Task.Run(() => RepairOnlineSongInDbAsync(music, cand));
-                music.OnlineVirtualPath = cand.VirtualPath;
-                music.Path = altFile;
-                log.LogInformation("[播放计时] 完成(回退换源[{platform}]) 总耗时 {ms}ms", cand.Platform, sw.ElapsedMilliseconds);
+                _ = Task.Run(() => RepairOnlineSongInDbAsync(music, fallback.CompleteSong));
+                music.OnlineVirtualPath = fallback.CompleteSong.VirtualPath;
+                music.Path = fallback.CompleteFile;
+                log.LogInformation("[播放计时] 完成(回退换源[{platform}]) 总耗时 {ms}ms", fallback.CompleteSong.Platform, sw.ElapsedMilliseconds);
                 return (true, null);
             }
+            trialFile = fallback.TrialFile;
+            trialSong = fallback.TrialSong;
             ct.ThrowIfCancellationRequested();
             // 仅试听可用: 播放试听但不写回歌单库(避免锁死试听源, 来源恢复后自动回到完整版)
             if (trialFile is not null && trialSong is not null)
             {
+                // 预取只缓存完整版: 试听版不写回 Path(写回会让正式播放跳过完整版回退链),
+                // 也不弹提示, 留给正式播放时完整走一遍并给出试听提示
+                if (prefetch)
+                {
+                    log.LogInformation("[播放计时] 预取仅试听版, 放弃缓存 「{title}」 {ms}ms", music.Title, sw.ElapsedMilliseconds);
+                    return (false, null);
+                }
                 View.SubView.ToastFlyout.ShowInfo($"「{music.Title}」各音源均仅提供试听版");
                 OnlineMusicRegistry.Register(trialSong);
                 music.OnlineVirtualPath = trialSong.VirtualPath;
@@ -491,6 +599,82 @@ namespace WinUIMusicPlayer.Services.Plugins
             }
             log.LogInformation("[播放计时] 失败 总耗时 {ms}ms 错误={err}", sw.ElapsedMilliseconds, lastError);
             return (false, lastError);
+        }
+
+        /// <summary>回退候选并行解析结果: 完整版(Complete* 同时非空)或试听兜底(Trial*)。</summary>
+        private sealed record FallbackResolveResult(string? CompleteFile, OnlineSong? CompleteSong, string? TrialFile, OnlineSong? TrialSong);
+
+        /// <summary>回退候选并行解析+下载: 所有候选同时开跑, 最先下载完成的完整版胜出并取消其余;
+        /// 全部只试听时保留最先完成的试听版作兜底。串行逐个尝试时病态插件(如汽水内部重试,
+        /// 单次 12 秒超时)会把后续可用音源全部挡在身后(实测整链 18.9 秒), 并行后总耗时≈
+        /// 回退搜索+最快完整版耗时。预取失败/取消一律静默。</summary>
+        private static async Task<FallbackResolveResult> ResolveCandidatesInParallelAsync(
+            PluginManagerService pm, List<OnlineSong> candidates, double expectedSec,
+            string? existingTrialFile, OnlineSong? existingTrialSong,
+            CancellationToken ct, DateTime deadline, ILogger log)
+        {
+            var trialFile = existingTrialFile;
+            var trialSong = existingTrialSong;
+            if (candidates.Count == 0) return new(null, null, trialFile, trialSong);
+
+            using var batchCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var pending = new List<Task<(OnlineSong Cand, string? File, bool IsComplete, long Ms)>>();
+            foreach (var cand in candidates)
+            {
+                if (string.IsNullOrEmpty(cand.PluginHash)) continue;
+                pending.Add(ResolveOneCandidateAsync(pm, cand, expectedSec, batchCts.Token));
+            }
+            try
+            {
+                while (pending.Count > 0)
+                {
+                    if (DateTime.UtcNow >= deadline) break; // 整体限时兜底, 由 finally 统一取消剩余
+                    var done = await Task.WhenAny(pending);
+                    pending.Remove(done);
+                    var r = await done; // 内部全捕获, 不抛
+                    log.LogInformation("[播放计时] 候选[{platform}] 解析+下载 {ms}ms 完整版={ok}", r.Cand.Platform, r.Ms, r.IsComplete);
+                    if (r.IsComplete && r.File is not null)
+                    {
+                        batchCts.Cancel(); // 胜出: 其余候选立即取消, 网络与插件引擎让位
+                        return new(r.File, r.Cand, trialFile, trialSong);
+                    }
+                    if (r.File is not null && trialFile is null)
+                    {
+                        // 下载成功但只是试听版: 留作兜底, 继续等其他候选的完整版
+                        trialFile = r.File;
+                        trialSong = r.Cand;
+                    }
+                }
+            }
+            finally
+            {
+                batchCts.Cancel(); // 正常胜出/超时/外部取消统一回收剩余任务
+            }
+            return new(null, null, trialFile, trialSong);
+        }
+
+        /// <summary>单个回退候选的限时解析+下载: 任何失败/超时/取消都返回 (null, false) 不抛异常。</summary>
+        private static async Task<(OnlineSong Cand, string? File, bool IsComplete, long Ms)> ResolveOneCandidateAsync(
+            PluginManagerService pm, OnlineSong cand, double expectedSec, CancellationToken ct)
+        {
+            var swCand = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                var (altSource, _) = await GetMediaSourceWithTimeoutAsync(pm, cand, ct, TimeSpan.FromSeconds(12));
+                if (altSource is null) return (cand, null, false, swCand.ElapsedMilliseconds);
+                var (altFile, _) = await DownloadAudioWithTimeoutAsync(altSource.Url, altSource.Headers, ct, TimeSpan.FromSeconds(15));
+                if (altFile is null) return (cand, null, false, swCand.ElapsedMilliseconds);
+                var isTrial = IsTrialVersion(altFile, cand.DurationSec > 0 ? cand.DurationSec : expectedSec);
+                return (cand, altFile, !isTrial, swCand.ElapsedMilliseconds);
+            }
+            catch (OperationCanceledException)
+            {
+                return (cand, null, false, swCand.ElapsedMilliseconds);
+            }
+            catch
+            {
+                return (cand, null, false, swCand.ElapsedMilliseconds);
+            }
         }
 
         /// <summary>主音源失败时按 标题+歌手 在其余插件中搜索同曲, 返回按匹配分降序的候选(排除已失败插件, 严格匹配标题+歌手/时长)。限时 8 秒。

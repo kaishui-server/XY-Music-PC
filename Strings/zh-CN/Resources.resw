@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -2437,5 +2437,152 @@
   </data>
   <data name="CloudDataPlaylistNotFound" xml:space="preserve">
     <value>歌单不存在或已被删除</value>
+  </data>
+  <data name="MobileBackupImportDone" xml:space="preserve">
+    <value>导入完成</value>
+  </data>
+  <data name="MobileBackupLblPlugins" xml:space="preserve">
+    <value>插件</value>
+  </data>
+  <data name="MobileBackupImporting" xml:space="preserve">
+    <value>正在导入备份...</value>
+  </data>
+  <data name="MobileBackupLblSongs" xml:space="preserve">
+    <value>歌曲</value>
+  </data>
+  <data name="MobileBackupInvalidFile" xml:space="preserve">
+    <value>不是有效的手机版备份文件</value>
+  </data>
+  <data name="MobileBackupLblUserVars" xml:space="preserve">
+    <value>用户变量</value>
+  </data>
+  <data name="ImportMobileBackupButton.Content" xml:space="preserve">
+    <value>选择备份文件</value>
+  </data>
+  <data name="MobileBackupLblSkipped" xml:space="preserve">
+    <value>跳过</value>
+  </data>
+  <data name="MobileBackupLblFavorites" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="SettingsBackup.Text" xml:space="preserve">
+    <value>备份与恢复</value>
+  </data>
+  <data name="MobileBackupLblFailed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="ImportMobileBackupDescription" xml:space="preserve">
+    <value>选择手机版导出的备份文件（.json），导入其中的歌单、收藏、插件与用户变量。主题、设置等其他内容将被忽略。</value>
+  </data>
+  <data name="MobileBackupLblPlaylists" xml:space="preserve">
+    <value>歌单</value>
+  </data>
+  <data name="MobileBackupLblApplied" xml:space="preserve">
+    <value>已应用</value>
+  </data>
+  <data name="MobileBackupLblLocal" xml:space="preserve">
+    <value>本地</value>
+  </data>
+  <data name="ImportMobileBackup.Text" xml:space="preserve">
+    <value>从手机版导入备份</value>
+  </data>
+  <data name="MobileBackupLblOnline" xml:space="preserve">
+    <value>在线</value>
+  </data>
+  <data name="ExportMobileBackup.Text" xml:space="preserve">
+    <value>导出备份</value>
+  </data>
+  <data name="ExportMobileBackupButton.Content" xml:space="preserve">
+    <value>选择保存位置</value>
+  </data>
+  <data name="ExportMobileBackupDescription" xml:space="preserve">
+    <value>将收藏、歌单、插件与用户变量导出为备份文件（.json），可在电脑版与手机版之间互相导入。本地曲库、主题与设置不会导出。</value>
+  </data>
+  <data name="MobileBackupExporting" xml:space="preserve">
+    <value>正在导出备份...</value>
+  </data>
+  <data name="MobileBackupExportDone" xml:space="preserve">
+    <value>导出完成</value>
+  </data>
+  <data name="MobileBackupExportFailed" xml:space="preserve">
+    <value>导出备份失败</value>
+  </data>
+  <data name="SettingsDebugLogs.Text" xml:space="preserve">
+    <value>调试与日志</value>
+  </data>
+  <data name="LogSettings.Text" xml:space="preserve">
+    <value>日志设置</value>
+  </data>
+  <data name="LogRetentionCount.Text" xml:space="preserve">
+    <value>日志保存条数</value>
+  </data>
+  <data name="LogRetentionCountDescription" xml:space="preserve">
+    <value>日志文件最多保留的条目数量，超出后自动裁剪旧条目。</value>
+  </data>
+  <data name="LogWarningOnly.Text" xml:space="preserve">
+    <value>只记录警告和报错日志</value>
+  </data>
+  <data name="LogWarningOnlyDescription" xml:space="preserve">
+    <value>开启后仅记录警告及以上级别的日志，可减少磁盘占用。</value>
+  </data>
+  <data name="LogExportCrashTitle" xml:space="preserve">
+    <value>导出崩溃记录</value>
+  </data>
+  <data name="LogExportCrashDescription" xml:space="preserve">
+    <value>导出包含崩溃与未处理异常的记录。</value>
+  </data>
+  <data name="LogExportErrorTitle" xml:space="preserve">
+    <value>导出错误日志</value>
+  </data>
+  <data name="LogExportErrorDescription" xml:space="preserve">
+    <value>导出全部错误与致命级别日志。</value>
+  </data>
+  <data name="LogExportAllTitle" xml:space="preserve">
+    <value>导出全部日志</value>
+  </data>
+  <data name="LogExportAllDescription" xml:space="preserve">
+    <value>导出所有保留的日志文件内容。</value>
+  </data>
+  <data name="LogExportButton" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="LogClear.Text" xml:space="preserve">
+    <value>清空日志</value>
+  </data>
+  <data name="LogClearDescription" xml:space="preserve">
+    <value>删除全部日志文件，操作不可恢复。</value>
+  </data>
+  <data name="LogClearButton" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="LogExportDoneFormat" xml:space="preserve">
+    <value>已导出{1} {0} 条</value>
+  </data>
+  <data name="LogExportEmpty" xml:space="preserve">
+    <value>没有可导出的日志</value>
+  </data>
+  <data name="LogClearConfirmTitle" xml:space="preserve">
+    <value>清空日志</value>
+  </data>
+  <data name="LogClearConfirmContent" xml:space="preserve">
+    <value>将删除全部日志文件，此操作无法恢复。确定继续吗？</value>
+  </data>
+  <data name="LogClearDoneFormat" xml:space="preserve">
+    <value>已清空 {0} 个日志文件</value>
+  </data>
+  <data name="PluginEnableAll.Text" xml:space="preserve">
+    <value>一键启用全部</value>
+  </data>
+  <data name="PluginDisableAll.Text" xml:space="preserve">
+    <value>一键禁用全部</value>
+  </data>
+  <data name="PluginEnableAllToast" xml:space="preserve">
+    <value>已启用 {0} 个音源</value>
+  </data>
+  <data name="PluginDisableAllToast" xml:space="preserve">
+    <value>已禁用 {0} 个音源</value>
+  </data>
+  <data name="PluginSetAllNoChange" xml:space="preserve">
+    <value>插件状态无变化</value>
   </data>
 </root>

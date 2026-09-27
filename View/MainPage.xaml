@@ -150,7 +150,7 @@
                         x:Name="CurrentPlayListView"
                         Grid.Row="1"
                         Padding="0,0,0,8"
-                        DoubleTapped="CurrentPlayListView_DoubleTapped"
+                        SelectionChanged="CurrentPlayListView_SelectionChanged"
                         ItemsSource="{x:Bind ViewModel.AppViewModel.CurrentPlayingList, Mode=OneWay}"
                         SelectionMode="Single">
                         <ListView.ItemTemplate>

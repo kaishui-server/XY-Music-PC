@@ -2437,4 +2437,151 @@
   <data name="CloudDataPlaylistNotFound" xml:space="preserve">
     <value>Playlist not found or deleted</value>
   </data>
+  <data name="MobileBackupImportDone" xml:space="preserve">
+    <value>Import Complete</value>
+  </data>
+  <data name="MobileBackupLblPlugins" xml:space="preserve">
+    <value>Plugins</value>
+  </data>
+  <data name="MobileBackupImporting" xml:space="preserve">
+    <value>Importing backup...</value>
+  </data>
+  <data name="MobileBackupLblSongs" xml:space="preserve">
+    <value>Songs</value>
+  </data>
+  <data name="MobileBackupInvalidFile" xml:space="preserve">
+    <value>Not a valid mobile backup file</value>
+  </data>
+  <data name="MobileBackupLblUserVars" xml:space="preserve">
+    <value>User Variables</value>
+  </data>
+  <data name="ImportMobileBackupButton.Content" xml:space="preserve">
+    <value>Select Backup File</value>
+  </data>
+  <data name="MobileBackupLblSkipped" xml:space="preserve">
+    <value>Skipped</value>
+  </data>
+  <data name="MobileBackupLblFavorites" xml:space="preserve">
+    <value>Favorites</value>
+  </data>
+  <data name="SettingsBackup.Text" xml:space="preserve">
+    <value>Backup &amp; Restore</value>
+  </data>
+  <data name="MobileBackupLblFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="ImportMobileBackupDescription" xml:space="preserve">
+    <value>Select a backup file (.json) exported from the mobile app to import playlists, favorites, plugins and user variables. Themes, settings and other content will be ignored.</value>
+  </data>
+  <data name="MobileBackupLblPlaylists" xml:space="preserve">
+    <value>Playlists</value>
+  </data>
+  <data name="MobileBackupLblApplied" xml:space="preserve">
+    <value>Applied</value>
+  </data>
+  <data name="MobileBackupLblLocal" xml:space="preserve">
+    <value>Local</value>
+  </data>
+  <data name="ImportMobileBackup.Text" xml:space="preserve">
+    <value>Import from Mobile Backup</value>
+  </data>
+  <data name="MobileBackupLblOnline" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="ExportMobileBackup.Text" xml:space="preserve">
+    <value>Export Backup</value>
+  </data>
+  <data name="ExportMobileBackupButton.Content" xml:space="preserve">
+    <value>Choose Save Location</value>
+  </data>
+  <data name="ExportMobileBackupDescription" xml:space="preserve">
+    <value>Export favorites, playlists, plugins and user variables to a backup file (.json) that can be imported on another PC or the mobile version. Local library, themes and settings are not included.</value>
+  </data>
+  <data name="MobileBackupExporting" xml:space="preserve">
+    <value>Exporting backup...</value>
+  </data>
+  <data name="MobileBackupExportDone" xml:space="preserve">
+    <value>Export complete</value>
+  </data>
+  <data name="MobileBackupExportFailed" xml:space="preserve">
+    <value>Failed to export backup</value>
+  </data>
+  <data name="SettingsDebugLogs.Text" xml:space="preserve">
+    <value>Debug &amp; Logs</value>
+  </data>
+  <data name="LogSettings.Text" xml:space="preserve">
+    <value>Log Settings</value>
+  </data>
+  <data name="LogRetentionCount.Text" xml:space="preserve">
+    <value>Log retention count</value>
+  </data>
+  <data name="LogRetentionCountDescription" xml:space="preserve">
+    <value>Maximum number of entries kept in the log file. Older entries are trimmed automatically.</value>
+  </data>
+  <data name="LogWarningOnly.Text" xml:space="preserve">
+    <value>Log warnings and errors only</value>
+  </data>
+  <data name="LogWarningOnlyDescription" xml:space="preserve">
+    <value>When enabled, only warnings and errors are recorded to reduce disk usage.</value>
+  </data>
+  <data name="LogExportCrashTitle" xml:space="preserve">
+    <value>Export crash records</value>
+  </data>
+  <data name="LogExportCrashDescription" xml:space="preserve">
+    <value>Export records containing crashes and unhandled exceptions.</value>
+  </data>
+  <data name="LogExportErrorTitle" xml:space="preserve">
+    <value>Export error logs</value>
+  </data>
+  <data name="LogExportErrorDescription" xml:space="preserve">
+    <value>Export all error and fatal level logs.</value>
+  </data>
+  <data name="LogExportAllTitle" xml:space="preserve">
+    <value>Export all logs</value>
+  </data>
+  <data name="LogExportAllDescription" xml:space="preserve">
+    <value>Export the contents of all retained log files.</value>
+  </data>
+  <data name="LogExportButton" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="LogClear.Text" xml:space="preserve">
+    <value>Clear logs</value>
+  </data>
+  <data name="LogClearDescription" xml:space="preserve">
+    <value>Delete all log files. This cannot be undone.</value>
+  </data>
+  <data name="LogClearButton" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="LogExportDoneFormat" xml:space="preserve">
+    <value>Exported {0} {1}</value>
+  </data>
+  <data name="LogExportEmpty" xml:space="preserve">
+    <value>No logs to export</value>
+  </data>
+  <data name="LogClearConfirmTitle" xml:space="preserve">
+    <value>Clear logs</value>
+  </data>
+  <data name="LogClearConfirmContent" xml:space="preserve">
+    <value>All log files will be deleted. This cannot be undone. Continue?</value>
+  </data>
+  <data name="LogClearDoneFormat" xml:space="preserve">
+    <value>Cleared {0} log files</value>
+  </data>
+  <data name="PluginEnableAll.Text" xml:space="preserve">
+    <value>Enable all</value>
+  </data>
+  <data name="PluginDisableAll.Text" xml:space="preserve">
+    <value>Disable all</value>
+  </data>
+  <data name="PluginEnableAllToast" xml:space="preserve">
+    <value>Enabled {0} sources</value>
+  </data>
+  <data name="PluginDisableAllToast" xml:space="preserve">
+    <value>Disabled {0} sources</value>
+  </data>
+  <data name="PluginSetAllNoChange" xml:space="preserve">
+    <value>No plugin state changed</value>
+  </data>
 </root>

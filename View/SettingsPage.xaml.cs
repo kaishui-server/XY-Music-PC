@@ -5,10 +5,16 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using Windows.System;
 using WinUIMusicPlayer.Model;
+using WinUIMusicPlayer.Services;
 using WinUIMusicPlayer.Utils;
 using WinUIMusicPlayer.ViewModel;
+using WinUIMusicPlayer.View.SubView;
+using Microsoft.Windows.Storage.Pickers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -21,6 +27,7 @@ namespace WinUIMusicPlayer.View
     public sealed partial class SettingsPage : Page
     {
         private ContentDialog? _thirdPartyDialog;
+        private bool _isImportingBackup;
         public SettingsViewModel ViewModel { get; }
         public SettingsPage()
         {
@@ -84,9 +91,243 @@ namespace WinUIMusicPlayer.View
             string storeUri = "spectrumvisualization:";
             LauncherOptions options = new LauncherOptions
             {
-                FallbackUri = new Uri("ms-windows-store://pdp/?ProductId=9PL2DSHJ79W7")
+                FallbackUri = new Uri("ms-windows-store://pdp/?ProductId=9PL2DSHJ79W")
             };
             _ = Launcher.LaunchUriAsync(new Uri(storeUri), options);
+        }
+
+        private async void ImportMobileBackup_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isImportingBackup) return;
+            var picker = new Microsoft.Windows.Storage.Pickers.FileOpenPicker(App.MainWindow.AppWindow.Id);
+            picker.FileTypeFilter.Add(".json");
+            var file = await picker.PickSingleFileAsync();
+            if (file is null) return;
+
+            string backupJson;
+            try
+            {
+                backupJson = await File.ReadAllTextAsync(file.Path, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                await ShowMobileBackupResultAsync(ToolUtils.GetString("MobileBackupInvalidFile"), ex.Message);
+                return;
+            }
+
+            _isImportingBackup = true;
+            var progressDialog = new ContentDialog
+            {
+                Title = ToolUtils.GetString("MobileBackupImporting"),
+                Content = new Microsoft.UI.Xaml.Controls.ProgressRing { IsActive = true },
+                XamlRoot = this.XamlRoot
+            };
+            progressDialog.RequestedTheme = AppSettings.ElementTheme;
+            _ = progressDialog.ShowAsync();
+            MobileBackupImportResult result;
+            try
+            {
+                result = await new MobileBackupImportService().ImportAsync(backupJson);
+            }
+            catch (Exception ex)
+            {
+                result = new MobileBackupImportResult { Ok = false, Error = ex.Message };
+            }
+            finally
+            {
+                _isImportingBackup = false;
+                progressDialog.Hide();
+            }
+
+            if (result.Ok)
+            {
+                // 收藏/歌单导入后刷新本地收藏集合与各视图
+                ViewModel.AppViewModel.RefreshAllViews();
+            }
+            await ShowMobileBackupResultAsync(
+                result.Ok ? ToolUtils.GetString("MobileBackupImportDone") : ToolUtils.GetString("MobileBackupInvalidFile"),
+                result.Ok ? BuildMobileBackupSummary(result) : result.Error);
+        }
+
+        private static string BuildMobileBackupSummary(MobileBackupImportResult r)
+        {
+            var sb = new StringBuilder();
+            sb.Append(ToolUtils.GetString("MobileBackupLblPlaylists")).Append(": ")
+              .Append(r.CreatedPlaylists + r.ReusedPlaylists).AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblSongs")).Append(": ")
+              .Append(r.ImportedOnlineSongs + r.ImportedLocalSongs)
+              .Append(" (").Append(ToolUtils.GetString("MobileBackupLblOnline")).Append(' ').Append(r.ImportedOnlineSongs)
+              .Append(", ").Append(ToolUtils.GetString("MobileBackupLblLocal")).Append(' ').Append(r.ImportedLocalSongs)
+              .Append(", ").Append(ToolUtils.GetString("MobileBackupLblSkipped")).Append(' ').Append(r.SkippedSongs)
+              .Append(')').AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblFavorites")).Append(": ")
+              .Append(r.LocalFavorites + r.OnlineFavorites)
+              .Append(" (").Append(ToolUtils.GetString("MobileBackupLblLocal")).Append(' ').Append(r.LocalFavorites)
+              .Append(", ").Append(ToolUtils.GetString("MobileBackupLblOnline")).Append(' ').Append(r.OnlineFavorites)
+              .Append(')').AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblPlugins")).Append(": ")
+              .Append(r.InstalledPlugins)
+              .Append(", ").Append(ToolUtils.GetString("MobileBackupLblFailed")).Append(' ').Append(r.FailedPlugins)
+              .AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblUserVars")).Append(": ")
+              .Append(ToolUtils.GetString("MobileBackupLblApplied")).Append(' ').Append(r.AppliedUserVarPlugins);
+            foreach (var err in r.PluginErrors)
+                sb.AppendLine().Append(err);
+            return sb.ToString();
+        }
+
+        private async Task ShowMobileBackupResultAsync(string title, string? message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = new ScrollViewer
+                {
+                    MaxHeight = 400,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    Content = new TextBlock
+                    {
+                        TextWrapping = TextWrapping.Wrap,
+                        FontSize = 13,
+                        Text = message ?? string.Empty
+                    }
+                },
+                CloseButtonText = ToolUtils.GetString("CloseButton"),
+                XamlRoot = this.XamlRoot
+            };
+            dialog.RequestedTheme = AppSettings.ElementTheme;
+            await dialog.ShowAsync();
+        }
+
+        private bool _isExportingBackup;
+
+        private async void ExportMobileBackup_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isExportingBackup) return;
+            var picker = new FileSavePicker(App.MainWindow.AppWindow.Id)
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+            };
+            picker.FileTypeChoices.Add("JSON", new[] { ".json" });
+            var now = DateTime.Now;
+            picker.SuggestedFileName = $"xy_music_backup_{now:yyyyMMdd}_{now:HHmmss}";
+            var file = await picker.PickSaveFileAsync();
+            if (file is null) return;
+
+            _isExportingBackup = true;
+            var progressDialog = new ContentDialog
+            {
+                Title = ToolUtils.GetString("MobileBackupExporting"),
+                Content = new Microsoft.UI.Xaml.Controls.ProgressRing { IsActive = true },
+                XamlRoot = this.XamlRoot
+            };
+            progressDialog.RequestedTheme = AppSettings.ElementTheme;
+            _ = progressDialog.ShowAsync();
+            MobileBackupExportResult result;
+            try
+            {
+                result = await new MobileBackupExportService().ExportAsync(file.Path);
+            }
+            catch (Exception ex)
+            {
+                result = new MobileBackupExportResult { Ok = false, Error = ex.Message };
+            }
+            finally
+            {
+                _isExportingBackup = false;
+                progressDialog.Hide();
+            }
+            await ShowMobileBackupResultAsync(
+                result.Ok ? ToolUtils.GetString("MobileBackupExportDone") : ToolUtils.GetString("MobileBackupExportFailed"),
+                result.Ok ? BuildMobileBackupExportSummary(result) : result.Error);
+        }
+
+        private static string BuildMobileBackupExportSummary(MobileBackupExportResult r)
+        {
+            var sb = new StringBuilder();
+            sb.Append(ToolUtils.GetString("MobileBackupLblPlaylists")).Append(": ")
+              .Append(r.Playlists).AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblSongs")).Append(": ")
+              .Append(r.OnlineSongs + r.LocalSongs)
+              .Append(" (").Append(ToolUtils.GetString("MobileBackupLblOnline")).Append(' ').Append(r.OnlineSongs)
+              .Append(", ").Append(ToolUtils.GetString("MobileBackupLblLocal")).Append(' ').Append(r.LocalSongs)
+              .Append(", ").Append(ToolUtils.GetString("MobileBackupLblSkipped")).Append(' ').Append(r.SkippedSongs)
+              .Append(')').AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblFavorites")).Append(": ")
+              .Append(r.OnlineFavorites + r.LocalFavorites)
+              .Append(" (").Append(ToolUtils.GetString("MobileBackupLblOnline")).Append(' ').Append(r.OnlineFavorites)
+              .Append(", ").Append(ToolUtils.GetString("MobileBackupLblLocal")).Append(' ').Append(r.LocalFavorites)
+              .Append(')').AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblPlugins")).Append(": ")
+              .Append(r.Plugins).AppendLine();
+            sb.Append(ToolUtils.GetString("MobileBackupLblUserVars")).Append(": ")
+              .Append(ToolUtils.GetString("MobileBackupLblApplied")).Append(' ').Append(r.UserVarPlugins);
+            return sb.ToString();
+        }
+
+        private async void ExportCrashLogs_Click(object sender, RoutedEventArgs e) =>
+            await ExportLogsAsync(LogExportKind.Crash);
+
+        private async void ExportErrorLogs_Click(object sender, RoutedEventArgs e) =>
+            await ExportLogsAsync(LogExportKind.Error);
+
+        private async void ExportAllLogs_Click(object sender, RoutedEventArgs e) =>
+            await ExportLogsAsync(LogExportKind.All);
+
+        private async Task ExportLogsAsync(LogExportKind kind)
+        {
+            var kindName = kind switch
+            {
+                LogExportKind.Crash => ToolUtils.GetString("LogExportCrashTitle"),
+                LogExportKind.Error => ToolUtils.GetString("LogExportErrorTitle"),
+                _ => ToolUtils.GetString("LogExportAllTitle")
+            };
+            var picker = new FileSavePicker(App.MainWindow.AppWindow.Id)
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+            };
+            picker.FileTypeChoices.Add("Log", new[] { ".log" });
+            picker.SuggestedFileName = $"XYMusic-{kind.ToString().ToLowerInvariant()}-log-{DateTime.Now:yyyyMMdd-HHmmss}";
+            var file = await picker.PickSaveFileAsync();
+            if (file is null) return;
+
+            var (ok, count, error) = LogManagementService.Export(kind, file.Path);
+            if (!ok)
+            {
+                ToastFlyout.ShowError(error ?? ToolUtils.GetString("Error"));
+            }
+            else if (count == 0)
+            {
+                ToastFlyout.ShowInfo(ToolUtils.GetString("LogExportEmpty"));
+            }
+            else
+            {
+                ToastFlyout.ShowSuccess(string.Format(
+                    ToolUtils.GetString("LogExportDoneFormat"), count, kindName));
+            }
+        }
+
+        private async void ClearLogs_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = ToolUtils.GetString("LogClearConfirmTitle"),
+                Content = new TextBlock
+                {
+                    Text = ToolUtils.GetString("LogClearConfirmContent"),
+                    TextWrapping = TextWrapping.Wrap
+                },
+                PrimaryButtonText = ToolUtils.GetString("LogClearButton"),
+                CloseButtonText = ToolUtils.GetString("TextCancel"),
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+            dialog.RequestedTheme = AppSettings.ElementTheme;
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
+            var deleted = LogManagementService.ClearAllLogs();
+            ToastFlyout.ShowSuccess(string.Format(
+                ToolUtils.GetString("LogClearDoneFormat"), deleted));
         }
 
         private void AutoScrollHover_PointerEntered(object sender, PointerRoutedEventArgs e)

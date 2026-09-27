@@ -33,11 +33,39 @@ namespace WinUIMusicPlayer.ViewModel.Pages
             };
         }
 
+        /// <summary>
+        /// 就地合并清单数据, 不做 Clear+整表重建: 整表重建会让 ListView 回收容器并重置
+        /// ToggleSwitch.IsOn, 在旧 DataContext 存续期间触发 Toggled, 被页面误判为用户
+        /// 关闭操作而反向回写清单(表现为启用后被弹回"暂无可用插件")。
+        /// </summary>
         public void RefreshList()
         {
-            Plugins.Clear();
-            foreach (var item in _pluginManager.GetInstalledItems())
-                Plugins.Add(item);
+            var fresh = _pluginManager.GetInstalledItems();
+            var freshByHash = fresh.Select(i => i.Hash).ToHashSet();
+
+            for (var i = Plugins.Count - 1; i >= 0; i--)
+                if (!freshByHash.Contains(Plugins[i].Hash))
+                    Plugins.RemoveAt(i);
+
+            foreach (var item in fresh)
+            {
+                var existing = Plugins.FirstOrDefault(p => p.Hash == item.Hash);
+                if (existing is null)
+                {
+                    Plugins.Add(item);
+                    continue;
+                }
+                existing.Platform = item.Platform;
+                existing.Version = item.Version;
+                existing.Author = item.Author;
+                existing.SrcUrl = item.SrcUrl;
+                existing.Enabled = item.Enabled;
+                existing.Status = item.Status;
+                existing.SupportsSearch = item.SupportsSearch;
+                existing.MethodsText = item.MethodsText;
+                existing.SearchTypesText = item.SearchTypesText;
+                existing.UserVariables = item.UserVariables;
+            }
             if (Plugins.Count == 0)
                 ToastFlyout.ShowInfo(ToolUtils.GetString("PluginManageEmpty"));
         }
@@ -231,6 +259,41 @@ namespace WinUIMusicPlayer.ViewModel.Pages
                 if (error is not null) ToastFlyout.ShowError(error);
                 else if (count == 0) ToastFlyout.ShowInfo(ToolUtils.GetString("PluginManageEmpty"));
                 else ToastFlyout.ShowSuccess($"{ToolUtils.GetString("PluginUninstallSuccess")} ({count})");
+            }
+            finally
+            {
+                IsBusy = false;
+                RefreshList();
+            }
+        }
+
+        /// <summary>一键启用全部音源。</summary>
+        [RelayCommand]
+        private async Task EnableAllAsync() => await SetAllCoreAsync(true);
+
+        /// <summary>一键禁用全部音源。</summary>
+        [RelayCommand]
+        private async Task DisableAllAsync() => await SetAllCoreAsync(false);
+
+        private async Task SetAllCoreAsync(bool enabled)
+        {
+            if (IsBusy) return;
+            if (Plugins.Count == 0)
+            {
+                ToastFlyout.ShowInfo(ToolUtils.GetString("PluginManageEmpty"));
+                return;
+            }
+            IsBusy = true;
+            try
+            {
+                var (count, error) = await _pluginManager.SetAllEnabledAsync(enabled);
+                if (error is not null)
+                    ToastFlyout.ShowError(error);
+                else if (count == 0)
+                    ToastFlyout.ShowInfo(ToolUtils.GetString("PluginSetAllNoChange"));
+                else
+                    ToastFlyout.ShowSuccess(string.Format(
+                        ToolUtils.GetString(enabled ? "PluginEnableAllToast" : "PluginDisableAllToast"), count));
             }
             finally
             {

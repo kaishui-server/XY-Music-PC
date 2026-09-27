@@ -299,6 +299,10 @@ namespace WinUIMusicPlayer.Services.Plugins
     {
         public static readonly PluginHttpBridge Shared = new();
 
+        // 与手机端 rust 桥(rust/src/plugins.rs USER_AGENT)完全一致:
+        // 裸请求(无 User-Agent)会被酷我 mobi.s 等音源判定为异常客户端, 返回"免费听歌权限"广告音频
+        private const string DefaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
         private readonly HttpClient _client;
         private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
         // 响应序列化使用 camelCase, 与插件侧 axios 垫片读取的字段名(parsed.statusCode/parsed.body 等)一致
@@ -326,11 +330,16 @@ namespace WinUIMusicPlayer.Services.Plugins
             {
                 var options = JsonSerializer.Deserialize<RequestOptions>(optionsJson, JsonOptions) ?? new RequestOptions();
                 using var req = new HttpRequestMessage(new HttpMethod(options.Method?.ToUpperInvariant() ?? "GET"), url);
+                var hasUserAgent = false;
                 if (options.Headers is not null)
                 {
                     foreach (var kv in options.Headers)
                         req.Headers.TryAddWithoutValidation(kv.Key, kv.Value);
+                    hasUserAgent = options.Headers.Keys.Any(k => k.Equals("User-Agent", StringComparison.OrdinalIgnoreCase));
                 }
+                // 插件未显式携带 UA 时兜底注入(对齐手机端 rust 桥的强制 UA)
+                if (!hasUserAgent)
+                    req.Headers.TryAddWithoutValidation("User-Agent", DefaultUserAgent);
                 if (!string.IsNullOrEmpty(options.Body))
                 {
                     req.Content = new StringContent(options.Body, Encoding.UTF8);

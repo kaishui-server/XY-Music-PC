@@ -365,3 +365,7 @@ FodyWeavers.xsd
 # 打包产物
 installer-output/
 release-publish/
+
+# Scripts 测试产物与本地插件备份(截图/第三方插件不入库)
+Scripts/shot_*.png
+Scripts/_backup_plugins/

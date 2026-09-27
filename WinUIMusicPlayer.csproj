@@ -108,6 +108,11 @@
     <EmbeddedResource Remove="External\**" />
     <None Remove="External\**" />
     <Page Remove="External\**" />
+    <!-- Scripts 目录仅存放 UIA 回归脚本与独立复现工程(LxRepro 自带 csproj), 不参与主工程编译 -->
+    <Compile Remove="Scripts\**" />
+    <EmbeddedResource Remove="Scripts\**" />
+    <None Remove="Scripts\**" />
+    <Page Remove="Scripts\**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />

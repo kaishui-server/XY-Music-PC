@@ -125,7 +125,18 @@ namespace WinUIMusicPlayer.Services
                 var isOnline = IsOnlineMusic(music);
                 string? lyricsText = null, transLrc = null, krc = null, tKrc = null;
                 if (!isOnline)
+                {
                     (lyricsText, transLrc, krc, tKrc) = await _musicDatabaseService.GetLyricsAsync(music.Id);
+                }
+                else
+                {
+                    // 在线歌曲负数临时 Id 禁落库: 读取实例会话缓存(上次播放联网搜索写回),
+                    // 重播直接命中——否则 IsKrcSearched/IsLrcSearched 已置位跳过搜索, 歌词必然丢失
+                    krc = music.CachedKrc;
+                    tKrc = music.CachedKrcTrans;
+                    lyricsText = music.CachedLrc;
+                    transLrc = music.CachedLrcTrans;
+                }
 
                 // 0. 在线歌曲的会话级关联歌词(用户手动关联, 优先级最高, 不落库)
                 if (isOnline && OnlineLyricsLinkStore.TryGet(music, out var linked))
@@ -397,10 +408,16 @@ namespace WinUIMusicPlayer.Services
                 {
                     var (newKrc, newTKrc) = await App.Services.GetRequiredService<LrcService>()
                         .GetKrcLyricsAsync(music, cancellationToken);
+                    // LrcService 内部吞掉取消异常返回空串: 被切歌取消的搜索不得把歌曲标记为
+                    // "已搜索", 否则重播时跳过搜索直接兜底空歌词(表现为歌词区永久空白)
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (!string.IsNullOrEmpty(newKrc))
                     {
                         krc = newKrc;
                         tKrc = newTKrc ?? "";
+                        // 写回实例会话缓存: 重播免联网重搜(在线歌禁落库, 实例是唯一缓存载体)
+                        music.CachedKrc = krc;
+                        music.CachedKrcTrans = tKrc;
                     }
                     music.IsKrcSearched = true;
                 }
@@ -975,10 +992,15 @@ namespace WinUIMusicPlayer.Services
                     {
                         var (lyric, trans) = await App.Services.GetRequiredService<LrcService>()
                             .GetMixedLyricsAsync(music, cancellationToken);
+                        // 同 KRC: 被取消的搜索不得置 IsLrcSearched, 保证重播时重新联网搜索
+                        cancellationToken.ThrowIfCancellationRequested();
                         if (!string.IsNullOrEmpty(lyric))
                         {
                             lrcContent = lyric;
                             transLrcStr = trans;
+                            // 同 KRC: 写回实例会话缓存, 重播直接命中
+                            music.CachedLrc = lrcContent;
+                            music.CachedLrcTrans = transLrcStr;
                         }
                         music.IsLrcSearched = true;
                     }
@@ -995,9 +1017,9 @@ namespace WinUIMusicPlayer.Services
                     return (parsed, lrcContent, transLrcStr);
             }
 
-            var emptyLine = RentLine();
-            emptyLine.IsCurrent = true;
-            return ([emptyLine], lrcContent, transLrcStr);
+            // 全链路(本地文件/插件/缓存/联网搜索)均无歌词: 返回空列表触发"暂无歌词"空态。
+            // 不可兜底单条空行——非空列表会骗过 Count==0 的空态判定, 歌词区渲染成一片空白
+            return ([], lrcContent, transLrcStr);
         }
 
         // ──────────────────────────────────────────────────────────────

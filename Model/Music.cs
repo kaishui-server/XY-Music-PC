@@ -49,6 +49,13 @@ namespace WinUIMusicPlayer.Model
         /// <summary>在线歌曲原始虚拟路径(mfplugin://...), 播放时 Path 会被替换为缓存文件, 此字段保留插件音源信息。</summary>
         [Ignore]
         public string OnlineVirtualPath { get; set; } = string.Empty;
+
+        // 在线歌曲歌词会话级缓存: 联网搜索结果写回实例(在线歌曲负数临时 Id 禁落库),
+        // 重播同一实例直接命中, 不再因 IsKrcSearched/IsLrcSearched 已置位跳过搜索而丢词
+        [Ignore] public string? CachedKrc { get; set; }
+        [Ignore] public string? CachedKrcTrans { get; set; }
+        [Ignore] public string? CachedLrc { get; set; }
+        [Ignore] public string? CachedLrcTrans { get; set; }
         public string ImageHash { get; set => SetProperty(ref field, value); } = string.Empty;
         public DateTime CreateTime { get; set => SetProperty(ref field, value); }
         public DateTime UpdateTime { get; set => SetProperty(ref field, value); }

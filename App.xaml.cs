@@ -54,14 +54,18 @@ namespace WinUIMusicPlayer
                     Directory.CreateDirectory(logDirectory);
                 }
                 var logFilePath = Path.Combine(logDirectory, "WinUIMusicPlayer-.log");
+                // 等级开关支持运行时"只记录警告和报错日志"
+                var logLevelSwitch = new Serilog.Core.LoggingLevelSwitch(Serilog.Events.LogEventLevel.Information);
                 Serilog.Log.Logger = new LoggerConfiguration()
-                     .MinimumLevel.Information()
+                     .MinimumLevel.ControlledBy(logLevelSwitch)
                      .WriteTo.File(
                          logFilePath,
+                         shared: true,
                          rollingInterval: RollingInterval.Day,
                          retainedFileCountLimit: 30,
                          outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                      .CreateLogger();
+                WinUIMusicPlayer.Services.LogManagementService.Initialize(logLevelSwitch);
                 logging.AddSerilog(Serilog.Log.Logger);
                 // 设置日志级别
                 logging.SetMinimumLevel(LogLevel.Information);

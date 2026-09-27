@@ -39,6 +39,22 @@
                 </StackPanel>
             </Button>
             <Button
+                Command="{x:Bind ViewModel.EnableAllCommand}"
+                IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Glyph="&#xE73E;" />
+                    <TextBlock x:Uid="PluginEnableAll" />
+                </StackPanel>
+            </Button>
+            <Button
+                Command="{x:Bind ViewModel.DisableAllCommand}"
+                IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontSize="14" Glyph="&#xE769;" />
+                    <TextBlock x:Uid="PluginDisableAll" />
+                </StackPanel>
+            </Button>
+            <Button
                 Command="{x:Bind ViewModel.UninstallAllCommand}"
                 IsEnabled="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}">
                 <StackPanel Orientation="Horizontal" Spacing="8">

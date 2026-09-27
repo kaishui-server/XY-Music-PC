@@ -1806,6 +1806,32 @@ namespace WinUIMusicPlayer.ViewModel
             await Launcher.LaunchFolderAsync(folder, options);
         }
 
+        /// <summary>日志保存条数(100/500/1000/3000), 超出自动裁剪最旧记录。ComboBox Tag 为字符串。</summary>
+        public string LogRetentionCount
+        {
+            get => field;
+            set
+            {
+                if (SetProperty(ref field, value) && int.TryParse(value, out var count))
+                {
+                    Services.LogManagementService.SetRetentionCount(count);
+                }
+            }
+        } = Services.LogManagementService.RetentionCount.ToString();
+
+        /// <summary>只记录警告和报错日志, 即时切换 Serilog 等级开关。</summary>
+        public bool IsLogWarningOnly
+        {
+            get => field;
+            set
+            {
+                if (SetProperty(ref field, value))
+                {
+                    Services.LogManagementService.SetWarningOnly(value);
+                }
+            }
+        } = Services.LogManagementService.WarningOnly;
+
         [RelayCommand]
         private async Task ChangeCoverCacheLocation()
         {
@@ -2021,13 +2047,13 @@ namespace WinUIMusicPlayer.ViewModel
         [RelayCommand]
         private void OpenWebSite()
         {
-            _ = Launcher.LaunchUriAsync(new Uri("https://johnwikix.github.io/original-sound-player-page"));
+            _ = Launcher.LaunchUriAsync(new Uri("https://xymusic.cc"));
         }
 
         [RelayCommand]
         private void OpenMainGitHub()
         {
-            _ = Launcher.LaunchUriAsync(new Uri("https://github.com/Johnwikix/original-sound-hq-player"));
+            _ = Launcher.LaunchUriAsync(new Uri("https://github.com/kaishui-server/XY-Music-PC"));
         }
         [RelayCommand]
         private async Task OpenCoverCacheLocation()

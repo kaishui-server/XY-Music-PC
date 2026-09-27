@@ -577,12 +577,19 @@ namespace WinUIMusicPlayer.View
             });
         }
 
-        private void CurrentPlayListView_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        /// <summary>
+        /// 程序性高亮当前播放曲时抑制点播: 面板打开/切歌都会经 UpdateCurrentPlayList
+        /// 设置 SelectedItem, 不抑制的话每次都会触发重播当前曲。
+        /// </summary>
+        private bool _isProgrammaticPlayListSelection;
+
+        private void CurrentPlayListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedMusic = CurrentPlayListView.SelectedItem as Music;
-            if (selectedMusic is not null)
+            if (_isProgrammaticPlayListSelection) return;
+            // 单击队列歌曲立即跳播(原来仅双击才播, 单击只选中不播放)
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is Music clicked)
             {
-                _ = ViewModel.MusicBrowseVM.PlayMusic(music: selectedMusic, IsChangeList: false);
+                _ = ViewModel.MusicBrowseVM.PlayMusic(music: clicked, IsChangeList: false);
             }
         }
 
@@ -704,8 +711,16 @@ namespace WinUIMusicPlayer.View
                         {
                             DispatcherQueue.TryEnqueue(() =>
                             {
-                                CurrentPlayListView.SelectedItem = selectedMusic;
-                                CurrentPlayListView.ScrollIntoView(selectedMusic);
+                                _isProgrammaticPlayListSelection = true;
+                                try
+                                {
+                                    CurrentPlayListView.SelectedItem = selectedMusic;
+                                    CurrentPlayListView.ScrollIntoView(selectedMusic);
+                                }
+                                finally
+                                {
+                                    _isProgrammaticPlayListSelection = false;
+                                }
                             });
                         });
                     }

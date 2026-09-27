@@ -2124,6 +2124,235 @@
                     </Expander.Content>
                 </Expander>
 
+                <!--  备份与恢复  -->
+                <TextBlock
+                    x:Uid="SettingsBackup"
+                    Margin="10,10,0,10"
+                    FontSize="16" />
+
+                <Expander
+                    MinHeight="69"
+                    Margin="10,0,10,0"
+                    Padding="0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    CornerRadius="{ThemeResource ControlCornerRadius}">
+                    <Expander.Header>
+                        <Grid Padding="16,16,4,16">
+                            <TextBlock
+                                x:Uid="ImportMobileBackup"
+                                VerticalAlignment="Center"
+                                FontSize="14" />
+                        </Grid>
+                    </Expander.Header>
+                    <Expander.Content>
+                        <StackPanel>
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('ImportMobileBackupDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button
+                                    x:Uid="ImportMobileBackupButton"
+                                    Grid.Column="1"
+                                    Click="ImportMobileBackup_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </Expander.Content>
+                </Expander>
+
+                <Expander
+                    MinHeight="69"
+                    Margin="10,0,10,0"
+                    Padding="0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    CornerRadius="{ThemeResource ControlCornerRadius}">
+                    <Expander.Header>
+                        <Grid Padding="16,16,4,16">
+                            <TextBlock
+                                x:Uid="ExportMobileBackup"
+                                VerticalAlignment="Center"
+                                FontSize="14" />
+                        </Grid>
+                    </Expander.Header>
+                    <Expander.Content>
+                        <StackPanel>
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('ExportMobileBackupDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button
+                                    x:Uid="ExportMobileBackupButton"
+                                    Grid.Column="1"
+                                    Click="ExportMobileBackup_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </Expander.Content>
+                </Expander>
+
+                <!--  调试与日志  -->
+                <TextBlock
+                    x:Uid="SettingsDebugLogs"
+                    Margin="10,10,0,10"
+                    FontSize="16" />
+
+                <Expander
+                    MinHeight="69"
+                    Margin="10,0,10,0"
+                    Padding="0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    CornerRadius="{ThemeResource ControlCornerRadius}">
+                    <Expander.Header>
+                        <Grid Padding="16,16,4,16">
+                            <TextBlock
+                                x:Uid="LogSettings"
+                                VerticalAlignment="Center"
+                                FontSize="14" />
+                        </Grid>
+                    </Expander.Header>
+                    <Expander.Content>
+                        <StackPanel>
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock x:Uid="LogRetentionCount" FontSize="14" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('LogRetentionCountDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ComboBox
+                                    Grid.Column="1"
+                                    Width="160"
+                                    VerticalAlignment="Center"
+                                    SelectedValue="{x:Bind ViewModel.AppViewModel.LogRetentionCount, Mode=TwoWay}"
+                                    SelectedValuePath="Tag">
+                                    <ComboBoxItem Content="100" Tag="100" />
+                                    <ComboBoxItem Content="500" Tag="500" />
+                                    <ComboBoxItem Content="1000" Tag="1000" />
+                                    <ComboBoxItem Content="3000" Tag="3000" />
+                                </ComboBox>
+                            </Grid>
+
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock x:Uid="LogWarningOnly" FontSize="14" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('LogWarningOnlyDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch
+                                    Grid.Column="1"
+                                    MinWidth="0"
+                                    IsOn="{x:Bind ViewModel.AppViewModel.IsLogWarningOnly, Mode=TwoWay}" />
+                            </Grid>
+
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="14" Text="{x:Bind tool:ToolUtils.GetString('LogExportCrashTitle')}" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('LogExportCrashDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button
+                                    Grid.Column="1"
+                                    Click="ExportCrashLogs_Click"
+                                    Content="{x:Bind tool:ToolUtils.GetString('LogExportButton')}" />
+                            </Grid>
+
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="14" Text="{x:Bind tool:ToolUtils.GetString('LogExportErrorTitle')}" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('LogExportErrorDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button
+                                    Grid.Column="1"
+                                    Click="ExportErrorLogs_Click"
+                                    Content="{x:Bind tool:ToolUtils.GetString('LogExportButton')}" />
+                            </Grid>
+
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock FontSize="14" Text="{x:Bind tool:ToolUtils.GetString('LogExportAllTitle')}" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('LogExportAllDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button
+                                    Grid.Column="1"
+                                    Click="ExportAllLogs_Click"
+                                    Content="{x:Bind tool:ToolUtils.GetString('LogExportButton')}" />
+                            </Grid>
+
+                            <Grid
+                                MinHeight="52"
+                                Padding="58,8,44,8"
+                                HorizontalAlignment="Stretch"
+                                ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock x:Uid="LogClear" FontSize="14" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind tool:ToolUtils.GetString('LogClearDescription')}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button
+                                    Grid.Column="1"
+                                    Click="ClearLogs_Click"
+                                    Content="{x:Bind tool:ToolUtils.GetString('LogClearButton')}" />
+                            </Grid>
+                        </StackPanel>
+                    </Expander.Content>
+                </Expander>
+
                 <!--  关于  -->
                 <TextBlock
                     x:Uid="SettingsAbout"
@@ -2134,7 +2363,7 @@
                     x:Uid="AppTitleHeader"
                     Margin="10,0,10,0"
                     Description="© 2026 XYMusic"
-                    HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/Square44x44Logo.altform-unplated_targetsize-32.png}">
+                    HeaderIcon="{ui:BitmapIcon Source=ms-appx:///Assets/icon.ico}">
                     <TextBlock
                         x:Name="Version"
                         Margin="10"

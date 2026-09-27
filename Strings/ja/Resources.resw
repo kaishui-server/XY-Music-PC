@@ -2434,4 +2434,151 @@
   <data name="CloudDataPlaylistNotFound" xml:space="preserve">
     <value>プレイリストが存在しないか削除されました</value>
   </data>
+  <data name="MobileBackupImportDone" xml:space="preserve">
+    <value>インポート完了</value>
+  </data>
+  <data name="MobileBackupLblPlugins" xml:space="preserve">
+    <value>プラグイン</value>
+  </data>
+  <data name="MobileBackupImporting" xml:space="preserve">
+    <value>バックアップをインポート中...</value>
+  </data>
+  <data name="MobileBackupLblSongs" xml:space="preserve">
+    <value>曲</value>
+  </data>
+  <data name="MobileBackupInvalidFile" xml:space="preserve">
+    <value>有効なモバイル版バックアップファイルではありません</value>
+  </data>
+  <data name="MobileBackupLblUserVars" xml:space="preserve">
+    <value>ユーザー変数</value>
+  </data>
+  <data name="ImportMobileBackupButton.Content" xml:space="preserve">
+    <value>バックアップファイルを選択</value>
+  </data>
+  <data name="MobileBackupLblSkipped" xml:space="preserve">
+    <value>スキップ</value>
+  </data>
+  <data name="MobileBackupLblFavorites" xml:space="preserve">
+    <value>お気に入り</value>
+  </data>
+  <data name="SettingsBackup.Text" xml:space="preserve">
+    <value>バックアップと復元</value>
+  </data>
+  <data name="MobileBackupLblFailed" xml:space="preserve">
+    <value>失敗</value>
+  </data>
+  <data name="ImportMobileBackupDescription" xml:space="preserve">
+    <value>モバイル版でエクスポートしたバックアップファイル（.json）を選択すると、プレイリスト・お気に入り・プラグイン・ユーザー変数をインポートします。テーマや設定などの内容は無視されます。</value>
+  </data>
+  <data name="MobileBackupLblPlaylists" xml:space="preserve">
+    <value>プレイリスト</value>
+  </data>
+  <data name="MobileBackupLblApplied" xml:space="preserve">
+    <value>適用</value>
+  </data>
+  <data name="MobileBackupLblLocal" xml:space="preserve">
+    <value>ローカル</value>
+  </data>
+  <data name="ImportMobileBackup.Text" xml:space="preserve">
+    <value>モバイル版バックアップからインポート</value>
+  </data>
+  <data name="MobileBackupLblOnline" xml:space="preserve">
+    <value>オンライン</value>
+  </data>
+  <data name="ExportMobileBackup.Text" xml:space="preserve">
+    <value>バックアップのエクスポート</value>
+  </data>
+  <data name="ExportMobileBackupButton.Content" xml:space="preserve">
+    <value>保存先を選択</value>
+  </data>
+  <data name="ExportMobileBackupDescription" xml:space="preserve">
+    <value>お気に入り、プレイリスト、プラグイン、ユーザー変数をバックアップファイル（.json）としてエクスポートし、他のPC版やモバイル版にインポートできます。ローカルライブラリ、テーマ、設定は含まれません。</value>
+  </data>
+  <data name="MobileBackupExporting" xml:space="preserve">
+    <value>バックアップをエクスポート中...</value>
+  </data>
+  <data name="MobileBackupExportDone" xml:space="preserve">
+    <value>エクスポート完了</value>
+  </data>
+  <data name="MobileBackupExportFailed" xml:space="preserve">
+    <value>バックアップのエクスポートに失敗しました</value>
+  </data>
+  <data name="SettingsDebugLogs.Text" xml:space="preserve">
+    <value>デバッグとログ</value>
+  </data>
+  <data name="LogSettings.Text" xml:space="preserve">
+    <value>ログ設定</value>
+  </data>
+  <data name="LogRetentionCount.Text" xml:space="preserve">
+    <value>ログ保存件数</value>
+  </data>
+  <data name="LogRetentionCountDescription" xml:space="preserve">
+    <value>ログファイルに保持する最大件数。超過分は自動的に切り詰められます。</value>
+  </data>
+  <data name="LogWarningOnly.Text" xml:space="preserve">
+    <value>警告とエラーのみ記録</value>
+  </data>
+  <data name="LogWarningOnlyDescription" xml:space="preserve">
+    <value>有効にすると警告以上のレベルのみ記録し、ディスク使用量を削減します。</value>
+  </data>
+  <data name="LogExportCrashTitle" xml:space="preserve">
+    <value>クラッシュ記録をエクスポート</value>
+  </data>
+  <data name="LogExportCrashDescription" xml:space="preserve">
+    <value>クラッシュおよび未処理例外の記録をエクスポートします。</value>
+  </data>
+  <data name="LogExportErrorTitle" xml:space="preserve">
+    <value>エラーログをエクスポート</value>
+  </data>
+  <data name="LogExportErrorDescription" xml:space="preserve">
+    <value>すべてのエラーおよび致命的レベルのログをエクスポートします。</value>
+  </data>
+  <data name="LogExportAllTitle" xml:space="preserve">
+    <value>すべてのログをエクスポート</value>
+  </data>
+  <data name="LogExportAllDescription" xml:space="preserve">
+    <value>保持されているすべてのログファイルの内容をエクスポートします。</value>
+  </data>
+  <data name="LogExportButton" xml:space="preserve">
+    <value>エクスポート</value>
+  </data>
+  <data name="LogClear.Text" xml:space="preserve">
+    <value>ログを消去</value>
+  </data>
+  <data name="LogClearDescription" xml:space="preserve">
+    <value>すべてのログファイルを削除します。この操作は元に戻せません。</value>
+  </data>
+  <data name="LogClearButton" xml:space="preserve">
+    <value>消去</value>
+  </data>
+  <data name="LogExportDoneFormat" xml:space="preserve">
+    <value>{1}を {0} 件エクスポートしました</value>
+  </data>
+  <data name="LogExportEmpty" xml:space="preserve">
+    <value>エクスポートできるログがありません</value>
+  </data>
+  <data name="LogClearConfirmTitle" xml:space="preserve">
+    <value>ログを消去</value>
+  </data>
+  <data name="LogClearConfirmContent" xml:space="preserve">
+    <value>すべてのログファイルが削除されます。この操作は元に戻せません。続行しますか？</value>
+  </data>
+  <data name="LogClearDoneFormat" xml:space="preserve">
+    <value>{0} 個のログファイルを消去しました</value>
+  </data>
+  <data name="PluginEnableAll.Text" xml:space="preserve">
+    <value>すべて有効化</value>
+  </data>
+  <data name="PluginDisableAll.Text" xml:space="preserve">
+    <value>すべて無効化</value>
+  </data>
+  <data name="PluginEnableAllToast" xml:space="preserve">
+    <value>{0} 個の音源を有効にしました</value>
+  </data>
+  <data name="PluginDisableAllToast" xml:space="preserve">
+    <value>{0} 個の音源を無効にしました</value>
+  </data>
+  <data name="PluginSetAllNoChange" xml:space="preserve">
+    <value>プラグインの状態に変化はありません</value>
+  </data>
 </root>

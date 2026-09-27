@@ -478,6 +478,17 @@ namespace AnimatedWin2dControls.Controls
             catch (Exception ex) { RaiseException(ex); }
         }
 
+        /// <summary>当前背景 4 目标色的平均 WCAG 相对亮度(0=纯黑, 1=纯白)。
+        /// SetPalette/RefreshColors 同步更新；无渲染器时按主题给出保守值。
+        /// 供宿主页面实现"文字黑/白自适应反转"。</summary>
+        public float GetBackgroundLuminance()
+            => _background?.TargetAverageLuminance ?? (IsDark ? 0.05f : 0.85f);
+
+        /// <summary>高级歌词文字色覆盖(仅非自定义颜色模式生效): null=跟随主题黑白字。
+        /// 供宿主页面按背景亮度临时反转歌词字色, 与页面其他文字保持一致。</summary>
+        public void SetLyricsTextColorOverride(Windows.UI.Color? color)
+            => _coordinator.TextColorOverride = color;
+
         // ── 封面 ─────────────────────────────────────────────────────────────
 
         /// <summary>

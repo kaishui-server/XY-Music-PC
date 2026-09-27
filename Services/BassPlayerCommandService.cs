@@ -103,6 +103,12 @@ namespace WinUIMusicPlayer.Services
                         break;
                 }
             }
+            catch (Exception ex)
+            {
+                // 自动切歌由 IPC 后台线程触发, 异常无人观察会被任务调度器静默吞掉,
+                // 表现为播放完一曲后下一首无声卡住且日志只有"未观察到的异常"
+                _logger.LogError(ex, "自动切歌失败: {Message}", ex.Message);
+            }
             finally
             {
                 Interlocked.Exchange(ref _autoPlayInFlight, 0);

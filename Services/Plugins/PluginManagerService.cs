@@ -23,6 +23,8 @@ namespace WinUIMusicPlayer.Services.Plugins
         private readonly ConcurrentDictionary<string, PluginRuntime> _runtimes = new();
         /// <summary>LX(洛雪)插件运行时: 搜索走内置 SDK, 插件仅解析 musicUrl/lyric/pic。</summary>
         private readonly ConcurrentDictionary<string, LxPluginRuntime> _lxRuntimes = new();
+        /// <summary>animemusic/1 插件运行时: 宿主直连后端 REST(搜索/解析/歌词), 无脚本引擎。</summary>
+        private readonly ConcurrentDictionary<string, AnimemusicPluginRuntime> _amRuntimes = new();
         private readonly List<PluginManifestEntry> _manifest = new();
         private readonly object _manifestGate = new();
         private bool _initialized;
@@ -44,8 +46,10 @@ namespace WinUIMusicPlayer.Services.Plugins
 
         public IEnumerable<LxPluginRuntime> ActiveLxPlugins => _lxRuntimes.Values;
 
-        /// <summary>按清单(插件管理页)顺序返回启用插件的运行时(MF 与 LX 二选一), 供在线搜索 Tab 排序。</summary>
-        public List<(PluginRuntime? Mf, LxPluginRuntime? Lx)> GetActiveRuntimesInOrder()
+        public IEnumerable<AnimemusicPluginRuntime> ActiveAnimemusicPlugins => _amRuntimes.Values;
+
+        /// <summary>按清单(插件管理页)顺序返回启用插件的运行时(MF/LX/animemusic), 供在线搜索 Tab 排序。</summary>
+        public List<(PluginRuntime? Mf, LxPluginRuntime? Lx, AnimemusicPluginRuntime? Am)> GetActiveRuntimesInOrder()
         {
             lock (_manifestGate)
             {
@@ -55,9 +59,10 @@ namespace WinUIMusicPlayer.Services.Plugins
                     {
                         _runtimes.TryGetValue(e.Hash, out var mf);
                         _lxRuntimes.TryGetValue(e.Hash, out var lx);
-                        return (Mf: mf, Lx: lx);
+                        _amRuntimes.TryGetValue(e.Hash, out var am);
+                        return (Mf: mf, Lx: lx, Am: am);
                     })
-                    .Where(t => t.Mf is not null || t.Lx is not null)
+                    .Where(t => t.Mf is not null || t.Lx is not null || t.Am is not null)
                     .ToList();
             }
         }
@@ -125,6 +130,14 @@ namespace WinUIMusicPlayer.Services.Plugins
                     _lxRuntimes[entry.Hash] = lx;
                     return;
                 }
+                if (entry.Format == "am" || AnimemusicPluginRuntime.IsAnimemusicScript(code))
+                {
+                    var savedAmVars = PluginUserVariablesStore.Get(entry.Platform);
+                    savedAmVars.TryGetValue("api", out var apiOverride);
+                    var am = AnimemusicPluginRuntime.Load(code, entry.Hash, apiOverride, entry.SrcUrl, _logger);
+                    _amRuntimes[entry.Hash] = am;
+                    return;
+                }
                 var runtime = PluginRuntime.Load(
                     code, entry.Hash,
                     Path.Combine(StorageDir, entry.Hash[..8] + ".json"),
@@ -151,9 +164,9 @@ namespace WinUIMusicPlayer.Services.Plugins
             }
         }
 
-        /// <summary>从插件源码安装插件。返回 (hash, error)。</summary>
-        public Task<(string? Hash, string? Error)> InstallFromCodeAsync(string code)
-            => Task.Run(() => InstallFromCode(code));
+        /// <summary>从插件源码安装插件。返回 (hash, error)。srcUrl 为安装来源(用于 animemusic api 端口改写与更新检查)。</summary>
+        public Task<(string? Hash, string? Error)> InstallFromCodeAsync(string code, string? srcUrl = null)
+            => Task.Run(() => InstallFromCode(code, srcUrl));
 
         public Task<(string? Hash, string? Error)> InstallFromFileAsync(string filePath)
         {
@@ -171,7 +184,7 @@ namespace WinUIMusicPlayer.Services.Plugins
             });
         }
 
-        private (string? Hash, string? Error) InstallFromCode(string code)
+        private (string? Hash, string? Error) InstallFromCode(string code, string? srcUrl = null)
         {
             if (!_initialized) return (null, "插件服务未初始化");
             if (string.IsNullOrWhiteSpace(code)) return (null, "插件代码为空");
@@ -180,6 +193,8 @@ namespace WinUIMusicPlayer.Services.Plugins
             var fileName = hash[..16] + ".js";
             if (LxPluginRuntime.IsLxScript(code))
                 return InstallLxFromCode(code, hash, fileName);
+            if (AnimemusicPluginRuntime.IsAnimemusicScript(code))
+                return InstallAmFromCode(code, hash, fileName, srcUrl);
 
             PluginRuntime? runtime = null;
             PluginManifestEntry? entry = null;
@@ -267,6 +282,54 @@ namespace WinUIMusicPlayer.Services.Plugins
             }
         }
 
+        /// <summary>安装 animemusic/1 自有格式插件(对齐手机版): 纯 META 解析,
+        /// 播放/搜索由宿主直连后端 REST; api 缺失时可由用户变量 api 补充。</summary>
+        private (string? Hash, string? Error) InstallAmFromCode(string code, string hash, string fileName, string? srcUrl)
+        {
+            try
+            {
+                var meta = AnimemusicPluginRuntime.ParseMeta(code);
+                if (meta.Name.Length == 0 && meta.Api.Length == 0 && !MetaRegexHasMeta(code))
+                    return (null, "无法识别 animemusic/1 插件(缺少 META 声明)");
+                var name = meta.Name.Length > 0 ? meta.Name : $"animemusic-{meta.Platform}";
+                var savedVars = PluginUserVariablesStore.Get(name);
+                savedVars.TryGetValue("api", out var apiOverride);
+                var am = AnimemusicPluginRuntime.Load(code, hash, apiOverride, srcUrl, _logger);
+                if (am.Api.Length == 0)
+                    _logger.LogWarning("animemusic 插件 {Name} 未提供后端地址, 可通过用户变量 api 配置", name);
+                Directory.CreateDirectory(PluginDir);
+                File.WriteAllText(Path.Combine(PluginDir, fileName), code);
+                var entry = new PluginManifestEntry
+                {
+                    Hash = hash,
+                    FileName = fileName,
+                    Platform = name,
+                    Version = meta.Version,
+                    Author = meta.Author,
+                    SrcUrl = srcUrl ?? string.Empty,
+                    Enabled = true,
+                    Format = "am",
+                    Sources = meta.Platform,
+                };
+                lock (_manifestGate)
+                {
+                    _manifest.RemoveAll(e => e.Hash == hash);
+                    _manifest.Add(entry);
+                    SaveManifestLocked();
+                }
+                _amRuntimes.AddOrUpdate(hash, am, (_, old) => { old.Dispose(); return am; });
+                PluginsChanged?.Invoke();
+                return (hash, null);
+            }
+            catch (Exception ex)
+            {
+                return (null, $"animemusic 插件加载失败: {ex.Message}");
+            }
+        }
+
+        private static bool MetaRegexHasMeta(string code)
+            => System.Text.RegularExpressions.Regex.IsMatch(code, @"const\s+META\s*=\s*\{");
+
         public Task<(bool Ok, string? Error)> UninstallAsync(string hash)
         {
             return Task.Run(() =>
@@ -286,6 +349,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                 if (!string.IsNullOrEmpty(platform)) PluginUserVariablesStore.Remove(platform);
                 if (_runtimes.TryRemove(hash, out var runtime)) runtime.Dispose();
                 if (_lxRuntimes.TryRemove(hash, out var lxRuntime)) lxRuntime.Dispose();
+                if (_amRuntimes.TryRemove(hash, out var amRuntime)) amRuntime.Dispose();
                 PluginsChanged?.Invoke();
                 return (true, (string?)null);
             });
@@ -313,6 +377,8 @@ namespace WinUIMusicPlayer.Services.Plugins
                 _runtimes.Clear();
                 foreach (var (_, lxRuntime) in _lxRuntimes) lxRuntime.Dispose();
                 _lxRuntimes.Clear();
+                foreach (var (_, amRuntime) in _amRuntimes) amRuntime.Dispose();
+                _amRuntimes.Clear();
                 PluginsChanged?.Invoke();
                 return (entries.Count, (string?)null);
             });
@@ -345,8 +411,53 @@ namespace WinUIMusicPlayer.Services.Plugins
                 {
                     lxRuntime.Dispose();
                 }
+                else if (_amRuntimes.TryRemove(hash, out var amRuntime))
+                {
+                    amRuntime.Dispose();
+                }
                 PluginsChanged?.Invoke();
                 return (true, (string?)null);
+            });
+        }
+
+        /// <summary>
+        /// 一键启用/禁用全部插件: 单次保存清单避免逐条写盘; 启用时只补载此前被禁用
+        /// (无活动运行时)的插件, 禁用时统一回收三个运行时容器。返回状态变更条数。
+        /// </summary>
+        public Task<(int Count, string? Error)> SetAllEnabledAsync(bool enabled)
+        {
+            return Task.Run(() =>
+            {
+                List<PluginManifestEntry> toLoad;
+                int changed;
+                lock (_manifestGate)
+                {
+                    toLoad = _manifest.Where(e => e.Enabled != enabled).ToList();
+                    foreach (var entry in toLoad)
+                        entry.Enabled = enabled;
+                    changed = toLoad.Count;
+                    if (changed > 0)
+                        SaveManifestLocked();
+                }
+                if (enabled)
+                {
+                    lock (_manifestGate)
+                    {
+                        foreach (var entry in toLoad)
+                            LoadPluginRuntime(entry);
+                    }
+                }
+                else
+                {
+                    foreach (var (_, runtime) in _runtimes) runtime.Dispose();
+                    _runtimes.Clear();
+                    foreach (var (_, lxRuntime) in _lxRuntimes) lxRuntime.Dispose();
+                    _lxRuntimes.Clear();
+                    foreach (var (_, amRuntime) in _amRuntimes) amRuntime.Dispose();
+                    _amRuntimes.Clear();
+                }
+                PluginsChanged?.Invoke();
+                return (changed, (string?)null);
             });
         }
 
@@ -382,7 +493,8 @@ namespace WinUIMusicPlayer.Services.Plugins
                 {
                     var active = _runtimes.TryGetValue(e.Hash, out var rt);
                     var lxActive = _lxRuntimes.TryGetValue(e.Hash, out var lx);
-                    var runtimeActive = active || lxActive;
+                    var amActive = _amRuntimes.TryGetValue(e.Hash, out var am);
+                    var runtimeActive = active || lxActive || amActive;
                     InstalledPluginItem item;
                     if (e.Format == "lx")
                     {
@@ -404,6 +516,27 @@ namespace WinUIMusicPlayer.Services.Plugins
                             MethodsText = actions,
                             SearchTypesText = lxActive ? string.Join(", ", lx!.Sources.Keys) : string.Empty,
                             UserVariables = null,
+                        };
+                    }
+                    else if (e.Format == "am")
+                    {
+                        // animemusic 插件: 宿主直连后端 REST, 能力固定(搜索/音源/歌词); api 用户变量可覆盖后端地址
+                        item = new InstalledPluginItem
+                        {
+                            Hash = e.Hash,
+                            FileName = e.FileName,
+                            Platform = e.Platform,
+                            Version = e.Version,
+                            Author = e.Author,
+                            SrcUrl = e.SrcUrl,
+                            Enabled = e.Enabled,
+                            Status = e.Enabled && !amActive ? "加载失败" : string.Empty,
+                            SupportsSearch = amActive,
+                            MethodsText = amActive ? "search, getMediaSource, getLyric" : string.Empty,
+                            SearchTypesText = amActive ? am!.Meta.Platform : string.Empty,
+                            UserVariables = amActive
+                                ? [new JsonUserVariable { Key = "api", Name = "接口地址", Hint = $"默认 {am!.Api}" }]
+                                : null,
                         };
                     }
                     else
@@ -445,6 +578,34 @@ namespace WinUIMusicPlayer.Services.Plugins
                 if (entry is null) return (false, "插件不存在");
                 if (entry.Format == "lx") return (false, "LX 插件不支持用户变量");
                 PluginUserVariablesStore.Set(entry.Platform, values);
+                // animemusic: api 变量覆盖 META 后端地址, 重建运行时立即生效
+                if (entry.Format == "am")
+                {
+                    if (_amRuntimes.TryGetValue(hash, out var oldAm))
+                    {
+                        try
+                        {
+                            var file = Path.Combine(PluginDir, entry.FileName);
+                            if (File.Exists(file))
+                            {
+                                values.TryGetValue("api", out var apiOverride);
+                                var runtime = AnimemusicPluginRuntime.Load(
+                                    File.ReadAllText(file), entry.Hash, apiOverride, entry.SrcUrl, _logger);
+                                if (_amRuntimes.TryUpdate(hash, runtime, oldAm))
+                                    oldAm.Dispose();
+                                else
+                                    runtime.Dispose();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "用户变量保存后重载 animemusic 插件 {Platform} 失败: {Message}", entry.Platform, ex.Message);
+                            return (false, $"变量已保存, 但重载插件失败: {ex.Message}");
+                        }
+                    }
+                    PluginsChanged?.Invoke();
+                    return (true, (string?)null);
+                }
                 // 重载运行时让新变量立即注入 env
                 if (_runtimes.TryGetValue(hash, out var old))
                 {
@@ -509,6 +670,13 @@ namespace WinUIMusicPlayer.Services.Plugins
                         return ("update", lxInfo.Version, code, null);
                     }
 
+                    if (AnimemusicPluginRuntime.IsAnimemusicScript(code))
+                    {
+                        // animemusic: 仅解析 META, 无需脚本引擎
+                        var amMeta = AnimemusicPluginRuntime.ParseMeta(code);
+                        return ("update", amMeta.Version, code, null);
+                    }
+
                     // 临时加载解析新版本号(仅读取元数据后立即释放)
                     var tmp = PluginRuntime.Load(code, newHash, Path.Combine(StorageDir, newHash[..8] + ".json"), App.GetAppVersion(), null, _logger);
                     try
@@ -550,7 +718,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                 }
                 catch { /* 存储迁移失败不影响更新 */ }
 
-                var (installedHash, error) = InstallFromCode(code);
+                var (installedHash, error) = InstallFromCode(code, oldEntry.SrcUrl);
                 if (installedHash is null) return (false, error);
 
                 lock (_manifestGate)
@@ -573,6 +741,7 @@ namespace WinUIMusicPlayer.Services.Plugins
                 }
                 if (_runtimes.TryRemove(oldHash, out var runtime)) runtime.Dispose();
                 if (_lxRuntimes.TryRemove(oldHash, out var lxRuntime)) lxRuntime.Dispose();
+                if (_amRuntimes.TryRemove(oldHash, out var amRuntime)) amRuntime.Dispose();
                 PluginsChanged?.Invoke();
                 return (true, (string?)null);
             });
@@ -636,6 +805,20 @@ namespace WinUIMusicPlayer.Services.Plugins
             return Task.Run(() =>
             {
                 var result = new PluginSearchResult { PluginHash = pluginHash };
+                if (_amRuntimes.TryGetValue(pluginHash, out var am))
+                {
+                    result.PluginName = am.Meta.Name;
+                    if (searchType != "music")
+                    {
+                        result.Error = "插件不支持该搜索类型";
+                        return result;
+                    }
+                    var (songs, isEnd, error) = am.Search(keyword, page);
+                    result.Songs = [.. songs];
+                    result.IsEnd = isEnd;
+                    result.Error = error;
+                    return result;
+                }
                 if (!_runtimes.TryGetValue(pluginHash, out var runtime) || !runtime.SupportsMethod("search"))
                 {
                     result.Error = "插件不可用";
@@ -1099,7 +1282,7 @@ namespace WinUIMusicPlayer.Services.Plugins
         /// <summary>插件哈希无法识别(如手机端同步歌曲携带手机插件文件名)时, 按平台名回退匹配本地唯一启用插件。</summary>
         public string? ResolvePluginHashByPlatform(string pluginHash, string platform)
         {
-            if (_runtimes.ContainsKey(pluginHash)) return pluginHash;
+            if (_runtimes.ContainsKey(pluginHash) || _amRuntimes.ContainsKey(pluginHash)) return pluginHash;
             if (string.IsNullOrWhiteSpace(platform)) return null;
             var matches = _runtimes.Values
                 .Where(r => string.Equals(r.Metadata.Platform?.Trim(), platform.Trim(), StringComparison.OrdinalIgnoreCase))
@@ -1161,7 +1344,7 @@ namespace WinUIMusicPlayer.Services.Plugins
             if (!string.IsNullOrEmpty(song.PluginHash) && !song.IsLx)
             {
                 var resolved = ResolvePluginHashByPlatform(song.PluginHash, song.Platform);
-                if (resolved is not null && resolved != song.PluginHash)
+                if (resolved is not null)
                 {
                     song.PluginHash = resolved;
                     if (string.IsNullOrEmpty(song.PluginName))
@@ -1177,6 +1360,28 @@ namespace WinUIMusicPlayer.Services.Plugins
         {
             return Task.Run<(OnlineMediaSource?, string?)>(async () =>
             {
+                if (_amRuntimes.TryGetValue(song.PluginHash, out var am))
+                {
+                    // animemusic 歌曲: 宿主直连后端 music/url, 逐档回退(首选 → 插件声明档位 → 常规兜底)
+                    var amPreferred = AnimemusicPluginRuntime.NormalizeQuality(quality);
+                    var amCandidates = new List<string> { amPreferred };
+                    amCandidates.AddRange(am.Meta.Qualities.Select(AnimemusicPluginRuntime.NormalizeQuality));
+                    foreach (var fallback in new[] { "320k", "128k" })
+                        if (!amCandidates.Contains(fallback)) amCandidates.Add(fallback);
+                    var amOrdered = qualityDownFirst
+                        ? OrderDownFirst(amCandidates, amPreferred).ToArray()
+                        : amCandidates.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                    string? amLastError = null;
+                    foreach (var q in amOrdered)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        var (source, error) = am.GetMediaSource(song, q);
+                        if (source is not null) return (source, null);
+                        amLastError = error;
+                        if (amLastError is not null && IsSongLevelError(amLastError)) break;
+                    }
+                    return (null, amLastError);
+                }
                 if (song.IsLx)
                 {
                     // LX 歌曲: RawJson 为 musicInfo, 先交给 LX 插件解析直链, 失败后走公共 API 兜底(与手机版一致)
@@ -1516,11 +1721,16 @@ namespace WinUIMusicPlayer.Services.Plugins
             value.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
             value.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>获取在线歌词: MF 走 getLyric, LX 走插件 lyric 动作。</summary>
+        /// <summary>获取在线歌词: MF 走 getLyric, LX 走插件 lyric 动作, animemusic 直连后端。</summary>
         public Task<(string? Lrc, string? Translation, string? Error)> GetLyricAsync(OnlineSong song)
         {
             return Task.Run(() =>
             {
+                if (_amRuntimes.TryGetValue(song.PluginHash, out var am))
+                {
+                    try { return am.GetLyric(song); }
+                    catch (Exception ex) { return (null, null, ex.Message); }
+                }
                 if (song.IsLx)
                 {
                     var lx = ResolveLxRuntime(song);

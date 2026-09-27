@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using WinUIMusicPlayer.Model;
+using WinUIMusicPlayer.Services.Plugins;
 using WinUIMusicPlayer.View;
 using WinUIMusicPlayer.ViewModel;
 
@@ -48,22 +49,30 @@ namespace WinUIMusicPlayer.Services
             if (music is null) return;
             music.IsFavorite = !music.IsFavorite;
             var app = App.Services.GetRequiredService<AppViewModel>();
+            var db = App.Services.GetRequiredService<MusicDatabaseService>();
+            var onlinePath = OnlinePathOf(music);
             if (music.IsFavorite)
             {
                 music.Order = ComputeNextFavoriteOrder(app);
                 app.AddToFavoriteSongs(music);
+                if (onlinePath is not null && OnlineMusicRegistry.TryGet(onlinePath, out var song))
+                    _ = db.AddOnlineFavoriteAsync(song);
             }
             else
             {
                 app.RemoveFromFavoriteSongs(music);
                 music.Order = 0;
+                if (onlinePath is not null)
+                    _ = db.RemoveOnlineFavoriteAsync(onlinePath);
             }
-            _ = App.Services.GetRequiredService<MusicDatabaseService>().AddToFavourite(music);
+            if (onlinePath is null)
+                _ = db.AddToFavourite(music);
         }
 
         private static void AddToFavourite(Music? music)
         {
             if (music is null) return;
+            var onlinePath = OnlinePathOf(music);
             if (!music.IsFavorite)
             {
                 music.IsFavorite = true;
@@ -71,7 +80,22 @@ namespace WinUIMusicPlayer.Services
                 music.Order = ComputeNextFavoriteOrder(app);
                 app.AddToFavoriteSongs(music);
             }
-            _ = App.Services.GetRequiredService<MusicDatabaseService>().AddToFavourite(music);
+            if (onlinePath is not null)
+            {
+                if (OnlineMusicRegistry.TryGet(onlinePath, out var song))
+                    _ = App.Services.GetRequiredService<MusicDatabaseService>().AddOnlineFavoriteAsync(song);
+            }
+            else
+            {
+                _ = App.Services.GetRequiredService<MusicDatabaseService>().AddToFavourite(music);
+            }
+        }
+
+        /// <summary>在线歌曲的虚拟路径(播放解析后 Path 被替换为缓存文件, 优先取 OnlineVirtualPath), 本地歌曲返回 null。</summary>
+        private static string? OnlinePathOf(Music music)
+        {
+            var p = music.OnlineVirtualPath is { Length: > 0 } ? music.OnlineVirtualPath : music.Path;
+            return OnlineMusicRegistry.IsOnlinePath(p) ? p : null;
         }
 
         private static void AddToCurrentPlayList(Music? music)
